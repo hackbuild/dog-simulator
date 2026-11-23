@@ -1,0 +1,29 @@
+<!DOCTYPE html><html><head><script type="importmap">{"imports":{"three":"../vendor/three/three.webgpu.js","three/addons/":"../vendor/three/addons/"}}</script></head><body style="margin:0;background:#eee">
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const A = await (await fetch('./hanims.json')).json();
+const g = await new GLTFLoader().loadAsync('./moheeb.glb');
+const W = 1200, Hh = 900;
+const r = new THREE.WebGPURenderer({ antialias: true }); r.setSize(W, Hh); document.body.appendChild(r.domElement); await r.init();
+const scene = new THREE.Scene(); scene.background = new THREE.Color('#eef2ef');
+scene.add(new THREE.HemisphereLight('#fff', '#998', 2)); const d = new THREE.DirectionalLight('#fff', 2); d.position.set(2, 4, 3); scene.add(d);
+const root = g.scene; root.updateMatrixWorld(true);
+const box = new THREE.Box3().setFromObject(root, true); const s = 1.75 / (box.max.y - box.min.y); root.scale.setScalar(s); root.position.y = -box.min.y * s;
+const holder = new THREE.Group(); holder.add(root); scene.add(holder);
+const byName = {}; root.traverse(o => { if (o.isBone) byName[o.name] = o; });
+const T = { hips: 'Hips', spine: 'Spine02', chest: 'Spine01', upperChest: 'Spine', neck: 'neck', head: 'Head', shoulderL: 'LeftShoulder', upperArmL: 'LeftArm', lowerArmL: 'LeftForeArm', handL: 'LeftHand', shoulderR: 'RightShoulder', upperArmR: 'RightArm', lowerArmR: 'RightForeArm', handR: 'RightHand', upperLegL: 'LeftUpLeg', lowerLegL: 'LeftLeg', footL: 'LeftFoot', upperLegR: 'RightUpLeg', lowerLegR: 'RightLeg', footR: 'RightFoot' };
+const dec = b => { const s = atob(b), u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return new Int16Array(u.buffer); };
+const cam = new THREE.PerspectiveCamera(30, 1, 0.1, 50);
+const hipH = 0.55 * 1.75;
+window.pose = (name, k, cols, side) => {
+  const c = A.clips[name], q = dec(c.q), p = dec(c.p), R = A.roles.length;
+  const f = Math.round(k / (cols - 1) * (c.n - 1));
+  A.roles.forEach((role, i) => { const o = (f * R + i) * 4; byName[T[role]].quaternion.set(q[o] / 32767, q[o + 1] / 32767, q[o + 2] / 32767, q[o + 3] / 32767).normalize(); });
+  holder.position.set(p[f * 3] / 10000 * hipH, p[f * 3 + 1] / 10000 * hipH, p[f * 3 + 2] / 10000 * hipH);
+  cam.aspect = W / Hh; cam.updateProjectionMatrix();
+  if (side) cam.position.set(4.5, 1.0, 0.3); else cam.position.set(0.3, 1.0, 4.5);
+  cam.lookAt(0, 0.8, 0); r.render(scene, cam);
+};
+window.READY = true;
+</script></body></html>

@@ -14,3 +14,4 @@ out/
 target/
 pkg/
 *.wasm.b64
+assets-local/

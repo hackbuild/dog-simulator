@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "note": "sizes measured; sha256 of the files as received. assets-local/ is gitignored and never committed.",
+  "assets": {
+    "assets-local/dog.glb": {
+      "sha256": "6b1df348972d8cc381506d7cc4356582cde824277112c32a56ce2a29a97fafce",
+      "bytes": 5455648,
+      "source": "HACKLE handoff pack, received 2026-11-22, app/assets/dog.glb; a Meshy model reduced with legacy/pack/tools/opt.mjs",
+      "licence": "unknown (Meshy output terms not checked)",
+      "git": false
+    },
+    "assets-local/moheeb.glb": {
+      "sha256": "0e4d5b0a2ab1d78532d788ede10433767430025c4ad90bbcab96663d2a3bbf54",
+      "bytes": 636936,
+      "source": "HACKLE handoff pack, received 2026-11-22, work/moheeb.glb; the owner's likeness",
+      "licence": "owner likeness, not for redistribution; rig origin unknown",
+      "git": false,
+      "likeness": true
+    },
+    "assets-local/voice.wav": {
+      "sha256": "bed6f37b2a8a9da79093dd7789cff317a7412be13c532cb9ad3ca430dc2dd1ac",
+      "bytes": 472364,
+      "source": "HACKLE handoff pack, received 2026-11-22, ferrule/voice.wav; the owner's voice reference",
+      "licence": "owner likeness, not for redistribution",
+      "git": false,
+      "likeness": true
+    },
+    "assets-local/quadruped.bin": {
+      "sha256": "9568debf4a41da54f62d19bd7a29fbaf7dcc34c32d4ee472ab8560caefbcb372",
+      "bytes": 17704644,
+      "source": "sweriko/ai4anim-webgpu@b539455f849f284a1e814eb11ab649eb594319dc public/quadruped.bin (copy in the pack)",
+      "licence": "CC-BY-NC-4.0 (vendor, legacy/pack/nn/AI4ANIM_NOTICE.txt)",
+      "git": false
+    },
+    "assets-local/yolov8n.onnx": {
+      "sha256": "505648ada344cd9f3f31e51d49c489c070819bc96cc758258a8fd51488e00579",
+      "bytes": 12821996,
+      "source": "Hyuto/yolov8-onnxruntime-web@fc4a52c466d15ad4519873a0cef22fbc935b93b6 public/model/yolov8n.onnx (copy in the pack)",
+      "licence": "AGPL-3.0 (vendor, Ultralytics YOLOv8)",
+      "git": false
+    },
+    "assets-local/nms-yolov8.onnx": {
+      "sha256": "7f24620fd976ac596dc5e539c59e1659c4627979b36b73e292cc8989b8d249e8",
+      "bytes": 3096,
+      "source": "HACKLE handoff pack, received 2026-11-22, models/nms-yolov8.onnx; likely Hyuto/yolov8-onnxruntime-web (inferred)",
+      "licence": "unknown",
+      "git": false
+    },
+    "assets-local/AnimationLibrary_Godot_Standard.gltf": {
+      "sha256": "0ff075c7ad6855c5c2c37a171592ee8f0d6ab2f58259e2be77a9b63dd8027765",
+      "bytes": 2459987,
+      "source": "HACKLE handoff pack, received 2026-11-22, app/_ual; Quaternius Universal Animation Library",
+      "licence": "CC0-1.0 (legacy/pack/ferrule/UAL_LICENSE.txt)",
+      "git": false
+    },
+    "assets-local/AnimationLibrary_Godot_Standard.bin": {
+      "sha256": "6e65377d81558333c4093dbb144a48fd19019343d82b1a3a7992a98ec0e0543c",
+      "bytes": 1587224,
+      "source": "HACKLE handoff pack, received 2026-11-22, app/_ual; Quaternius Universal Animation Library",
+      "licence": "CC0-1.0 (legacy/pack/ferrule/UAL_LICENSE.txt)",
+      "git": false
+    },
+    "assets-local/hackle.html": {
+      "sha256": "5562bde47954583781443266e59818d457def4a22a347fa9fa1afec1de426aeb",
+      "bytes": 9315603,
+      "source": "HACKLE handoff pack, received 2026-11-22, hackle.html; the pack's build output, kept for the parity check",
+      "licence": "mixed; embeds the owner likeness, not for redistribution",
+      "git": false,
+      "likeness": true
+    }
+  },
+  "legacy": {
+    "legacy/pack/HANDOFF.md": {
+      "sha256": "b54afa5079d99bb1997d51daa202adcdfb26718c020b40c42f5f5b797f7663a1",
+      "bytes": 8727,
+      "source": "HACKLE handoff pack, received 2026-11-22, HANDOFF.md",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/app/_ual/bake.html": {
+      "sha256": "9d96e2e2a8f622507740b660714c560be0ab6e4c4b982958bd65b7d0427fefee",
+      "bytes": 7331,
+      "source": "HACKLE handoff pack, received 2026-11-22, app/_ual/bake.html",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/app/_ual/preview.html": {
+      "sha256": "cb2811cc204f8c02211eaec5abae032a8efe93f8e442c137fdc8b24e3d5f5f96",
+      "bytes": 2546,
+      "source": "HACKLE handoff pack, received 2026-11-22, app/_ual/preview.html",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/bake.py": {
+      "sha256": "d305deb8393fdca4f4242aa710855d9a693ac228085a48c15e1c79b6aaa25b4c",
+      "bytes": 1187,
+      "source": "HACKLE handoff pack, received 2026-11-22, bake.py",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/build.py": {
+      "sha256": "8b904c73a940eee22788c415932d8eb0f8f1bbda5a118e4ab4bda07e40bb1f45",
+      "bytes": 1528,
+      "source": "HACKLE handoff pack, received 2026-11-22, build.py",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/ferrule/UAL_LICENSE.txt": {
+      "sha256": "a2010f343487d3f7618affe54f789f5487602331c0a8d03f49e9a7c547cf0499",
+      "bytes": 7048,
+      "source": "HACKLE handoff pack, received 2026-11-22, ferrule/UAL_LICENSE.txt",
+      "licence": "licence text, CC0-1.0",
+      "git": true
+    },
+    "legacy/pack/nn/AI4ANIM_LICENSE.txt": {
+      "sha256": "a7950c0fed88e9a177617e3836e9dc0ae4f4a96e59b15c3706de38ace171aca4",
+      "bytes": 19333,
+      "source": "HACKLE handoff pack, received 2026-11-22, nn/AI4ANIM_LICENSE.txt",
+      "licence": "licence text, CC-BY-NC-4.0",
+      "git": true
+    },
+    "legacy/pack/nn/AI4ANIM_NOTICE.txt": {
+      "sha256": "3d49d70e3b152dbd581bbbde34b44b208eb9f45c6d8d053b358c845b114c4043",
+      "bytes": 1235,
+      "source": "HACKLE handoff pack, received 2026-11-22, nn/AI4ANIM_NOTICE.txt",
+      "licence": "licence text, CC-BY-NC-4.0",
+      "git": true
+    },
+    "legacy/pack/nn/bind.json": {
+      "sha256": "de6619c6deb45f76eced5110cf402e13c2669dc4a3d958451126632a2993961a",
+      "bytes": 3948,
+      "source": "HACKLE handoff pack, received 2026-11-22, nn/bind.json",
+      "licence": "unknown (rig binding for the CC-BY-NC network, inferred derived)",
+      "git": true
+    },
+    "legacy/pack/nn/quadruped.json": {
+      "sha256": "5953a50cd7b0ab4d37447e701bec2c58658cae1e990014591b661f077ed1019d",
+      "bytes": 9524,
+      "source": "HACKLE handoff pack, received 2026-11-22, nn/quadruped.json",
+      "licence": "CC-BY-NC-4.0 (derived from sweriko/ai4anim-webgpu and AI4AnimationPy, legacy/pack/nn/AI4ANIM_NOTICE.txt)",
+      "git": true
+    },
+    "legacy/pack/src/avatar_core.js": {
+      "sha256": "d58928f3f5043bee0f864dbf2aac57c93127f86c90e7a18d5f7b252d767bce67",
+      "bytes": 20040,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/avatar_core.js",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/src/body.js": {
+      "sha256": "69c693c3b34768f80f165a791a97f754ad705caf2d373d38cb7f836de0d02b7f",
+      "bytes": 30145,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/body.js",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/src/brain.js": {
+      "sha256": "731823d75fbc8220750267c4c59e310bb6fcef8ed9d397776effd5f86158b8c5",
+      "bytes": 56358,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/brain.js",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/src/hackle_src.html": {
+      "sha256": "a029b3996601a42eddbae799d3035fb7087df3656e83ec3f6dd62c5889f46689",
+      "bytes": 118877,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/hackle_src.html",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/src/human.js": {
+      "sha256": "dc737b29f1429203e6c7a61934b22eabb36228f8ed41e2c44a1792d51aff206c",
+      "bytes": 60378,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/human.js",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/src/nn_gait.js": {
+      "sha256": "fbeb47ec4d7d434ce7de9ae0325f4217c54c3b0055a53e53832e47fead9d8eaf",
+      "bytes": 26167,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/nn_gait.js",
+      "licence": "CC-BY-NC-4.0 (derived from sweriko/ai4anim-webgpu and AI4AnimationPy, legacy/pack/nn/AI4ANIM_NOTICE.txt)",
+      "git": true
+    },
+    "legacy/pack/src/nn_infer.js": {
+      "sha256": "c90092ee54c9dd9fe01829a0414f37919505322b1dde357e8354673a25992166",
+      "bytes": 6936,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/nn_infer.js",
+      "licence": "CC-BY-NC-4.0 (derived from sweriko/ai4anim-webgpu and AI4AnimationPy, legacy/pack/nn/AI4ANIM_NOTICE.txt)",
+      "git": true
+    },
+    "legacy/pack/src/organic.js": {
+      "sha256": "26c4fb35968bbaf2f525c4fb7bebc6d860062d9605c55aa47f88a3e4e6007549",
+      "bytes": 21877,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/organic.js",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/src/senses.js": {
+      "sha256": "be9919c8bf21493345d52e7f381d6ee252d292d8f68d3be1d2881d1725fc6512",
+      "bytes": 20922,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/senses.js",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/src/voice.js": {
+      "sha256": "30ec77693b74705fb2984d78e3c31c1cc9f948b1efec5c4fa0810ddd8605b914",
+      "bytes": 8044,
+      "source": "HACKLE handoff pack, received 2026-11-22, src/voice.js",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/test_o.py": {
+      "sha256": "907a5b7aaec909d7a89382289bab210457e7a52de0d312c364a251188e1a7e73",
+      "bytes": 5225,
+      "source": "HACKLE handoff pack, received 2026-11-22, test_o.py",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/tools/fbx2glb.py": {
+      "sha256": "b6ffdb2eb24f32155c02f076789f071f857ec5cf1926cf05ac216d58d716de55",
+      "bytes": 964,
+      "source": "HACKLE handoff pack, received 2026-11-22, tools/fbx2glb.py",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/tools/opt.mjs": {
+      "sha256": "d5fefcb7911d4928f8cee08ee7424a6858b577c8f15f44b3ca010e7e2b6a849e",
+      "bytes": 1162,
+      "source": "HACKLE handoff pack, received 2026-11-22, tools/opt.mjs",
+      "licence": "owner authored (inferred), MIT with this repository",
+      "git": true
+    },
+    "legacy/pack/work/hanims_min.json": {
+      "sha256": "b706b98d35244c02ca5a8094a1cab54f21ce2aa9f23be83095fad5a6a55b9ef3",
+      "bytes": 207879,
+      "source": "HACKLE handoff pack, received 2026-11-22, work/hanims_min.json",
+      "licence": "CC0-1.0 inputs (Universal Animation Library) baked onto the owner rig; bake code owner authored",
+      "git": true
+    }
+  }
+}

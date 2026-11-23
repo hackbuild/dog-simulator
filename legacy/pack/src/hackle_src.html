@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HACKLE browser dog</title>
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Permanent+Marker&family=Special+Elite&family=VT323&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: a field instrument for a living thing, hack.build bench language, light paper.
+IDEA: the dog is the picture; every panel is a probe wired into one part of its nervous system.
+PICTURE: the 3D yard with the dog, its eye view inset, footfall diagram and brain bars as live instruments.
+COLOUR and TYPE: paper #f5f0e6, ink #1a1a1a, pink #FE0386 accent; Permanent Marker display, VT323 readouts, Plex Mono utility, Special Elite notes.
+LAYOUT: stage left (fills), instrument column right 380px; stacks under 900px.
+*/
+:root{color-scheme:light;--paper:#f5f0e6;--raised:#fffdf7;--sunk:#efe9db;--edge:#e8e0d0;--ink:#1a1a1a;--ink2:#444;--ink3:#6b6459;--ink4:#9a9184;--pink:#FE0386;--ok:#1f9d55;--warn:#c77700;--err:#c3251f;--info:#2b6cb0}
+:root[data-theme=dark]{color-scheme:light}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.45 "IBM Plex Mono",ui-monospace,monospace;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+#app{display:grid;grid-template-rows:52px minmax(0,1fr);height:100%}
+header{display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:2px solid var(--ink);background:var(--raised)}
+.mark{font-family:"Permanent Marker",cursive;font-size:26px;line-height:1;letter-spacing:.5px}
+.mark b{color:var(--pink);font-weight:400}
+.tag{font-family:"Special Elite",serif;color:var(--ink3);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{margin-left:auto;display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.chip{font-family:VT323,monospace;font-size:17px;line-height:1;padding:4px 7px;border:1.5px solid var(--ink);background:var(--paper);white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--paper)}
+.chip.pk{border-color:var(--pink);color:var(--pink)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 380px;min-height:0}
+#stage{position:relative;overflow:hidden;background:#eef2ef}
+#stage canvas.gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#side{border-left:2px solid var(--ink);background:var(--paper);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:2px solid var(--ink);background:var(--raised)}
+.tabs button{flex:1;border:0;border-right:1.5px solid var(--ink);background:transparent;padding:10px 0;font-family:VT323,monospace;font-size:15px;letter-spacing:0;cursor:pointer;min-height:44px;overflow:hidden;white-space:nowrap}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--paper)}
+.pane{display:none;overflow:auto;padding:12px;flex:1;min-height:0}
+.pane.on{display:block}
+.blk{background:var(--raised);border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink);margin:0 4px 16px 0}
+.bh{background:var(--ink);color:var(--paper);font-family:VT323,monospace;font-size:19px;padding:3px 9px;display:flex;justify-content:space-between;gap:8px}
+.bh span:last-child{color:#ffd1e8}
+.bb{padding:9px 10px}
+.big{font-family:"Permanent Marker",cursive;font-size:28px;line-height:1.05}
+.note{font-family:"Special Elite",serif;color:var(--ink3);font-size:13px;line-height:1.4}
+.row{display:grid;grid-template-columns:84px minmax(0,1fr) 42px;align-items:center;gap:8px;margin:4px 0;font-size:12.5px}
+.row .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:11px;background:var(--sunk);border:1px solid var(--ink);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+.bar.p i{background:var(--pink)}
+.row .v{font-family:VT323,monospace;font-size:16px;text-align:right}
+.row.cur .lab{color:var(--pink);font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1.5px solid var(--ink);background:var(--raised);box-shadow:3px 3px 0 var(--ink);padding:7px 10px;min-height:38px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;font-size:13px}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn:focus-visible,.tabs button:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.btn.pk{background:var(--pink);color:#fff}
+.btn.on{background:var(--ink);color:var(--paper)}
+.btn svg{width:16px;height:16px;flex:none}
+.tog{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px;cursor:pointer}
+.tog input{width:18px;height:18px;accent-color:#FE0386}
+canvas.inst{width:100%;display:block;background:var(--paper);border:1px solid var(--edge)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12.5px}
+.kv b{font-weight:400;color:var(--ink3)}
+.kv span{font-family:VT323,monospace;font-size:17px;line-height:1.1}
+/* stage overlays */
+#eyecard{position:absolute;left:12px;top:12px;width:min(320px,46%);background:var(--raised);border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+#eyecard .bh{font-size:17px}
+.eyewho{display:flex;gap:2px}#eyeMode{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:14px}.eyewho{flex:none}.eyewho button{white-space:nowrap;font:inherit;font-size:15px;background:none;border:0;color:inherit;opacity:.5;padding:0 6px 0 0;cursor:pointer;letter-spacing:inherit}.eyewho button.on{opacity:1;text-decoration:underline;text-underline-offset:3px}
+#eyewrap{position:relative;aspect-ratio:2/1}
+#eyewrap canvas{position:absolute;inset:0;width:100%;height:100%}
+#tool{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;pointer-events:none}
+#tool>*{pointer-events:auto}
+#bubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:var(--raised);border:1.5px solid var(--ink);padding:4px 9px;font-family:"Special Elite",serif;font-size:14px;white-space:nowrap;box-shadow:3px 3px 0 var(--ink);max-width:260px;overflow:hidden;text-overflow:ellipsis}
+#hbubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:#fff;border:1.5px solid var(--pink);color:var(--ink);padding:4px 9px;font-family:"Special Elite",serif;font-size:14px;max-width:280px;box-shadow:3px 3px 0 var(--pink);white-space:normal;text-align:center}
+#bubble:after{content:"";position:absolute;left:50%;bottom:-8px;width:10px;height:10px;background:var(--raised);border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);transform:translateX(-50%) rotate(45deg)}
+#hint{position:absolute;right:12px;top:12px;font-family:"Special Elite",serif;font-size:12.5px;background:rgba(255,253,247,.88);border:1px solid var(--edge);padding:5px 8px;max-width:280px;color:var(--ink2)}
+#load{position:absolute;inset:0;display:grid;place-items:center;background:var(--paper);z-index:5}
+#load .big{font-size:34px}
+#load .note{margin-top:6px;text-align:center}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:6px 12px;font-family:VT323,monospace;font-size:19px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:4;white-space:nowrap}
+#toast.on{opacity:1}
+#drop{position:absolute;inset:0;border:4px dashed var(--pink);display:none;place-items:center;background:rgba(245,240,230,.7);z-index:6;font-family:"Permanent Marker",cursive;font-size:30px}
+#photoView{display:none;margin-top:8px;position:relative}
+#photoView canvas{width:100%;display:block;border:1px solid var(--ink)}
+#cam{width:100%;display:none;border:1px solid var(--ink);margin-top:8px;transform:scaleX(-1)}
+table.heat{border-collapse:collapse;font-size:11px;width:100%}
+table.heat th{font-weight:400;color:var(--ink3);padding:2px;text-align:center;white-space:nowrap}
+table.heat th.r{text-align:right;padding-right:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+table.heat td{width:26px;height:20px;border:1px solid var(--edge);text-align:center;font-family:VT323,monospace;font-size:14px}
+input[type=range]{width:100%;accent-color:#FE0386}
+input[type=text]{border:1.5px solid var(--ink);background:var(--raised);padding:6px 8px;font-size:16px;width:100%}
+.heard{font-family:VT323,monospace;font-size:19px;min-height:24px;padding:3px 6px;background:var(--sunk);border:1px solid var(--edge);margin-top:6px}
+.lst{font-size:12.5px;display:grid;gap:2px}
+.lst div{display:grid;grid-template-columns:1fr auto auto;gap:8px}
+.lst .vis{color:var(--pink)}
+.about p{margin:0 0 9px}
+.about a{color:var(--ink)}
+details.tdet>summary{list-style:none;cursor:pointer}
+details.tdet>summary::-webkit-details-marker{display:none}
+details.tdet[open]>summary span:last-child:after{content:" open"}
+.trow{grid-template-columns:150px minmax(0,1fr) 46px}
+.trow .lab{font-size:12px}
+#eyeSal{pointer-events:none}
+@media (max-width:900px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100%}
+  main{grid-template-columns:minmax(0,1fr);grid-template-rows:62vh auto}
+  #side{border-left:0;border-top:2px solid var(--ink)}
+  .pane{max-height:none;overflow:visible}
+  .tag{display:none}
+}
+@media (max-width:600px){#eyecard{width:56%}#eyeMode{display:none}#hint{display:none}.chips .chip:nth-child(n+3){display:none}#tool{gap:4px;left:8px;right:8px;bottom:8px}#tool .btn{min-height:34px;padding:4px 7px;font-size:12px;box-shadow:2px 2px 0 var(--ink)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+<script>
+// single file build: libraries load pinned from jsDelivr, the dog model is embedded below, YOLOv8n loads from GitHub on demand
+window.HACKLE_LOCAL = false;
+{
+  const L = window.HACKLE_LOCAL, T = L ? './vendor/three/' : 'https://cdn.jsdelivr.net/npm/three@0.187.0/';
+  const map = { imports: { three: T + (L ? '' : 'build/') + 'three.webgpu.js', 'three/webgpu': T + (L ? '' : 'build/') + 'three.webgpu.js', 'three/addons/': T + (L ? 'addons/' : 'examples/jsm/') } };
+  window.HACKLE_LIB = { rapier: L ? './vendor/rapier/rapier.mjs' : 'https://cdn.jsdelivr.net/npm/@dimforge/rapier3d-compat@0.21.0/dist/rapier.mjs', ort: L ? './vendor/ort/ort.webgpu.bundle.min.mjs' : 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/ort.webgpu.bundle.min.mjs' };
+  const el = document.createElement('script'); el.type = 'importmap'; el.textContent = JSON.stringify(map); document.currentScript.after(el);
+}
+</script>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="mark">HACKLE<b>.</b></div>
+  <div class="tag">a dog with a brain, a body and eyes, running in your browser</div>
+  <div class="chips">
+    <span class="chip" id="chipGpu">GPU ...</span>
+    <span class="chip" id="chipPhys">PHYS ...</span>
+    <span class="chip" id="chipNet">EYE NET off</span>
+    <span class="chip" id="chipClock">10:00</span>
+    <span class="chip" id="chipFps">-- fps</span>
+  </div>
+</header>
+<main>
+<section id="stage" aria-label="3D yard">
+  <div id="load"><div><div class="big">waking the dog<b style="color:var(--pink)">...</b></div><div class="note" id="loadNote">loading model</div></div></div>
+  <div id="eyecard"><div class="bh"><span class="eyewho"><button id="eyeWhoDog" class="on" title="what the dog sees">DOG EYE</button><button id="eyeWhoHis" title="what Moheeb sees">HIS EYES</button></span><span id="eyeMode">dichromat</span></div><div id="eyewrap"><canvas id="eye" width="320" height="160"></canvas><canvas id="eyeBoxes" width="320" height="160"></canvas><canvas id="eyeSal" width="320" height="160"></canvas></div></div>
+  <div id="hint">click ground: point. shift+click: Moheeb throws there. click dog: pet. drag: orbit. right drag, two fingers or WASD: move the camera freely, Q and E for height, F to follow the dog again. WASD drives the dog in manual mode.</div>
+  <div id="bubble">...</div>
+  <div id="hbubble" style="display:none"></div>
+  <div id="toast"></div>
+  <div id="drop">show the dog this photo</div>
+  <div id="tool">
+    <button class="btn pk" id="bThrow"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5c3 1 7 1 10 0M3 11c3-1 7-1 10 0" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Throw ball</button>
+    <button class="btn" id="bTreat"><svg viewBox="0 0 16 16"><rect x="3" y="5" width="10" height="6" rx="1" fill="currentColor"/></svg>Treat</button>
+    <button class="btn" id="bGood"><svg viewBox="0 0 16 16"><path d="M2 9l4 4 8-10" fill="none" stroke="currentColor" stroke-width="2"/></svg>Good dog</button>
+    <button class="btn" id="bNo"><svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2"/></svg>No</button>
+    <button class="btn" id="bFill"><svg viewBox="0 0 16 16"><path d="M2 8h12l-2 5H4z" fill="currentColor"/></svg>Fill bowl</button>
+    <button class="btn" id="bSquirrel"><svg viewBox="0 0 16 16"><circle cx="6" cy="10" r="3" fill="currentColor"/><path d="M9 11c4 0 5-4 3-7-2-2-5 0-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Squirrel</button>
+    <button class="btn" id="bCam"><svg viewBox="0 0 16 16"><path d="M1 5h4l1-2h4l1 2h4v8H1z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="9" r="2.4" fill="currentColor"/></svg><span id="camLab">Follow</span></button>
+    <button class="btn" id="bMic"><svg viewBox="0 0 16 16"><rect x="6" y="1" width="4" height="9" rx="2" fill="currentColor"/><path d="M3 8a5 5 0 0010 0M8 13v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="micLab">Talk</span></button>
+  </div>
+</section>
+<aside id="side">
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-p="pBrain">BRAIN</button>
+    <button role="tab" aria-selected="false" data-p="pBody">BODY</button>
+    <button role="tab" aria-selected="false" data-p="pSense">SENSE</button>
+    <button role="tab" aria-selected="false" data-p="pTrain">TRAIN</button>
+    <button role="tab" aria-selected="false" data-p="pHuman">HUMAN</button>
+    <button role="tab" aria-selected="false" data-p="pTune">TUNE</button>
+    <button role="tab" aria-selected="false" data-p="pAbout">HOW</button>
+  </div>
+  <div class="pane on" id="pBrain">
+    <div class="blk"><div class="bh"><span>BEHAVIOR</span><span id="behT">0.0s</span></div><div class="bb"><div class="big" id="behName">idle</div><div class="note" id="behWhy">standing around</div></div></div>
+    <div class="blk"><div class="bh"><span>UTILITY</span><span id="utilMode">sampled</span></div><div class="bb" id="utilRows"></div><div class="bb note" id="pendNote" style="padding-top:0">drive reduction reward, softmax choice with commitment</div></div>
+    <div class="blk"><div class="bh"><span>DRIVES</span><span>need 0..1</span></div><div class="bb" id="driveRows"></div>
+      <div class="bb" style="padding-top:0"><div class="row"><span class="lab">tempo</span><input type="range" id="tempo" min="0.25" max="8" step="0.25" value="1"><span class="v" id="tempoV">1x</span></div></div></div>
+    <div class="blk"><div class="bh"><span>AFFECT</span><span>valence x arousal</span></div><div class="bb"><canvas class="inst" id="affect" width="340" height="120"></canvas></div></div>
+    <div class="blk"><div class="bh"><span>SLEEP AND CLOCK</span><span id="slpStage">awake</span></div><div class="bb"><canvas class="inst" id="hyp" width="340" height="64"></canvas>
+      <div class="kv" style="margin-top:6px"><b>time</b><span id="kClock">10:00</span><b>sleep pressure</b><span id="kSp">0</span><b>body clock</b><span id="kCirc">0</span><b>bond</b><span id="kBond">0.5</span><b>wag mode</b><span id="kWag">-</span></div>
+      <div class="note" style="margin-top:6px">Sleep pressure builds while awake and drains asleep; the body clock peaks near 7 and 19 with a midday dip. Sleep runs onset, NREM, short REM with paddling paws, and often a wake after REM. Pet dogs sleep about 11 hours a day.</div></div></div>
+    <div class="blk" id="cortexBlk"><div class="bh"><span>CORTEX</span><span id="cortexSt">checking</span></div><div class="bb">
+      <div class="note">A vision language model running on your GPU looks at the dog eye frame, reads its drives, and returns what it saw, an inner thought and a goal. Nothing leaves the browser. Weights download once and stay cached.</div>
+      <div class="row" style="grid-template-columns:84px 1fr;margin-top:8px"><span class="lab">model</span><select id="vlmPick" style="border:1.5px solid var(--ink);background:var(--raised);padding:6px;font-size:14px"><option value="gemma">Gemma 4 E2B (about 3.3 GB)</option><option value="lfm">LFM2-VL 450M (about 320 MB, faster)</option></select></div>
+      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bVlmLoad">Load model</button><button class="btn" id="bThink" disabled>Look and think</button><label class="tog"><input type="checkbox" id="autoThink">on its own every 30s</label></div>
+      <div class="row" style="grid-template-columns:84px minmax(0,1fr) 42px"><span class="lab">download</span><div class="bar p"><i id="vlmBar"></i></div><span class="v" id="vlmPct">0</span></div>
+      <div class="row" style="grid-template-columns:84px 1fr"><span class="lab">ask the dog</span><input type="text" id="askIn" placeholder="what do you see? (enter)" disabled></div>
+      <div class="heard" id="cortexOut">no thoughts yet</div></div></div>
+  </div>
+  <div class="pane" id="pBody">
+    <div class="blk"><div class="bh"><span>GAIT CPG</span><span id="gaitName">stand</span></div><div class="bb">
+      <canvas class="inst" id="cpg" width="340" height="150"></canvas>
+      <div class="kv" style="margin-top:8px"><b>speed</b><span id="kSpeed">0</span><b>stride freq</b><span id="kFreq">0</span><b>duty</b><span id="kDuty">0</span><b>turn rate</b><span id="kTurn">0</span><b>posture</b><span id="kPost">stand</span><b>Froude</b><span id="kFr">0</span><b>body source</b><span id="kSrc">cpg</span></div></div></div>
+    <div class="blk"><div class="bh"><span>NEURAL GAIT</span><span id="nnSt">off</span></div><div class="bb">
+      <div class="note">A codebook matching network trained on real dog motion capture (AI4AnimationPy, Paul and Sebastian Starke) predicts the next half second of a 27 bone dog: walk, pace, trot, canter, sit, lie. It runs on the CPU in a worker and is retargeted onto this rig. Bows, paw lifts and shakes hand back to the procedural body with an inertialized blend.</div>
+      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bNnLoad">Load neural gait (17.7 MB)</button></div>
+      <div class="kv" style="margin-top:6px"><b>guidance</b><span id="kGuide">-</span><b>inference</b><span id="kNnMs">-</span><b>contacts</b><span id="kCont">-</span></div>
+      <div class="note" style="margin-top:6px">Model and mocap are CC BY-NC 4.0 (non commercial), web port by sweriko. Toggle it under TUNE, layers.</div></div></div>
+    <div class="blk"><div class="bh"><span>FOOTFALLS</span><span>LF RF LH RH</span></div><div class="bb"><canvas class="inst" id="foot" width="340" height="96"></canvas><div class="note">Hildebrand plot of the last 4 s: dark is stance. Walk shows a four beat lateral sequence, trot pairs the diagonals, gallop goes rotary.</div></div></div>
+    <div class="blk"><div class="bh"><span>CONTROL</span><span>drive it</span></div><div class="bb">
+      <label class="tog"><input type="checkbox" id="manual">manual drive (WASD or arrows, shift to run)</label>
+      <label class="tog"><input type="checkbox" id="xray">x-ray: skeleton, IK targets, contacts</label>
+      <label class="tog"><input type="checkbox" id="prints" checked>footprints</label>
+      <label class="tog"><input type="checkbox" id="ikOn" checked>leg IK and terrain adaptation</label>
+      <label class="tog"><input type="checkbox" id="sound" checked>sound</label>
+    </div></div>
+    <div class="blk"><div class="bh"><span>MODEL</span><span id="mdlName">dog.glb</span></div><div class="bb"><div class="kv" id="mdlInfo"></div>
+      <div class="note" style="margin-top:6px">Drop another Meshy quadruped GLB on the stage to swap bodies.</div></div></div>
+  </div>
+  <div class="pane" id="pSense">
+    <div class="blk"><div class="bh"><span>VISION</span><span id="netSt">off</span></div><div class="bb">
+      <label class="tog"><input type="checkbox" id="dogColor" checked>dichromat color and 20/75 acuity</label>
+      <label class="tog"><input type="checkbox" id="netOn" checked>YOLOv8n on the eye feed (WebGPU, falls back to WASM)</label>
+      <label class="tog"><input type="checkbox" id="showSal">show saliency and the current fixation on the eye</label>
+      <div class="kv"><b>looking at</b><span id="kFocus">-</span></div>
+      <div class="lst" id="detList"></div>
+    </div></div>
+    <div class="blk"><div class="bh"><span>PERCEPTS</span><span>fov 240</span></div><div class="bb"><div class="lst" id="perList"></div></div></div>
+    <div class="blk"><div class="bh"><span>SHOW IT</span><span>photo or webcam</span></div><div class="bb">
+      <div class="btns"><label class="btn" for="photoIn">Pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="btn" id="bWebcam">Webcam</button></div>
+      <div class="note" style="margin-top:6px">The dog runs the same detector on whatever you show it: cats get barked at, food gets begged for, balls get a play bow. Webcam and microphone ask for permission; Chrome or Edge work best. With the cortex model loaded, the dog also tells you what it thinks of the photo.</div>
+      <div id="photoView"><canvas id="photo" width="320" height="240"></canvas></div>
+      <video id="cam" playsinline muted></video>
+    </div></div>
+    <div class="blk"><div class="bh"><span>NOSE AND EARS</span><span id="sniffSt">-</span></div><div class="bb"><label class="tog"><input type="checkbox" id="showPuffs">show scent puffs in the yard</label><div class="kv"><b>wind</b><span id="kWind">-</span><b>puffs</b><span id="kPuffs">0</span><b>left / right</b><span id="kLR">-</span></div><div class="row"><span class="lab">scent</span><div class="bar p"><i id="scentBar"></i></div><span class="v" id="scentV">0</span></div><div class="row"><span class="lab">sound</span><div class="bar"><i id="hearBar"></i></div><span class="v" id="hearV">0</span></div></div></div>
+  </div>
+  <div class="pane" id="pTrain">
+    <div class="blk"><div class="bh"><span>CUES</span><span>say or click</span></div><div class="bb">
+      <div class="btns" id="cueBtns"></div>
+      <div class="heard" id="heard">say "sit", "spin", or any new word</div>
+      <div class="row" style="grid-template-columns:84px 1fr"><span class="lab">dog name</span><input type="text" id="dogName" value="Pixel"></div>
+      <div class="row" style="grid-template-columns:84px 1fr"><span class="lab">type a cue</span><input type="text" id="cueIn" placeholder="press enter"></div>
+    </div></div>
+    <div class="blk"><div class="bh"><span>ASSOCIATIONS</span><span>RW + Pearce-Kaye-Hall</span></div><div class="bb"><div style="overflow-x:auto"><table class="heat" id="heat"></table></div>
+      <div class="note" style="margin-top:6px">Rows are cues, columns are actions. Cells show net strength, excitation minus a separate inhibition that fades faster, so an extinguished cue partly comes back after a break. The attn column is each cue's associability: it rises after surprises and falls as the outcome becomes predictable. Credit decays with delay (eligibility trace), so a slow treat can reward whatever the dog is doing when it lands. If nothing is strong the dog offers tricks it was rewarded for before; teach a new word by praising whatever it does.</div>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="bReset">Reset learning</button></div></div></div>
+  </div>
+  <div class="pane" id="pHuman">
+    <div class="blk"><div class="bh"><span>MOHEEB</span><span id="humMode">ai</span></div><div class="bb">
+      <div class="big" id="humTask">idle</div><div class="note" id="humWhy">standing on the porch</div>
+      <label class="tog"><input type="checkbox" id="humAI" checked>AI Moheeb runs his own day (off: you drive him with the buttons)</label>
+      <label class="tog"><input type="checkbox" id="humMindOn">let the cortex model drive him every 25s (load it in BRAIN first)</label>
+      <div class="btns" style="margin-top:6px"><button class="btn" id="bCall">Call the dog</button><button class="btn" id="bPet">Pet the dog</button><button class="btn" id="bTrainNow">Train a new word</button></div>
+      <div class="heard" id="humMind" style="white-space:pre-wrap">his own mind is off</div></div></div>
+    <div class="blk"><div class="bh"><span>VOICE</span><span>pocket tts</span></div><div class="bb">
+      <div class="note">Starts with the browser voice. Load Pocket TTS to speak in his cloned voice (the clip from FERRULE is embedded); the engine downloads once from Hugging Face.</div>
+      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bVoiceLoad">Load his voice</button><label class="tog"><input type="checkbox" id="humVoiceOn" checked>speak out loud</label></div>
+      <div class="heard" id="voiceSt">browser voice</div></div></div>
+    <div class="blk"><div class="bh"><span>TRAINING</span><span>he teaches</span></div><div class="bb" id="humTrain"></div>
+      <div class="bb note" style="padding-top:0">He says a cue, waits for what the dog does, then praises a match (sometimes with a treat) or says no. Those are the same rewards the TRAIN tab learns from, so the dog really picks up his words, including made up ones like boop.</div></div>
+    <div class="blk"><div class="bh"><span>SAID</span><span>latest first</span></div><div class="bb lst" id="humSaid"></div></div>
+  </div>
+  <div class="pane" id="pTune"></div>
+  <div class="pane about" id="pAbout">
+    <div class="blk"><div class="bh"><span>STACK</span><span>all local</span></div><div class="bb note" style="color:var(--ink2)">
+      <p>Body: your Meshy GLB, drawn by three.js WebGPURenderer with a WebGL2 fallback. Two motion sources share the rig: a central pattern generator (walk, pace, trot, canter, gallop picked by Froude number with hysteresis, Raibert foot placement, two bone IK) and a neural gait from dog motion capture (AI4AnimationPy codebook matching, retargeted by rotation deltas from both bind poses with leg length scaled paw targets locked by predicted contacts). Switches between them, and between postures, are inertialized (Holden) so nothing snaps.</p>
+      <p>On top: critically damped springs for posture and gaze, a tail chain driven by eight discrete wag modes with an owner side bias (Ren 2022, Quaranta 2007), spring ears kicked by head motion, centripetal lean and fore and hind load shift, a mass scaled shake off (Dickerson 2012), breathing jittered per cycle, pink noise drift so a still dog is never frozen, and paw paddling in REM.</p>
+      <p>Brain: drives reward by how much they reduce internal deficits (Keramati and Gutkin 2011). The choice is sampled from a softmax with a commitment bonus, urgent options start after an ex-Gaussian latency while the head turns first, and quiet changes wait for the current act to finish. Sleep pressure plus a two peak body clock run onset, NREM, REM and wake. Play bows need eye contact, a scolding brings the appeasement set keyed to his posture (Horowitz 2009), mutual gaze builds a bond (MacLean and Hare 2015), pointing is followed by gesture type and bond (Clark 2019), and exploring is bolder with him in view. Learning keeps Rescorla-Wagner with Pearce-Kaye-Hall associability, a separate inhibitory weight that fades faster, eligibility traces so a late treat can teach the wrong thing, and free operant offers.</p>
+      <p>Senses: Itti-Koch saliency on the dog eye frame (intensity, blue yellow, edges, motion weighted highest) with top down drive bias and inhibition of return kept in world directions; looming startle from time to contact; per dog sound direction error (Guerineau 2022); acuity that falls from bright to dim light (Lind 2017); a puff plume with whiffs and blanks plus decaying ground trails, sampled only on sniffs at 4 to 7 Hz in bouts (Craven 2010), tracked by surging upwind and casting crosswind (Celani 2014). YOLOv8n still runs on the eye feed.</p>
+      <p>Human: Moheeb with retargeted Quaternius UAL clips (CC0). His gaze follows saccade statistics (Eyes Alive), SmartBody gaze ratios and Stahl head recruitment; root motion uses velocity springs and the walking curvature law; planted feet lock; reaches follow minimum jerk; the throw is a phased kinematic chain with jitter; he breathes, sways, shows mood in his posture, approaches the dog from the side, and points.</p>
+      <p>Cortex: Gemma 4 E2B or LFM2-VL 450M on WebGPU sets goals on events, using a memory stream ranked by recency, importance and relevance (Park 2023). Reflexes and timing stay in JS.</p>
+      <p>Every number above is live in the TUNE tab, including seven temperament traits (Jones and Gosling 2005). Each layer can be switched off to compare against the old canned build.</p>
+      <p>Licenses: neural gait model and mocap CC BY-NC 4.0 (Meta AI4AnimationPy, port by sweriko), so this build is for non commercial use. Animation clips CC0 (Quaternius). Everything else here is original.</p>
+    </div></div>
+  </div>
+</aside>
+</main>
+</div>
+<script type="module">
+import * as THREE from 'three/webgpu';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+{
+// ---------- asset locations: hosted blobs first, then files beside the page ----------
+const ASSETS = { onnx: 'https://raw.githubusercontent.com/Hyuto/yolov8-onnxruntime-web/fc4a52c466d15ad4519873a0cef22fbc935b93b6/public/model/yolov8n.onnx', wasmDir: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/' };
+async function fetchFirst(list) { for (const u of list) { if (u.startsWith('__')) continue; try { const r = await fetch(u); if (r.ok) return r; } catch (e) {} } throw new Error('asset not reachable'); }
+async function fetchZip(list) {
+  // reads the first entry of a zip archive (stored or deflate) using the central directory
+  const buf = await (await fetchFirst(list)).arrayBuffer(), dv = new DataView(buf);
+  let e = buf.byteLength - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('not a zip');
+  const cd = dv.getUint32(e + 16, true);
+  const method = dv.getUint16(cd + 10, true), csize = dv.getUint32(cd + 20, true), lho = dv.getUint32(cd + 42, true);
+  const start = lho + 30 + dv.getUint16(lho + 26, true) + dv.getUint16(lho + 28, true);
+  const data = new Uint8Array(buf, start, csize);
+  if (method === 0) return data.slice().buffer;
+  return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).arrayBuffer();
+}
+// ---------- small helpers ----------
+const $ = id => document.getElementById(id);
+const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const ss = (a, b, x) => { const t = clamp((x - a) / (b - a), 0, 1); return t * t * (3 - 2 * t); };
+const frac = x => x - Math.floor(x);
+const wrapH = d => { d = ((d + 0.5) % 1 + 1) % 1; return d - 0.5; };
+const wrapA = a => Math.atan2(Math.sin(a), Math.cos(a));
+const rnd = (a, b) => a + Math.random() * (b - a);
+const pick = arr => arr[(Math.random() * arr.length) | 0];
+const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+const tmpV = [V3(), V3(), V3(), V3(), V3(), V3(), V3(), V3(), V3(), V3()];
+const tmpQ = [new THREE.Quaternion(), new THREE.Quaternion(), new THREE.Quaternion(), new THREE.Quaternion()];
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('hackle.' + k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem('hackle.' + k, JSON.stringify(v)); } catch (e) {} }
+};
+let toastT = 0;
+function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); toastT = 2.2; }
+/*@@ORGANIC@@*/
+
+// ---------- world layout ----------
+const PORCH = V3(0, 0, 7.2); // fixed spot where the human starts; the terrain is flattened here
+const YOU = V3(0, 0, 7.2);   // the human's live position, updated every frame
+const BOWL = V3(-4.2, 0, 4.4);
+const BED = V3(4.6, 0, 4.8);
+const FENCE_R = 14;
+const TREES = [[-8, -6], [7.5, -7], [-10.5, 3], [10, 2.5], [-3.5, -10.5], [3.8, -10]].map(([x, z]) => ({ x, z, r: 0.32 }));
+const ROCKS = [[-5.5, -2, 0.55], [5.8, -2.8, 0.4], [1.5, -6, 0.5], [-1.8, -4.2, 0.3], [8.5, 6.5, 0.45]].map(([x, z, r]) => ({ x, z, r }));
+const LOGS = [{ x: -7.2, z: 7, a: 0.6, len: 2.4 }, { x: 2.5, z: 2.8, a: -0.3, len: 1.8 }];
+const OBST = [];
+TREES.forEach(t => OBST.push({ x: t.x, z: t.z, r: t.r + 0.05, kind: 'tree' }));
+ROCKS.forEach(r => OBST.push({ x: r.x, z: r.z, r: r.r * 0.95, kind: 'rock' }));
+LOGS.forEach(l => { for (let i = -1; i <= 1; i++) OBST.push({ x: l.x + Math.cos(l.a) * i * l.len / 3, z: l.z - Math.sin(l.a) * i * l.len / 3, r: 0.32, kind: 'log' }); });
+OBST.push({ x: YOU.x, z: YOU.z, r: 0.3, kind: 'you' });
+
+function H(x, z) {
+  let h = 0.24 * Math.sin(x * 0.31 + 1.2) * Math.cos(z * 0.27 - 0.4) + 0.12 * Math.sin(x * 0.67 + z * 0.41) + 0.05 * Math.cos(x * 1.1 - z * 0.9);
+  const f = ss(1.0, 3.0, Math.hypot(x - PORCH.x, z - PORCH.z)) * ss(0.8, 2.2, Math.hypot(x - BOWL.x, z - BOWL.z)) * ss(1.0, 2.4, Math.hypot(x - BED.x, z - BED.z));
+  h *= f;
+  const r = Math.hypot(x, z);
+  h += 0.5 * ss(11.5, 15, r);
+  return h;
+}
+
+// ---------- renderer ----------
+const stage = $('stage');
+const renderer = new THREE.WebGPURenderer({ antialias: true });
+renderer.domElement.className = 'gl';
+stage.prepend(renderer.domElement);
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFShadowMap;
+renderer.toneMapping = THREE.NeutralToneMapping;
+renderer.toneMappingExposure = 1.0;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color('#eef2ef');
+scene.fog = new THREE.Fog('#eef2ef', 24, 48);
+const camera = new THREE.PerspectiveCamera(42, 1, 0.05, 120);
+camera.position.set(2.2, 1.7, 6.6);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0, 0.35, 2.2);
+controls.enableDamping = true;
+controls.maxPolarAngle = 1.48;
+controls.minDistance = 1.2; controls.maxDistance = 26;
+
+const hemi = new THREE.HemisphereLight('#ffffff', '#cbbfa6', 1.45); scene.add(hemi);
+const sun = new THREE.DirectionalLight('#fff3df', 2.3);
+sun.position.set(7, 14, 6);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+const sc = sun.shadow.camera; sc.left = -15; sc.right = 15; sc.top = 15; sc.bottom = -15; sc.near = 1; sc.far = 40;
+sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.03;
+scene.add(sun); scene.add(sun.target);
+
+// ---------- terrain ----------
+const GN = 128, GS = 34;
+const tg = new THREE.BufferGeometry();
+const tpos = new Float32Array((GN + 1) * (GN + 1) * 3), tcol = new Float32Array((GN + 1) * (GN + 1) * 3);
+const tidx = new Uint32Array(GN * GN * 6);
+{
+  let k = 0;
+  const cA = new THREE.Color('#cfdcae'), cB = new THREE.Color('#bccf98'), cC = new THREE.Color('#e7dcc0'), c = new THREE.Color();
+  for (let j = 0; j <= GN; j++) for (let i = 0; i <= GN; i++) {
+    const x = -GS / 2 + GS * i / GN, z = -GS / 2 + GS * j / GN, y = H(x, z);
+    tpos[k * 3] = x; tpos[k * 3 + 1] = y; tpos[k * 3 + 2] = z;
+    const n = 0.5 + 0.5 * Math.sin(x * 2.1 + Math.sin(z * 1.3)) * Math.cos(z * 1.7 - x * 0.4);
+    c.copy(cA).lerp(cB, n * 0.8);
+    const worn = Math.max(1 - Math.hypot(x - PORCH.x, z - PORCH.z) / 2.6, 0) + Math.max(1 - Math.hypot(x - BOWL.x, z - BOWL.z) / 1.4, 0) * 0.6;
+    c.lerp(cC, clamp(worn, 0, 0.9));
+    tcol[k * 3] = c.r; tcol[k * 3 + 1] = c.g; tcol[k * 3 + 2] = c.b; k++;
+  }
+  let q = 0;
+  for (let j = 0; j < GN; j++) for (let i = 0; i < GN; i++) {
+    const a = j * (GN + 1) + i, b = a + 1, d = a + GN + 1, e = d + 1;
+    tidx[q++] = a; tidx[q++] = d; tidx[q++] = b; tidx[q++] = b; tidx[q++] = d; tidx[q++] = e;
+  }
+}
+tg.setAttribute('position', new THREE.BufferAttribute(tpos, 3));
+tg.setAttribute('color', new THREE.BufferAttribute(tcol, 3));
+tg.setIndex(new THREE.BufferAttribute(tidx, 1));
+tg.computeVertexNormals();
+const ground = new THREE.Mesh(tg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95 }));
+ground.receiveShadow = true;
+scene.add(ground);
+
+// ---------- props ----------
+const M = (c, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: 0.85 }, o));
+function addMesh(geo, mat, x, y, z, parent = scene, cast = true) { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; parent.add(m); return m; }
+for (const t of TREES) {
+  const g = new THREE.Group(); g.position.set(t.x, H(t.x, t.z), t.z); scene.add(g);
+  addMesh(new THREE.CylinderGeometry(0.2, 0.3, 2.4, 9), M('#a68a6d'), 0, 1.2, 0, g);
+  const leaf = M('#9cc46c', { flatShading: true }), leaf2 = M('#b5d77f', { flatShading: true });
+  addMesh(new THREE.IcosahedronGeometry(1.5, 1), leaf, 0, 3.2, 0, g);
+  addMesh(new THREE.IcosahedronGeometry(1.1, 1), leaf2, 0.7, 3.9, 0.3, g);
+  addMesh(new THREE.IcosahedronGeometry(0.9, 1), leaf, -0.6, 4.2, -0.4, g);
+  t.group = g;
+}
+for (const r of ROCKS) { const m = addMesh(new THREE.DodecahedronGeometry(r.r, 0), M('#d6d2c8', { flatShading: true }), r.x, H(r.x, r.z) + r.r * 0.45, r.z); m.scale.set(1, 0.7, 1.1); m.rotation.y = r.x; }
+for (const l of LOGS) { const m = addMesh(new THREE.CylinderGeometry(0.22, 0.25, l.len, 10), M('#b08c66'), l.x, H(l.x, l.z) + 0.2, l.z); m.rotation.set(0, l.a, Math.PI / 2); }
+{ // fence
+  const posts = new THREE.InstancedMesh(new THREE.BoxGeometry(0.12, 1.1, 0.12), M('#f6f1e6'), 44);
+  const o = new THREE.Object3D();
+  for (let i = 0; i < 44; i++) { const a = i / 44 * Math.PI * 2, x = Math.cos(a) * FENCE_R, z = Math.sin(a) * FENCE_R; o.position.set(x, H(x, z) + 0.5, z); o.rotation.y = -a; o.updateMatrix(); posts.setMatrixAt(i, o.matrix); }
+  posts.castShadow = true; scene.add(posts);
+  for (const hh of [0.45, 0.85]) { const rail = new THREE.Mesh(new THREE.TorusGeometry(FENCE_R, 0.035, 6, 160), M('#f6f1e6')); rail.rotation.x = Math.PI / 2; rail.position.y = H(FENCE_R, 0) + hh; scene.add(rail); }
+}
+{ // grass tufts
+  const n = 2600, im = new THREE.InstancedMesh(new THREE.ConeGeometry(0.035, 0.16, 4), M('#a9c77a'), n);
+  const o = new THREE.Object3D(); let k = 0;
+  while (k < n) { const x = rnd(-13, 13), z = rnd(-13, 13); if (Math.hypot(x, z) > 13 || Math.hypot(x - PORCH.x, z - PORCH.z) < 1.6) continue; o.position.set(x, H(x, z) + 0.06, z); o.rotation.set(rnd(-0.3, 0.3), rnd(0, 6), rnd(-0.3, 0.3)); const s = rnd(0.6, 1.4); o.scale.set(s, s, s); o.updateMatrix(); im.setMatrixAt(k++, o.matrix); }
+  scene.add(im);
+}
+// bowl
+const bowlG = new THREE.Group(); bowlG.position.copy(BOWL).setY(H(BOWL.x, BOWL.z)); scene.add(bowlG);
+{ const pts = [V3(0.0, 0), V3(0.17, 0), V3(0.2, 0.02), V3(0.23, 0.09), V3(0.21, 0.1), V3(0.18, 0.03), V3(0.0, 0.03)].map(p => new THREE.Vector2(p.x, p.y)); addMesh(new THREE.LatheGeometry(pts, 28), M('#FE0386', { roughness: 0.4 }), 0, 0, 0, bowlG); }
+const food = addMesh(new THREE.CylinderGeometry(0.17, 0.15, 0.05, 20), M('#a56a3a', { roughness: 1 }), 0, 0.05, 0, bowlG, false);
+// bed
+// porch bench: seat height and depth set from the Sitting_Idle_Loop hip drop (0.44 m down, 0.33 m back)
+{ const bg = new THREE.Group(); bg.position.set(0, H(0, 7.43), 7.43); scene.add(bg); const wood = M('#b98a5e'), dark = M('#7d5a3c');
+  addMesh(new THREE.BoxGeometry(1.4, 0.05, 0.42), wood, 0, 0.405, 0, bg); addMesh(new THREE.BoxGeometry(1.4, 0.32, 0.04), wood, 0, 0.62, 0.22, bg);
+  for (const x of [-0.62, 0.62]) for (const z of [-0.17, 0.17]) addMesh(new THREE.BoxGeometry(0.05, 0.4, 0.05), dark, x, 0.2, z, bg);
+  for (const x of [-0.5, 0, 0.5]) OBST.push({ x, z: 7.45, r: 0.3, kind: 'bench' }); }
+const bedG = new THREE.Group(); bedG.position.copy(BED).setY(H(BED.x, BED.z)); scene.add(bedG);
+addMesh(new THREE.CylinderGeometry(0.62, 0.66, 0.08, 32), M('#f2e6d4'), 0, 0.04, 0, bedG);
+{ const rim = addMesh(new THREE.TorusGeometry(0.6, 0.12, 10, 36), M('#f7b5d2'), 0, 0.1, 0, bedG); rim.rotation.x = Math.PI / 2; }
+// pointer marker
+const marker = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.24, 28), new THREE.MeshBasicMaterial({ color: '#FE0386', transparent: true, opacity: 0, depthWrite: false }));
+marker.rotation.x = -Math.PI / 2; scene.add(marker);
+// squirrel
+const sq = new THREE.Group(); scene.add(sq); sq.visible = false;
+{ const fur = M('#8b7867'); const b = addMesh(new THREE.SphereGeometry(0.08, 12, 10), fur, 0, 0.09, 0, sq); b.scale.set(0.9, 0.85, 1.5);
+  addMesh(new THREE.SphereGeometry(0.055, 12, 10), fur, 0, 0.15, 0.13, sq);
+  const tail = addMesh(new THREE.TorusGeometry(0.09, 0.04, 8, 14, Math.PI * 1.3), M('#9d8a78'), 0, 0.2, -0.13, sq); tail.rotation.y = Math.PI / 2; }
+
+// ---------- physics ----------
+let RAPIER = null, world = null;
+const bodies = {};
+const dyn = [];
+async function initPhysics() {
+  const mod = await import(window.HACKLE_LIB.rapier);
+  RAPIER = mod.default || mod;
+  await RAPIER.init();
+  world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
+  world.timestep = 1 / 60;
+  const gb = world.createRigidBody(RAPIER.RigidBodyDesc.fixed());
+  world.createCollider(RAPIER.ColliderDesc.trimesh(tpos, tidx).setFriction(0.9).setRestitution(0.5), gb);
+  for (const t of TREES) world.createCollider(RAPIER.ColliderDesc.cylinder(1.5, 0.28).setTranslation(t.x, H(t.x, t.z) + 1.4, t.z), gb);
+  for (const r of ROCKS) world.createCollider(RAPIER.ColliderDesc.ball(r.r * 0.8).setTranslation(r.x, H(r.x, r.z) + r.r * 0.3, r.z), gb);
+  for (const l of LOGS) { const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, l.a, Math.PI / 2)); world.createCollider(RAPIER.ColliderDesc.capsule(l.len / 2 - 0.2, 0.23).setTranslation(l.x, H(l.x, l.z) + 0.2, l.z).setRotation(q), gb); }
+  for (let i = 0; i < 44; i++) { const a = (i + 0.5) / 44 * Math.PI * 2, x = Math.cos(a) * (FENCE_R + 0.05), z = Math.sin(a) * (FENCE_R + 0.05); const q = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, -a, 0)); world.createCollider(RAPIER.ColliderDesc.cuboid(0.06, 0.8, 1.05).setTranslation(x, H(x, z) + 0.6, z).setRotation(q), gb); }
+  world.createCollider(RAPIER.ColliderDesc.cylinder(0.05, 0.22).setTranslation(BOWL.x, H(BOWL.x, BOWL.z) + 0.05, BOWL.z), gb);
+  bodies.human = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(PORCH.x, H(PORCH.x, PORCH.z) + 0.9, PORCH.z));
+  world.createCollider(RAPIER.ColliderDesc.capsule(0.6, 0.2), bodies.human);
+  // dog kinematic body
+  bodies.dog = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 0.4, 2));
+  world.createCollider(RAPIER.ColliderDesc.capsule(0.22, 0.13).setRotation({ x: Math.SQRT1_2, y: 0, z: 0, w: Math.SQRT1_2 }), bodies.dog);
+  $('chipPhys').textContent = 'RAPIER ' + (RAPIER.version ? RAPIER.version() : 'ok'); $('chipPhys').classList.add('on');
+}
+function makeDynamic(name, mesh, colDesc, pos, opts = {}) {
+  const rb = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(pos.x, pos.y, pos.z).setCcdEnabled(true).setLinearDamping(opts.lin ?? 0.15).setAngularDamping(opts.ang ?? 0.6));
+  world.createCollider(colDesc.setRestitution(opts.rest ?? 0.3).setFriction(opts.fric ?? 0.7).setDensity(opts.dens ?? 300), rb);
+  const o = { name, mesh, rb, held: false, prevVy: 0, lastSpeed: 0 };
+  dyn.push(o); scene.add(mesh); mesh.castShadow = true; return o;
+}
+let ball, bone, treats = [];
+const crates = [];
+function initProps() {
+  const bm = new THREE.Mesh(new THREE.SphereGeometry(0.045, 20, 14), M('#d9f04e', { roughness: 0.95 }));
+  ball = makeDynamic('ball', bm, RAPIER.ColliderDesc.ball(0.045), V3(1.2, H(1.2, 4) + 0.3, 4), { rest: 0.72, dens: 160, lin: 0.3, ang: 2.2 });
+  const bg = new THREE.Group();
+  const bmat = M('#f3ead8', { roughness: 0.6 });
+  addMesh(new THREE.CapsuleGeometry(0.025, 0.18, 4, 8), bmat, 0, 0, 0, bg).rotation.z = Math.PI / 2;
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) addMesh(new THREE.SphereGeometry(0.035, 10, 8), bmat, sx * 0.12, 0, sz * 0.025, bg);
+  bone = makeDynamic('bone', bg, RAPIER.ColliderDesc.capsule(0.1, 0.035).setRotation({ x: 0, y: 0, z: Math.SQRT1_2, w: Math.SQRT1_2 }), V3(-2.5, H(-2.5, 0.5) + 0.3, 0.5), { rest: 0.2, dens: 400 });
+  const cmat = M('#e2c79b');
+  for (const [x, z] of [[3.5, -1], [-3, -1.6], [6.2, 1.2]]) {
+    const m = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.32, 0.32), cmat);
+    crates.push(makeDynamic('crate', m, RAPIER.ColliderDesc.cuboid(0.16, 0.16, 0.16), V3(x, H(x, z) + 0.4, z), { rest: 0.1, dens: 60, fric: 0.8 }));
+  }
+}
+function spawnTreat(p, v) {
+  const m = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.025, 0.035), M('#8a5530'));
+  const t = makeDynamic('treat', m, RAPIER.ColliderDesc.cuboid(0.025, 0.0125, 0.0175), p, { rest: 0.2, dens: 500 });
+  t.rb.setLinvel(v, true); treats.push(t); return t;
+}
+function removeDyn(o) { world.removeRigidBody(o.rb); scene.remove(o.mesh); dyn.splice(dyn.indexOf(o), 1); treats = treats.filter(t => t !== o); }
+const bodyPos = o => { const t = o.rb.translation(); return V3(t.x, t.y, t.z); };
+const bodyVel = o => { const t = o.rb.linvel(); return V3(t.x, t.y, t.z); };
+function setHeld(o, held) {
+  o.held = held;
+  o.rb.setBodyType(held ? RAPIER.RigidBodyType.KinematicPositionBased : RAPIER.RigidBodyType.Dynamic, true);
+}
+
+// ---------- audio ----------
+let actx = null, audioOK = false;
+addEventListener('pointerdown', () => { audioOK = true; }, { capture: true });
+addEventListener('keydown', () => { audioOK = true; }, { capture: true });
+function audio() { if (!$('sound').checked || !audioOK) return null; if (!actx) { try { actx = new AudioContext(); } catch (e) { return null; } } if (actx.state === 'suspended') actx.resume(); return actx; }
+function distGain(p) { return clamp(1.6 / (0.6 + camera.position.distanceTo(p) * 0.25), 0.05, 1); }
+function bark(p, pitch = 1, n = 1) {
+  if (typeof brain !== 'undefined' && p && dog.root && p.distanceTo(dog.root.position) < 1) brain.barkT = now;
+  const a = audio(); if (!a) return; const g0 = distGain(p);
+  for (let k = 0; k < n; k++) {
+    const t = a.currentTime + k * 0.22;
+    const o = a.createOscillator(); o.type = 'sawtooth';
+    o.frequency.setValueAtTime(520 * pitch, t); o.frequency.exponentialRampToValueAtTime(260 * pitch, t + 0.13);
+    const nz = a.createBufferSource(); const buf = a.createBuffer(1, a.sampleRate * 0.15, a.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; nz.buffer = buf;
+    const f1 = a.createBiquadFilter(); f1.type = 'bandpass'; f1.frequency.value = 900 * pitch; f1.Q.value = 2.5;
+    const f2 = a.createBiquadFilter(); f2.type = 'bandpass'; f2.frequency.value = 2200 * pitch; f2.Q.value = 3;
+    const g = a.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.5 * g0, t + 0.012); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+    const gn = a.createGain(); gn.gain.value = 0.35;
+    o.connect(f1); o.connect(f2); nz.connect(gn); gn.connect(f1); f1.connect(g); f2.connect(g); g.connect(a.destination);
+    o.start(t); o.stop(t + 0.18); nz.start(t); nz.stop(t + 0.15);
+  }
+}
+function whine(p) { const a = audio(); if (!a) return; const t = a.currentTime; const o = a.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(900, t); o.frequency.linearRampToValueAtTime(1400, t + 0.3); o.frequency.linearRampToValueAtTime(800, t + 0.7); const g = a.createGain(); g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.12 * distGain(p), t + 0.08); g.gain.linearRampToValueAtTime(0.0001, t + 0.75); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.8); }
+function thud(p, v) { const a = audio(); if (!a) return; const t = a.currentTime; const o = a.createOscillator(); o.frequency.setValueAtTime(180, t); o.frequency.exponentialRampToValueAtTime(60, t + 0.08); const g = a.createGain(); g.gain.setValueAtTime(clamp(v * 0.08, 0, 0.35) * distGain(p), t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1); o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.12); }
+let pantT = 0;
+function pant(p) { const a = audio(); if (!a) return; const t = a.currentTime; const nz = a.createBufferSource(); const buf = a.createBuffer(1, a.sampleRate * 0.14, a.sampleRate); const d = buf.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.sin(Math.PI * i / d.length); nz.buffer = buf; const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 1500; f.Q.value = 0.8; const g = a.createGain(); g.gain.value = 0.05 * distGain(p); nz.connect(f); f.connect(g); g.connect(a.destination); nz.start(t); }
+
+// ---------- the dog body ----------
+const dog = {
+  root: new THREE.Group(), pivot: new THREE.Group(), ready: false,
+  pos: V3(0, 0, 2), yaw: Math.PI, v: 0, w: 0, S: 0.47, yaw0: 0,
+  bones: {}, rest: new Map(), legs: [], mesh: null, mat: null,
+  noseL: V3(), mouthL: V3(), eyeL: V3(), fwdM: V3(), upM: V3(0, 1, 0),
+  posture: { sit: 0, down: 0, bow: 0, reach: 0 }, postureT: { sit: 0, down: 0, bow: 0, reach: 0 },
+  phase: 0, gaitW: [1, 0, 0], freq: 0, duty: 0.65, act: 0, standing: true,
+  head: { yaw: 0, pitch: 0, roll: 0, tYaw: 0, tPitch: 0, tRoll: 0 },
+  tailPhase: 0, earPerk: 0, bodyPitch: 0, heat: 0, hop: 0, pawLift: 0
+};
+scene.add(dog.root); dog.root.add(dog.pivot);
+const QY = a => new THREE.Quaternion().setFromAxisAngle(V3(0, 1, 0), a);
+let QC = QY(0), QCi = QY(0);
+const dqE = new THREE.Euler();
+function dq(pitch, yaw, roll, out = new THREE.Quaternion()) { dqE.set(pitch, yaw, roll, 'YXZ'); out.setFromEuler(dqE); return out.premultiply(QC).multiply(QCi); }
+
+const LEGDEF = [
+  { id: 'LF', up: 'frontUpr.L', mid: 'frontLeg.L_03', end: 'frontHorselink.L', toe: ['frontToe.L'], front: true, side: 1 },
+  { id: 'RF', up: 'frontUpr.R', mid: 'frontLeg.R_03', end: 'frontHorselink.R', toe: ['frontToe.R'], front: true, side: -1 },
+  { id: 'LH', up: 'rearUpr.L', mid: 'rearLwr.L', end: 'rearHorselink.L', toe: ['rearFoot.L', 'rearToe.L'], front: false, side: 1 },
+  { id: 'RH', up: 'rearUpr.R', mid: 'rearLwr.R', end: 'rearHorselink.R', toe: ['rearFoot.R', 'rearToe.R'], front: false, side: -1 }
+];
+const bk = n => n.replace(/[\[\]\.:\/]/g, '').replace(/\s/g, '_').toLowerCase();
+const NEED = ['root', 'hips', 'spine2', 'spine_03', 'chest', 'neck1', 'head', 'tail1', 'tail3', 'tail_03'];
+
+function setupDog(gltf, label) {
+  // clear previous
+  while (dog.pivot.children.length) dog.pivot.remove(dog.pivot.children[0]);
+  dog.bones = {}; dog.rest.clear(); dog.legs = []; dog.ready = false;
+  const root = gltf.scene;
+  let mesh = null;
+  root.traverse(o => { if (o.isSkinnedMesh && !mesh) mesh = o; if (o.isBone) dog.bones[bk(o.name)] = o; });
+  const raw = dog.bones; dog.bones = new Proxy(raw, { get: (t, k) => t[bk(String(k))] });
+  const miss = [...NEED, ...LEGDEF.flatMap(l => [l.up, l.mid, l.end, ...l.toe])].filter(n => !dog.bones[n]);
+  if (!mesh || miss.length) { toast('rig not recognised: missing ' + (mesh ? miss.slice(0, 3).join(', ') : 'skinned mesh')); return false; }
+  dog.mesh = mesh;
+  mesh.frustumCulled = false; mesh.castShadow = true; mesh.receiveShadow = true;
+  const mat = mesh.material; mat.metalness = 0; mat.side = THREE.FrontSide; dog.mat = mat;
+  root.updateMatrixWorld(true);
+  const W = n => dog.bones[n].getWorldPosition(V3());
+  const head = W('head'), tail = W('tail1');
+  const f = V3(head.x - tail.x, 0, head.z - tail.z).normalize();
+  dog.yaw0 = Math.atan2(f.x, f.z); dog.fwdM.copy(f);
+  QC = QY(dog.yaw0); QCi = QY(-dog.yaw0);
+  // skinned bind pose vertices in model space (quantized GLBs fold scale into the bind matrices)
+  const pa = mesh.geometry.attributes.position; const bb = new THREE.Box3();
+  const sk = mesh.geometry.attributes.skinIndex, sw = mesh.geometry.attributes.skinWeight;
+  const headIdx = mesh.skeleton.bones.indexOf(dog.bones['head']);
+  const verts = [];
+  mesh.skeleton.update();
+  for (let i = 0; i < pa.count; i += 3) {
+    const p = mesh.getVertexPosition(i, V3()).applyMatrix4(mesh.matrixWorld);
+    bb.expandByPoint(p);
+    let hw = 0; if (sk) for (let k = 0; k < 4; k++) if (sk.getComponent(i, k) === headIdx) hw += sw.getComponent(i, k);
+    if (hw > 0.5) verts.push(p);
+  }
+  const height = bb.max.y - bb.min.y;
+  dog.S = 0.78 / height;
+  const center = W('clavicle.L').add(W('clavicle.R')).add(W('rearUpr.L')).add(W('rearUpr.R')).multiplyScalar(0.25);
+  dog.pivot.rotation.set(0, -dog.yaw0, 0);
+  dog.pivot.scale.setScalar(dog.S);
+  const c = center.clone().applyAxisAngle(V3(0, 1, 0), -dog.yaw0).multiplyScalar(dog.S);
+  dog.pivot.position.set(-c.x, -bb.min.y * dog.S, -c.z);
+  dog.pivot.add(root);
+  root.traverse(o => { if (o.isBone) dog.rest.set(o, { p: o.position.clone(), q: o.quaternion.clone(), s: o.scale.clone() }); });
+  // nose, mouth, eyes from vertices near the head
+  const hb = head;
+  let best = -1e9; const nose = hb.clone().addScaledVector(f, 0.3);
+  for (const v of verts) { const pr = v.x * f.x + v.z * f.z; if (pr > best) { best = pr; nose.copy(v); } }
+  dog.noseL.copy(nose).sub(hb);
+  dog.mouthL.copy(hb).lerp(nose, 0.82).sub(hb); dog.mouthL.y -= 0.07;
+  dog.eyeL.copy(hb).lerp(nose, 0.35).sub(hb); dog.eyeL.y += 0.07;
+  // legs
+  dog.root.position.set(0, 0, 0); dog.root.rotation.set(0, 0, 0); dog.root.updateMatrixWorld(true);
+  for (const L of LEGDEF) {
+    const b = { up: dog.bones[L.up], mid: dog.bones[L.mid], end: dog.bones[L.end] };
+    const A = b.up.getWorldPosition(V3()), B = b.mid.getWorldPosition(V3()), C = b.end.getWorldPosition(V3());
+    const toeBone = dog.bones[L.toe[L.toe.length - 1]]; const T = toeBone.getWorldPosition(V3());
+    const pawL = V3(); for (const n of L.toe) pawL.add(dog.bones[n].position);
+    const ac = C.clone().sub(A).normalize(); const pole = B.clone().sub(A); pole.sub(ac.clone().multiplyScalar(pole.dot(ac))).normalize();
+    dog.legs.push(Object.assign({}, L, b, {
+      l1: A.distanceTo(B), l2: B.distanceTo(C), pawL, pole,
+      nom: V3(T.x, 0, T.z), toeH: Math.max(T.y, 0.005), hipL: A.clone(),
+      foot: V3(), lift: V3(), land: V3(), stance: true, swingS: 0, ph: 0, step: null, trail: []
+    }));
+  }
+  dog.frontZ = (dog.legs[0].nom.z + dog.legs[1].nom.z) / 2; dog.rearZ = (dog.legs[2].nom.z + dog.legs[3].nom.z) / 2;
+  dog.halfW = (dog.legs[0].nom.x - dog.legs[1].nom.x) / 2;
+  dog.rootL = dog.bones['root'].getWorldPosition(V3());
+  // tongue
+  const tongue = new THREE.Mesh(new THREE.SphereGeometry(0.06, 10, 8), M('#f07aa6', { roughness: 0.5 }));
+  tongue.scale.set(0.55, 0.18, 1.2); dog.bones['head'].add(tongue); tongue.position.copy(dog.mouthL).add(V3(0, -0.02, 0)); tongue.visible = false; dog.tongue = tongue;
+  // place feet
+  dog.root.position.set(dog.pos.x, H(dog.pos.x, dog.pos.z), dog.pos.z); dog.root.rotation.y = dog.yaw; dog.root.updateMatrixWorld(true);
+  for (const l of dog.legs) { l.foot.copy(nomWorld(l, dog.pos, dog.yaw)); l.stance = true; }
+  dog.phase = 0;
+  dog.ready = true;
+  const tris = mesh.geometry.index ? mesh.geometry.index.count / 3 : pa.count / 3;
+  $('mdlName').textContent = label;
+  $('mdlInfo').innerHTML = `<b>bones</b><span>${mesh.skeleton.bones.length}</span><b>triangles</b><span>${Math.round(tris).toLocaleString()}</span><b>scale</b><span>${dog.S.toFixed(3)} m per unit</span><b>shoulder</b><span>${(dog.legs[0].hipL.y).toFixed(2)} m</span><b>facing fix</b><span>${(dog.yaw0 * 180 / Math.PI).toFixed(1)} deg</span><b>stand height</b><span>${(height * dog.S).toFixed(2)} m</span>`;
+  if (skel) { scene.remove(skel); skel = null; }
+  orgSetup();
+  return true;
+}
+function nomWorld(l, pos, yaw, out = V3()) {
+  const P = dog.postureOff ? dog.postureOff[l.id] : null;
+  let x = l.nom.x, z = l.nom.z; if (P) { x += P.x; z += P.z; }
+  const c = Math.cos(yaw), s = Math.sin(yaw);
+  out.set(pos.x + c * x + s * z, 0, pos.z - s * x + c * z);
+  out.y = H(out.x, out.z) + l.toeH; return out;
+}
+function resetPose() { for (const [b, r] of dog.rest) { b.position.copy(r.p); b.quaternion.copy(r.q); b.scale.copy(r.s); } }
+
+/*@@BODY@@*/
+/*@@NNINFER@@*/
+/*@@NNGAIT@@*/
+const headWorld = (local, out = V3()) => dog.bones['head'].localToWorld(out.copy(local));
+function headForward(out = V3()) { const m = dog.bones['head'].matrixWorld; return out.copy(dog.fwdM).transformDirection(m); }
+function lookAt(p, roll = 0) {
+  if (!dog.ready) return;
+  const nk = dog.bones['neck1'].getWorldPosition(tmpV[6]);
+  const local = dog.root.worldToLocal(tmpV[7].copy(p)); const nl = dog.root.worldToLocal(nk.clone());
+  const d = local.sub(nl);
+  dog.head.tYaw = clamp(Math.atan2(d.x, d.z), -1.45, 1.45);
+  dog.head.tPitch = clamp(-Math.atan2(d.y, Math.hypot(d.x, d.z)), -0.9, 1.25);
+  dog.head.tRoll = roll;
+}
+function lookForward(pitch = 0) { dog.head.tYaw = 0; dog.head.tPitch = pitch; dog.head.tRoll = 0; }
+
+// ---------- senses ----------
+const eyeCam = new THREE.PerspectiveCamera(70, 2, 0.04, 40);
+const EW = 320, EH = 160;
+const eyeRT = new THREE.RenderTarget(EW, EH);
+const eyeCtx = $('eye').getContext('2d', { willReadFrequently: true }), boxCtx = $('eyeBoxes').getContext('2d');
+const rawEye = document.createElement('canvas'); rawEye.width = EW; rawEye.height = EH; const rawCtx = rawEye.getContext('2d', { willReadFrequently: true });
+const small = document.createElement('canvas'); small.width = 96; small.height = 48; const smallCtx = small.getContext('2d');
+const srgbLUT = new Uint8ClampedArray(256); for (let i = 0; i < 256; i++) { const c = i / 255; srgbLUT[i] = Math.round(255 * (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055)); }
+const toLin = new Float32Array(256); for (let i = 0; i < 256; i++) { const c = i / 255; toLin[i] = c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); }
+let eyeBusy = false, eyeTimer = 0;
+function updateEyeCam() {
+  const e = headWorld(dog.eyeL, tmpV[0]);
+  const f = headForward(tmpV[1]);
+  const up = tmpV[2].set(0, 1, 0).transformDirection(dog.bones['head'].matrixWorld);
+  eyeCam.position.copy(e); eyeCam.up.copy(up); eyeCam.lookAt(e.clone().add(f)); eyeCam.updateMatrixWorld();
+}
+// his eyes: first person from Moheeb's head along his modelled gaze (head plus eye in head), head bone collapsed so the face does not block the lens
+const povCam = new THREE.PerspectiveCamera(62, 2, 0.05, 80), povRT = new THREE.RenderTarget(EW, EH);
+const humGz = new THREE.Vector3(0, 0, 1); let eyeWho = 'dog';
+function updateHumCam(dt = 0.1) {
+  const h = humHead(tmpV[0]); h.y += 0.07;
+  const g = HUM.gazeDir && HUM.gazeDir.lengthSq() > 0.5 ? HUM.gazeDir : tmpV[1].set(Math.sin(HUM.yaw), -0.15, Math.cos(HUM.yaw));
+  humGz.lerp(g, 1 - Math.exp(-dt * 16)).normalize(); // a saccade lands in about 40 ms; keep a trace of it without strobing the view
+  povCam.position.copy(h).addScaledVector(humGz, 0.1); povCam.up.set(0, 1, 0); povCam.lookAt(tmpV[2].copy(povCam.position).add(humGz)); povCam.updateMatrixWorld();
+}
+function humHeadHide(on) { const hb = HUM.map && HUM.map.head; if (!hb) return; hb.scale.setScalar(on ? 0.001 : 1); hb.updateMatrixWorld(true); }
+async function renderHumEye() {
+  updateHumCam(0.1); humHeadHide(true); const wasM = marker.visible; marker.visible = false;
+  renderer.setRenderTarget(povRT); renderer.render(scene, povCam); renderer.setRenderTarget(null);
+  humHeadHide(false); marker.visible = wasM;
+  const px = await renderer.readRenderTargetPixelsAsync(povRT, 0, 0, EW, EH);
+  if (eyeWho !== 'his') return;
+  const img = eyeCtx.createImageData(EW, EH), d = img.data, flip = !renderer.backend.isWebGPUBackend, rowBytes = px.length / EH;
+  for (let y = 0; y < EH; y++) { const sy = flip ? EH - 1 - y : y; for (let x = 0; x < EW; x++) { const si = sy * rowBytes + x * 4, di = (y * EW + x) * 4; d[di] = srgbLUT[px[si]]; d[di + 1] = srgbLUT[px[si + 1]]; d[di + 2] = srgbLUT[px[si + 2]]; d[di + 3] = 255; } }
+  eyeCtx.putImageData(img, 0, 0);
+  const G = HUM.gz, tag = HUM.away ? 'out the gate' : G && G.av ? (G.thinkAv ? 'thinking, eyes up' : 'glancing away') : HUM.lookingAtDog ? 'on the dog' : HUM.phoneOn ? 'on his phone' : 'scanning';
+  $('eyeMode').textContent = tag;
+  if (HUM.away) { eyeCtx.fillStyle = 'rgba(245,240,230,0.88)'; eyeCtx.fillRect(0, 0, EW, EH); eyeCtx.fillStyle = '#1a1a1a'; eyeCtx.font = '22px VT323, monospace'; eyeCtx.fillText('he is away on an errand', 12, 30); }
+}
+function setEyeWho(w) {
+  eyeWho = w; $('eyeWhoDog').classList.toggle('on', w === 'dog'); $('eyeWhoHis').classList.toggle('on', w === 'his');
+  $('eyeBoxes').style.visibility = $('eyeSal').style.visibility = w === 'dog' ? '' : 'hidden';
+  if (w === 'dog') drawEyeDisplay();
+}
+async function renderEye() {
+  if (eyeBusy || !dog.ready) return; eyeBusy = true;
+  try {
+    updateEyeCam();
+    dog.mesh.visible = false; if (dog.tongue) dog.tongue.visible = false; marker.visible = false;
+    renderer.setRenderTarget(eyeRT); renderer.render(scene, eyeCam); renderer.setRenderTarget(null);
+    dog.mesh.visible = true; marker.visible = true;
+    const px = await renderer.readRenderTargetPixelsAsync(eyeRT, 0, 0, EW, EH);
+    const img = rawCtx.createImageData(EW, EH); const d = img.data;
+    const flip = !renderer.backend.isWebGPUBackend;
+    const rowBytes = px.length / EH;
+    for (let y = 0; y < EH; y++) {
+      const sy = flip ? EH - 1 - y : y;
+      for (let x = 0; x < EW; x++) { const si = sy * rowBytes + x * 4, di = (y * EW + x) * 4; d[di] = srgbLUT[px[si]]; d[di + 1] = srgbLUT[px[si + 1]]; d[di + 2] = srgbLUT[px[si + 2]]; d[di + 3] = 255; }
+    }
+    rawCtx.putImageData(img, 0, 0);
+    if (eyeWho === 'dog') drawEyeDisplay(); else if (HUM.map) await renderHumEye();
+    attention.update(); const sc2 = $('eyeSal').getContext('2d'); sc2.clearRect(0, 0, EW, EH); attention.draw(sc2);
+  } catch (err) { console.warn('eye', err); }
+  eyeBusy = false;
+}
+function drawEyeDisplay() {
+  if ($('dogColor').checked) {
+    const img = rawCtx.getImageData(0, 0, EW, EH), d = img.data, night = ON('L.day') ? 1 - CLOCK.light : 0;
+    // acuity: Lind 2017 bright 5.5 to 19.5 cpd, dim 1.8 to 3.5 cpd; interpolate in log luminance and resample at that density
+    const cpd = Math.exp(lerp(Math.log(TV('Se.cpdDim')), Math.log(TV('Se.cpdBright')), CLOCK.light)), sw = clamp(Math.round(96 * cpd / 12), 18, 160), sh = Math.max(9, sw >> 1);
+    if (small.width !== sw) { small.width = sw; small.height = sh; }
+    for (let i = 0; i < d.length; i += 4) {
+      const r = toLin[d[i]], g = toLin[d[i + 1]], b = toLin[d[i + 2]];
+      let rr = 0.29275 * r + 0.70725 * g, bb = -0.02234 * r + 0.02234 * g + b;
+      if (night > 0.02) { const y = 0.3 * rr + 0.7 * bb; rr = lerp(rr, y, night * 0.7) * (1 - night * 0.35); bb = lerp(bb, y, night * 0.7) * (1 - night * 0.3); }
+      const rv = srgbLUT[clamp(rr * 255, 0, 255) | 0], bv = srgbLUT[clamp(bb * 255, 0, 255) | 0];
+      d[i] = rv; d[i + 1] = rv; d[i + 2] = bv;
+    }
+    eyeCtx.putImageData(img, 0, 0);
+    smallCtx.imageSmoothingEnabled = true; smallCtx.drawImage($('eye'), 0, 0, small.width, small.height);
+    eyeCtx.imageSmoothingEnabled = true; eyeCtx.drawImage(small, 0, 0, EW, EH);
+    $('eyeMode').textContent = 'dichromat ' + cpd.toFixed(1) + ' cpd';
+  } else { eyeCtx.drawImage(rawEye, 0, 0); $('eyeMode').textContent = 'human color'; }
+  if (brain.cur === 'sleep' && dog.posture.down > 0.7 && (!ON('L.sleep') || brain.stage === 'nrem' || brain.stage === 'rem')) { eyeCtx.fillStyle = 'rgba(26,26,26,0.92)'; eyeCtx.fillRect(0, 0, EW, EH); eyeCtx.fillStyle = '#f5f0e6'; eyeCtx.font = '22px VT323, monospace'; eyeCtx.fillText('eyes closed', 12, 30); $('eyeMode').textContent = 'asleep'; }
+}
+// geometric percepts
+const percepts = {};
+const OBJ = () => [
+  ball && { id: 'ball', p: bodyPos(ball), v: bodyVel(ball), size: 0.09 },
+  bone && { id: 'bone', p: bodyPos(bone), v: bodyVel(bone), size: 0.25 },
+  !HUM.away && { id: 'you', p: V3(YOU.x, H(YOU.x, YOU.z) + 1.0, YOU.z), v: V3(), size: 1.7 },
+  { id: 'bowl', p: V3(BOWL.x, H(BOWL.x, BOWL.z) + 0.06, BOWL.z), v: V3(), size: 0.45 },
+  { id: 'bed', p: V3(BED.x, H(BED.x, BED.z) + 0.1, BED.z), v: V3(), size: 1.2 },
+  sq.visible && { id: 'squirrel', p: sq.position.clone().add(V3(0, 0.1, 0)), v: squirrel.vel.clone(), size: 0.3 },
+  marker.material.opacity > 0.2 && { id: 'pointer', p: marker.position.clone(), v: V3(), size: 0.4 },
+  ...treats.map((t, i) => ({ id: 'treat' + i, kind: 'treat', obj: t, p: bodyPos(t), v: bodyVel(t), size: 0.06 }))
+].filter(Boolean);
+function occluded(a, b) {
+  const dx = b.x - a.x, dz = b.z - a.z, L = Math.hypot(dx, dz);
+  for (const o of OBST) {
+    if (o.kind === 'you') continue;
+    const t = clamp(((o.x - a.x) * dx + (o.z - a.z) * dz) / (L * L), 0, 1);
+    const px = a.x + dx * t, pz = a.z + dz * t;
+    if (t > 0.02 && t < 0.98 && Math.hypot(px - o.x, pz - o.z) < o.r * 0.9) { const y = lerp(a.y, b.y, t); if (o.kind === 'tree' || y < H(o.x, o.z) + (o.kind === 'rock' ? 0.7 : 0.45)) return true; }
+  }
+  for (let s = 0.15; s < 0.95; s += 0.12) { const x = a.x + dx * s, z = a.z + dz * s, y = lerp(a.y, b.y, s); if (y < H(x, z) + 0.02) return true; }
+  return false;
+}
+function sense(t) {
+  if (!dog.ready) return;
+  const eye = headWorld(dog.eyeL, tmpV[0]).clone(), f = headForward(tmpV[1]).clone();
+  const fh = Math.atan2(f.x, f.z);
+  for (const o of OBJ()) {
+    const d = o.p.clone().sub(eye), dist = d.length();
+    const ang = Math.abs(wrapA(Math.atan2(d.x, d.z) - fh));
+    const speed = o.v.length();
+    // moving things are seen from about 1.5 times further (Miller, VIN); everything less far at night
+    const range = (o.size * 120) * (ON('L.organic') ? (speed > 0.2 ? 1.5 : 1) * (ON('L.day') ? 0.35 + 0.65 * CLOCK.light : 1) : 1 + clamp(speed, 0, 3));
+    let vis = ang < 2.09 && dist < range && !occluded(eye, o.p);
+    if (o.obj && o.obj.held) vis = false;
+    if (o.id === 'ball' && ball.held) vis = false;
+    if (brain.cur === 'sleep' && dog.posture.down > 0.7 && (!ON('L.sleep') || brain.stage === 'nrem' || brain.stage === 'rem')) vis = false;
+    const p = percepts[o.id] || (percepts[o.id] = { id: o.id, seen: -1e9, pos: V3(), vis: false, sal: 0, kind: o.kind || o.id, net: 0 });
+    p.vis = vis; p.obj = o.obj; p.dist = dist; p.speed = speed;
+    if (vis) { p.seen = t; p.pos.copy(o.p); p.vel = o.v.clone(); }
+    if (!vis && p.seen > -1e8 && !['bowl', 'bed'].includes(p.id) && ON('L.organic')) { if (!p.err) p.err = V3(ORG.gauss(), 0, ORG.gauss()); if (t - p.seen > 240) { p.seen = -1e9; p.err = null; } } else if (vis) p.err = null;
+    const novelty = clamp(1 - (t - p.seen) / 30, 0, 1);
+    p.sal = vis ? clamp((o.size / Math.max(dist, 0.3)) * 2 + clamp(speed, 0, 4) * 0.4 + (ang < 0.5 ? 0.2 : 0) + p.net * 0.3, 0, 2) : 0;
+    p.conf = vis ? 1 : novelty;
+    p.net = Math.max(0, p.net - 0.02);
+  }
+  for (const k in percepts) if (k.startsWith('treat') && !treats[+k.slice(5)]) delete percepts[k];
+}
+// remembered position: errors grow with time but stay near the target (Fiset 2003)
+function memPos(p) { const age = Math.max(0, now - p.seen); return p.err ? p.pos.clone().addScaledVector(p.err, 0.25 * Math.sqrt(age / 60)) : p.pos.clone(); }
+// sound events
+const sounds = [];
+let hearLevel = 0;
+function emitSound(pos, loud, type) { sounds.push({ pos: pos.clone(), loud, type, t: now }); hearLevel = Math.max(hearLevel, loud); if (brain) brain.hear(pos, loud, type); }
+// scent field
+const scentSrc = [];
+/*@@SENSES@@*/
+
+// ---------- YOLO on the eye ----------
+const COCO = ['person','bicycle','car','motorcycle','airplane','bus','train','truck','boat','traffic light','fire hydrant','stop sign','parking meter','bench','bird','cat','dog','horse','sheep','cow','elephant','bear','zebra','giraffe','backpack','umbrella','handbag','tie','suitcase','frisbee','skis','snowboard','sports ball','kite','baseball bat','baseball glove','skateboard','surfboard','tennis racket','bottle','wine glass','cup','fork','knife','spoon','bowl','banana','apple','sandwich','orange','broccoli','carrot','hot dog','pizza','donut','cake','chair','couch','potted plant','bed','dining table','toilet','tv','laptop','mouse','remote','keyboard','cell phone','microwave','oven','toaster','sink','refrigerator','book','clock','vase','scissors','teddy bear','hair drier','toothbrush'];
+const net = { sess: null, ort: null, loading: false, busy: false, ms: 0, ep: '', last: [] };
+const lb = document.createElement('canvas'); lb.width = 640; lb.height = 640; const lbCtx = lb.getContext('2d', { willReadFrequently: true });
+const netIn = new Float32Array(3 * 640 * 640);
+async function loadNet() {
+  if (net.sess || net.loading) return; net.loading = true;
+  setNet('loading', 'loading');
+  try {
+    const ort = await import(window.HACKLE_LIB.ort);
+    ort.env.wasm.wasmPaths = ASSETS.wasmDir; ort.env.wasm.numThreads = 1; ort.env.wasm.proxy = false;
+    const model = await (await fetchFirst([ASSETS.onnx])).arrayBuffer();
+    let sess = null, ep = 'wasm';
+    if (navigator.gpu) { try { sess = await ort.InferenceSession.create(model, { executionProviders: ['webgpu'] }); ep = 'webgpu'; } catch (e) { console.warn('webgpu EP failed', e); } }
+    if (!sess) sess = await ort.InferenceSession.create(model, { executionProviders: ['wasm'] });
+    net.sess = sess; net.ort = ort; net.ep = ep;
+    setNet('ready ' + ep, 'YOLO ' + ep.toUpperCase(), true);
+  } catch (e) { console.warn(e); setNet('failed: ' + (e.message || e).toString().slice(0, 60), 'EYE NET x'); }
+  net.loading = false;
+}
+function setNet(s, chip, on) { $('netSt').textContent = s; $('chipNet').textContent = chip; $('chipNet').classList.toggle('on', !!on); }
+async function detect(src, sw, sh, thr = 0.3) {
+  if (!net.sess || net.busy) return null; net.busy = true;
+  const t0 = performance.now();
+  try {
+    const sc = Math.min(640 / sw, 640 / sh), w = sw * sc, h = sh * sc, ox = (640 - w) / 2, oy = (640 - h) / 2;
+    lbCtx.fillStyle = 'rgb(114,114,114)'; lbCtx.fillRect(0, 0, 640, 640); lbCtx.drawImage(src, ox, oy, w, h);
+    const d = lbCtx.getImageData(0, 0, 640, 640).data, N = 640 * 640;
+    for (let i = 0; i < N; i++) { netIn[i] = d[i * 4] / 255; netIn[i + N] = d[i * 4 + 1] / 255; netIn[i + 2 * N] = d[i * 4 + 2] / 255; }
+    const tensor = new net.ort.Tensor('float32', netIn, [1, 3, 640, 640]);
+    const out = await net.sess.run({ [net.sess.inputNames[0]]: tensor });
+    const o = out[net.sess.outputNames[0]].data, A = 8400;
+    const cand = [];
+    for (let i = 0; i < A; i++) {
+      let best = 0, bc = -1; for (let c = 0; c < 80; c++) { const s = o[(4 + c) * A + i]; if (s > best) { best = s; bc = c; } }
+      if (best < thr) continue;
+      const cx = o[i], cy = o[A + i], bw = o[2 * A + i], bh = o[3 * A + i];
+      cand.push({ c: bc, s: best, x0: (cx - bw / 2 - ox) / sc, y0: (cy - bh / 2 - oy) / sc, x1: (cx + bw / 2 - ox) / sc, y1: (cy + bh / 2 - oy) / sc });
+    }
+    cand.sort((a, b) => b.s - a.s);
+    const keep = [];
+    for (const c of cand) { if (keep.some(k => k.c === c.c && iou(k, c) > 0.45)) continue; keep.push(c); if (keep.length > 12) break; }
+    net.ms = performance.now() - t0;
+    net.busy = false;
+    return keep.map(k => ({ label: COCO[k.c], score: k.s, box: k }));
+  } catch (e) { console.warn('detect', e); net.busy = false; return null; }
+}
+const iou = (a, b) => { const ix = Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)), iy = Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0)), I = ix * iy; return I / ((a.x1 - a.x0) * (a.y1 - a.y0) + (b.x1 - b.x0) * (b.y1 - b.y0) - I + 1e-6); };
+function drawBoxes(ctx, dets, sx = 1, sy = 1) {
+  ctx.lineWidth = 2; ctx.font = '13px VT323, monospace';
+  for (const d of dets) { const b = d.box; ctx.strokeStyle = '#FE0386'; ctx.strokeRect(b.x0 * sx, b.y0 * sy, (b.x1 - b.x0) * sx, (b.y1 - b.y0) * sy); const txt = d.label + ' ' + Math.round(d.score * 100); ctx.fillStyle = '#FE0386'; ctx.fillRect(b.x0 * sx, b.y0 * sy - 14, ctx.measureText(txt).width + 6, 14); ctx.fillStyle = '#fff'; ctx.fillText(txt, b.x0 * sx + 3, b.y0 * sy - 3); }
+}
+const NETMAP = { 'sports ball': 'ball', person: 'you', bowl: 'bowl', bed: 'bed', cat: 'squirrel', bird: 'squirrel', 'teddy bear': 'squirrel', dog: 'squirrel', mouse: 'squirrel' };
+async function eyeDetect() {
+  if (!$('netOn').checked || !net.sess) return;
+  const dets = await detect(rawEye, EW, EH, 0.28); if (!dets) return;
+  net.last = dets;
+  boxCtx.clearRect(0, 0, EW, EH); drawBoxes(boxCtx, dets);
+  for (const d of dets) { const id = NETMAP[d.label]; if (id && percepts[id]) percepts[id].net = Math.max(percepts[id].net, d.score); }
+  $('detList').innerHTML = (dets.length ? dets.map(d => `<div><span>${d.label}</span><span>${(d.score * 100).toFixed(0)}%</span><span class="vis">${NETMAP[d.label] ? '= ' + NETMAP[d.label] : ''}</span></div>`).join('') : '<div><span>nothing above 28%</span><span></span><span></span></div>') + `<div><span>latency</span><span>${net.ms.toFixed(0)} ms</span><span>${net.ep}</span></div>`;
+}
+// show the dog a photo or the webcam
+const REACT = {
+  cat: ['prey', 'a cat. A CAT.'], bird: ['prey', 'bird! get it'], squirrel: ['prey', 'squirrel?!'], horse: ['bark', 'very big dog'], cow: ['bark', 'giant dog, suspicious'], sheep: ['bark', 'must herd'], bear: ['fear', 'nope'], dog: ['bow', 'friend! play?'], person: ['social', 'a human, hello'],
+  'sports ball': ['play', 'ball ball ball'], frisbee: ['play', 'throw it'], 'teddy bear': ['play', 'squeaky?'], kite: ['play', 'sky toy'],
+  banana: ['food', 'snack?'], apple: ['food', 'snack?'], sandwich: ['food', 'share please'], orange: ['food', 'smells odd'], broccoli: ['food', 'meh, ok'], carrot: ['food', 'crunchy'], 'hot dog': ['food', 'HOT DOG'], pizza: ['food', 'pizza for me?'], donut: ['food', 'please'], cake: ['food', 'is it my birthday'],
+  umbrella: ['fear', 'scary stick'], 'hair drier': ['fear', 'loud thing'], 'fire hydrant': ['sniff', 'must sniff'], bowl: ['food', 'dinner?'], bed: ['rest', 'nap spot'], couch: ['rest', 'forbidden couch']
+};
+function reactTo(dets, source) {
+  if (!dets || !dets.length) { brain.say(source === 'cam' ? '' : 'nothing interesting', 2); return; }
+  const top = dets.find(d => REACT[d.label]) || dets[0];
+  const r = REACT[top.label];
+  if (!r) { brain.say('a ' + top.label + '?', 2.5); dog.head.tRoll = 0.35; return; }
+  brain.stimulus(r[0], top.score);
+  brain.say(r[1], 3);
+}
+async function showPhoto(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const bmp = await createImageBitmap(file);
+  const c = $('photo'), ctx = c.getContext('2d');
+  const sc = Math.min(320 / bmp.width, 240 / bmp.height); c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
+  ctx.drawImage(bmp, 0, 0, c.width, c.height); $('photoView').style.display = 'block';
+  document.querySelector('[data-p=pSense]').click();
+  if (!net.sess) { await loadNet(); }
+  if (!net.sess) { toast('detector not available'); return; }
+  let dets = null; for (let i = 0; i < 20 && !dets; i++) { dets = await detect(bmp, bmp.width, bmp.height, 0.3); if (!dets) await new Promise(r => setTimeout(r, 120)); }
+  if (dets) { drawBoxes(ctx, dets, sc, sc); reactTo(dets, 'photo'); toast(dets.length ? 'dog sees: ' + dets.slice(0, 3).map(d => d.label).join(', ') : 'dog sees nothing it knows'); }
+  if (vlm.state === 'ready' && !thinking) {
+    const pc = document.createElement('canvas'); pc.width = c.width; pc.height = c.height; pc.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    thinking = true; $('cortexSt').textContent = 'looking at photo';
+    vlmAsk(pc, 'You are a dog and your human is showing you this picture. In one short sentence, in a dog\'s voice, say what it is and how you feel about it.', 48)
+      .then(r => { const a = r.text.trim().split('\n')[0]; brain.say(a.slice(0, 90), 6); $('cortexOut').textContent = 'photo: ' + a; $('cortexSt').textContent = 'ready'; })
+      .catch(() => { $('cortexSt').textContent = 'error'; }).finally(() => { thinking = false; });
+  }
+}
+$('photoIn').addEventListener('change', e => showPhoto(e.target.files[0]));
+stage.addEventListener('dragover', e => { e.preventDefault(); $('drop').style.display = 'grid'; });
+stage.addEventListener('dragleave', e => { if (e.target === $('drop')) $('drop').style.display = 'none'; });
+stage.addEventListener('drop', async e => {
+  e.preventDefault(); $('drop').style.display = 'none';
+  const f = e.dataTransfer.files[0]; if (!f) return;
+  if (/\.glb$/i.test(f.name)) { const buf = await f.arrayBuffer(); new GLTFLoader().parse(buf, '', g => { if (setupDog(g, f.name)) toast('new body: ' + f.name); }, err => toast('could not read GLB')); }
+  else showPhoto(f);
+});
+// webcam, works only outside sandboxed viewers
+const camState = { on: false, gest: null, face: null, lastT: 0 };
+$('bWebcam').addEventListener('click', async () => {
+  if (camState.on) { const v = $('cam'); v.srcObject && v.srcObject.getTracks().forEach(t => t.stop()); v.style.display = 'none'; camState.on = false; $('bWebcam').classList.remove('on'); return; }
+  try {
+    const st = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+    navigator.mediaDevices.getUserMedia({ audio: true }).then(startMicLevel).catch(() => {});
+    const v = $('cam'); v.srcObject = st; v.style.display = 'block'; await v.play(); camState.on = true; $('bWebcam').classList.add('on');
+    loadNet();
+    try {
+      const mp = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/vision_bundle.mjs');
+      const fs = await mp.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm');
+      camState.gest = await mp.GestureRecognizer.createFromOptions(fs, { baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task', delegate: 'GPU' }, runningMode: 'VIDEO', numHands: 1 });
+      camState.face = await mp.FaceLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task', delegate: 'GPU' }, runningMode: 'VIDEO', outputFaceBlendshapes: true, numFaces: 1 });
+      toast('gestures and smiles on');
+    } catch (e) { console.warn('mediapipe', e); toast('webcam on, gesture models unreachable'); }
+  } catch (e) { toast('camera blocked here; host the page yourself to use it'); }
+});
+let lastGesture = '', gestT = 0;
+async function camTick(t) {
+  if (!camState.on) return;
+  const v = $('cam'); if (v.readyState < 2) return;
+  if (camState.gest && t - camState.lastT > 0.12) {
+    camState.lastT = t;
+    try {
+      const r = camState.gest.recognizeForVideo(v, performance.now());
+      const g = r.gestures && r.gestures[0] && r.gestures[0][0];
+      if (g && g.score > 0.6 && g.categoryName !== 'None') {
+        if (g.categoryName !== lastGesture || t - gestT > 3) { lastGesture = g.categoryName; gestT = t; gestureCue(g.categoryName); }
+      }
+      if (camState.face) { const f = camState.face.detectForVideo(v, performance.now() + 1); const bs = f.faceBlendshapes && f.faceBlendshapes[0]; if (bs) { const sm = bs.categories.filter(c => /mouthSmile/.test(c.categoryName)).reduce((a, c) => a + c.score, 0) / 2; if (sm > 0.55) brain.stimulus('smile', sm); } }
+    } catch (e) {}
+  }
+  if (net.sess && !net.busy && Math.floor(t * 1.5) !== camState.det) { camState.det = Math.floor(t * 1.5); const d = await detect(v, v.videoWidth, v.videoHeight, 0.45); if (d) { const inter = d.filter(x => x.label !== 'person'); if (inter.length) reactTo(inter, 'cam'); } }
+}
+function gestureCue(name) {
+  const map = { Thumb_Up: 'praise', Thumb_Down: 'scold' };
+  if (map[name] === 'praise') return brain.reward(0.6, 'thumbs up');
+  if (map[name] === 'scold') return brain.reward(-0.6, 'thumbs down');
+  brain.cue('gesture:' + name.toLowerCase());
+}
+let micAn = null;
+function startMicLevel(stream) { try { const a = audio() || new AudioContext(); const src = a.createMediaStreamSource(stream); micAn = a.createAnalyser(); micAn.fftSize = 512; src.connect(micAn); } catch (e) {} }
+const micBuf = new Float32Array(512); let micCool = 0;
+function micTick(dt) { if (!micAn) return; micAn.getFloatTimeDomainData(micBuf); let pk = 0; for (const x of micBuf) pk = Math.max(pk, Math.abs(x)); micCool -= dt; if (pk > 0.5 && micCool <= 0) { micCool = 1; emitSound(V3(YOU.x, 1.4, YOU.z), clamp(pk, 0, 1), 'clap'); } }
+
+// ---------- speech ----------
+const ACTIONS = ['sit', 'down', 'come', 'stay', 'spin', 'speak', 'paw', 'fetch', 'bed'];
+const SYN = { 'lie': 'down', 'lay': 'down', 'here': 'come', 'come here': 'come', 'roll': 'spin', 'turn': 'spin', 'bark': 'speak', 'shake': 'paw', 'go to bed': 'bed', 'bedtime': 'bed', 'get it': 'fetch', 'ball': 'fetch' };
+function handleSpeech(text) {
+  const s = text.toLowerCase().replace(/[^a-z ]/g, ' ').trim(); if (!s) return;
+  $('heard').textContent = '"' + s + '"';
+  const name = $('dogName').value.trim().toLowerCase();
+  if (name && s.includes(name)) brain.named();
+  if (/\b(good|yes|nice|well done|good boy|good girl)\b/.test(s)) { brain.reward(0.7, 'praise'); return; }
+  if (/\b(no|bad|stop it|ah ah)\b/.test(s)) { brain.reward(-0.7, 'no'); return; }
+  if (/\b(free|okay|ok|release|break)\b/.test(s)) { brain.release(); return; }
+  if (/\btreat\b/.test(s)) { brain.stimulus('food', 0.8); brain.say('TREAT?', 2); return; }
+  if (/\bwalk\b/.test(s)) { brain.stimulus('play', 1); brain.say('W A L K', 2); return; }
+  for (const k of Object.keys(SYN)) if (s.includes(k)) { brain.cue(SYN[k]); return; }
+  const words = s.split(/\s+/).filter(w => w && w !== name);
+  const known = words.find(w => ACTIONS.includes(w) || brain.W[w]);
+  brain.cue(known || words[words.length - 1]);
+}
+let rec = null, micOn = false;
+$('bMic').addEventListener('click', () => {
+  audio();
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { toast('no speech here; use the cue buttons or type a cue'); return; }
+  if (micOn && rec) { rec.stop(); return; }
+  try {
+    rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
+    rec.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) handleSpeech(r[0].transcript); else $('heard').textContent = '... ' + r[0].transcript; } };
+    rec.onend = () => { micOn = false; $('bMic').classList.remove('on'); $('micLab').textContent = 'Talk'; };
+    rec.onerror = e => { toast('speech: ' + e.error); };
+    rec.start(); micOn = true; $('bMic').classList.add('on'); $('micLab').textContent = 'Listening';
+  } catch (e) { toast('speech blocked here; type a cue instead'); }
+});
+
+/*@@BRAIN@@*/
+// ---------- squirrel ----------
+const squirrel = { state: 'gone', t: 0, next: 25, from: null, to: null, vel: V3(), climbT: 0 };
+function spawnSquirrel() {
+  const a = pick(TREES), b = pick(TREES.filter(t => t !== a));
+  squirrel.from = a; squirrel.to = b; squirrel.state = 'run'; squirrel.t = 0; squirrel.pause = rnd(0.8, 2);
+  sq.position.set(a.x + 0.45, H(a.x, a.z), a.z); sq.visible = true;
+  scentSrc.push({ x: a.x, z: a.z, s: 0.6, t: now }); if (scentSrc.length > 30) scentSrc.shift();
+}
+function squirrelTick(dt) {
+  if (squirrel.state === 'gone') { squirrel.next -= dt; if (squirrel.next < 0) { spawnSquirrel(); squirrel.next = rnd(60, 120); } return; }
+  const target = squirrel.state === 'flee' ? squirrel.to : squirrel.to;
+  const tx = target.x + 0.38, tz = target.z;
+  if (squirrel.state === 'run' || squirrel.state === 'flee') {
+    const dogClose = dist2(dog.pos, sq.position) < 3.2;
+    if (dogClose && squirrel.state === 'run') { let best = null, bd = 1e9; for (const t of TREES) { const dd = Math.hypot(t.x - sq.position.x, t.z - sq.position.z) - Math.hypot(t.x - dog.pos.x, t.z - dog.pos.z) * 0.5; if (dd < bd) { bd = dd; best = t; } } squirrel.to = best; squirrel.state = 'flee'; }
+    if (squirrel.pause > 0 && squirrel.state === 'run') { squirrel.pause -= dt; squirrel.vel.set(0, 0, 0); sq.position.y = H(sq.position.x, sq.position.z); return; }
+    const dx = tx - sq.position.x, dz = tz - sq.position.z, d = Math.hypot(dx, dz);
+    const sp = squirrel.state === 'flee' ? 5.6 : 2.4;
+    if (d < 0.15) { squirrel.state = 'tree'; squirrel.climbT = 0; squirrel.vel.set(0, 1.5, 0); return; }
+    squirrel.vel.set(dx / d * sp, 0, dz / d * sp);
+    sq.position.x += squirrel.vel.x * dt; sq.position.z += squirrel.vel.z * dt;
+    sq.position.y = H(sq.position.x, sq.position.z) + Math.abs(Math.sin(now * 14)) * 0.06;
+    sq.rotation.set(0, Math.atan2(dx, dz), 0);
+    if (Math.random() < dt * 3) { scentSrc.push({ x: sq.position.x, z: sq.position.z, s: 0.5, t: now }); if (scentSrc.length > 30) scentSrc.shift(); }
+    if (Math.random() < dt * 0.4 && squirrel.state === 'run') squirrel.pause = rnd(0.5, 1.8);
+  } else if (squirrel.state === 'tree') {
+    squirrel.climbT += dt; sq.position.y = Math.min(H(sq.position.x, sq.position.z) + squirrel.climbT * 1.4, H(sq.position.x, sq.position.z) + 2.3); sq.rotation.set(-Math.PI / 2, 0, 0);
+    squirrel.vel.set(0, squirrel.climbT < 1.6 ? 1.4 : 0, 0);
+    if (squirrel.climbT > 7) { sq.visible = false; squirrel.state = 'gone'; }
+  }
+}
+
+/*@@VOICE@@*/
+/*@@HUMAN@@*/
+// ---------- you: throwing ----------
+let foodAmt = 0.6;
+function throwBall(to) {
+  if (!ball || !HUM.ready) return;
+  if (ball.held) { toast('the dog has the ball; it brings it back on its own'); return; }
+  if (to) { to = to.clone(); }
+  humanHold(true);
+  startTask('throw', { to, user: true }, 'you asked him to throw');
+}
+function tossTreat(noReward) {
+  if (!noReward) brain.reward(ON('L.learn') ? 0.5 : 1, 'treat');
+  const near = dist2(dog.pos, YOU) < 1.6;
+  if (near && !noReward) { brain.d.hunger = clamp(brain.d.hunger - 0.08, 0, 1); brain.say('crunch, thank you', 1.6); return; }
+  const from = handPos(V3()), to = dog.pos.clone().add(V3(rnd(-0.5, 0.5), 0, rnd(-0.5, 0.5))); to.y = H(to.x, to.z);
+  const T = 0.7; const v = to.clone().sub(from).divideScalar(T); v.y = (to.y - from.y + 0.5 * 9.81 * T * T) / T;
+  spawnTreat(from, { x: v.x, y: v.y, z: v.z });
+  if (HUM.ready) haAct('interact');
+}
+
+// ---------- input ----------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; audio(); });
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6 || performance.now() - downAt.t > 450) return;
+  const r = renderer.domElement.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  // dog hit: ray vs body segment
+  if (dog.ready) {
+    const a = dog.root.localToWorld(V3(0, 0.33, -0.25)), b = dog.root.localToWorld(V3(0, 0.38, 0.35));
+    const dd = ray.ray.distanceSqToSegment(a, b);
+    if (dd < 0.2 * 0.2) { pet(); return; }
+  }
+  const hit = ray.intersectObject(ground)[0]; if (!hit) return;
+  if (e.shiftKey) { throwBall(hit.point.clone()); return; }
+  marker.position.copy(hit.point).add(V3(0, 0.015, 0)); marker.material.opacity = 1;
+  if (HUM.ready && ON('L.social')) { startTask('point', { p: hit.point.clone(), user: true }, 'you asked him to point there'); return; }
+  emitSound(V3(YOU.x, 1.4, YOU.z), 0.25, 'point');
+  if (brain.cur !== 'sleep' && brain.cur !== 'obey') { brain.pointT = now; }
+});
+function pet() { brain.d.social = clamp(brain.d.social - 0.12, 0, 1); brain.v = clamp(brain.v + 0.12, -1, 1); brain.a = clamp(brain.a - 0.05, 0, 1); brain.say(pick(['mmm', 'yes there', 'happy', 'more pets']), 1.6); dog.head.tRoll = 0.25; if (brain.trial && !brain.trial.rewarded) brain.reward(0.4, 'pet'); }
+addEventListener('keydown', e => { if (e.target.tagName === 'INPUT') return; manualKeys[e.key.toLowerCase()] = true; if (e.key === 'Shift') manualKeys.shift = true; if ($('manual').checked && /^(arrow|w|a|s|d)/i.test(e.key)) e.preventDefault(); });
+addEventListener('keyup', e => { manualKeys[e.key.toLowerCase()] = false; if (e.key === 'Shift') manualKeys.shift = false; });
+$('bThrow').onclick = () => { audio(); throwBall(); };
+$('bTreat').onclick = () => { audio(); tossTreat(); };
+$('bCall').onclick = () => { audio(); startTask('call', { user: true }, 'you asked'); };
+$('bPet').onclick = () => { audio(); startTask('pet', { user: true }, 'you asked'); };
+$('bTrainNow').onclick = () => { audio(); const p = pick(NEW_WORDS.concat([['sit', 'sit'], ['spin', 'spin'], ['paw', 'paw']])); startTask('train', { word: p[0], trick: p[1], reps: 5, user: true }, 'you asked: teach "' + p[0] + '" as ' + p[1]); };
+$('bVoiceLoad').onclick = () => { audio(); $('bVoiceLoad').disabled = true; Voice.init(t => { $('voiceSt').textContent = t; }).then(() => { $('voiceSt').textContent = 'Pocket TTS ready, his cloned voice'; }).catch(e => { $('voiceSt').textContent = 'Pocket TTS failed: ' + String(e.message || e).slice(0, 60) + '. Using the browser voice.'; $('bVoiceLoad').disabled = false; }); };
+$('humVoiceOn').onchange = e => { Voice.on = e.target.checked; };
+$('bGood').onclick = () => { audio(); if (HUM.ready) { humSay(pick(H_LINES.praise), 2, true); HUM.mood.pleasedT = 1; } brain.reward(0.8, 'good dog'); };
+$('bNo').onclick = () => { audio(); if (HUM.ready) { humSay(pick(H_LINES.no), 2); HUM.shakeT = 1.1; HUM.mood.frusT = Math.min(1, (HUM.mood.frusT || 0) + 0.4); } brain.reward(-0.8, 'no'); };
+$('bFill').onclick = () => { foodAmt = 1; toast('bowl filled'); emitSound(V3(BOWL.x, 0.2, BOWL.z), 0.45, 'kibble'); scentSrc.push({ x: BOWL.x, z: BOWL.z, s: 1.2, t: now }); };
+$('bSquirrel').onclick = () => { if (squirrel.state === 'gone') spawnSquirrel(); };
+let camMode = 0; const CAMS = ['Follow', 'Free', 'Dog eye', 'Side', 'His eyes'];
+function setCamMode(m) { camMode = m; $('camLab').textContent = CAMS[camMode]; controls.maxDistance = m === 1 ? 45 : 26; }
+$('bCam').onclick = () => setCamMode((camMode + 1) % CAMS.length);
+// free camera: right drag pans, two fingers pan, WASD or arrows fly, Q and E lower and raise, F goes back to following the dog
+renderer.domElement.addEventListener('pointerdown', e => { if ((e.button === 2 || e.button === 1) && camMode !== 1 && camMode !== 2 && camMode !== 4) setCamMode(1); });
+renderer.domElement.addEventListener('touchstart', e => { if (e.touches.length > 1 && camMode !== 1) setCamMode(1); }, { passive: true });
+renderer.domElement.addEventListener('contextmenu', e => e.preventDefault());
+const FLY = { w: [0, 1], arrowup: [0, 1], s: [0, -1], arrowdown: [0, -1], a: [-1, 0], arrowleft: [-1, 0], d: [1, 0], arrowright: [1, 0] };
+addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || $('manual').checked) return;
+  const k = e.key.toLowerCase();
+  if (k === 'f') { setCamMode(0); return; }
+  if (FLY[k] || k === 'q' || k === 'e') { e.preventDefault(); if (camMode !== 1) { if (camMode === 2 || camMode === 4) { camera.position.copy(camMode === 2 ? eyeCam.position : povCam.position); controls.target.copy(camera.position).add(tmpV[5].set(0, 0, -2).applyQuaternion((camMode === 2 ? eyeCam : povCam).quaternion)); } setCamMode(1); } }
+});
+function flyCam(dt) {
+  if ($('manual').checked || document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName)) return;
+  let fx = 0, fz = 0, up = 0; for (const k in FLY) if (manualKeys[k]) { fx += FLY[k][0]; fz += FLY[k][1]; }
+  if (manualKeys.q) up -= 1; if (manualKeys.e) up += 1;
+  if (!fx && !fz && !up) return;
+  const fwd = tmpV[6].copy(controls.target).sub(camera.position); fwd.y = 0; if (fwd.lengthSq() < 1e-6) fwd.set(0, 0, -1); fwd.normalize();
+  const right = tmpV[7].set(-fwd.z, 0, fwd.x), sp = (manualKeys.shift ? 12 : 5) * dt, n = Math.hypot(fx, fz) || 1;
+  const mv = tmpV[8].copy(fwd).multiplyScalar(fz / n * sp).addScaledVector(right, fx / n * sp); mv.y = up * sp * 0.6;
+  const nt = tmpV[9].copy(controls.target).add(mv), r = Math.hypot(nt.x, nt.z); if (r > 18) { mv.x -= nt.x / r * (r - 18); mv.z -= nt.z / r * (r - 18); }
+  if (controls.target.y + mv.y < 0.05) mv.y = 0.05 - controls.target.y; if (controls.target.y + mv.y > 8) mv.y = 8 - controls.target.y;
+  controls.target.add(mv); camera.position.add(mv); if (camera.position.y < H(camera.position.x, camera.position.z) + 0.2) camera.position.y = H(camera.position.x, camera.position.z) + 0.2;
+}
+$('eyeWhoDog').onclick = () => setEyeWho('dog'); $('eyeWhoHis').onclick = () => setEyeWho('his');
+$('tempo').oninput = e => $('tempoV').textContent = e.target.value + 'x';
+$('dogColor').onchange = drawEyeDisplay;
+$('netOn').onchange = e => { if (e.target.checked) loadNet(); else { boxCtx.clearRect(0, 0, EW, EH); } };
+$('bReset').onclick = () => { brain.seed(); store.set('W', brain.W); renderCueButtons(); renderHeat(); toast('learning reset'); };
+$('cueIn').addEventListener('keydown', e => { if (e.key === 'Enter') { handleSpeech(e.target.value); e.target.value = ''; } });
+$('dogName').addEventListener('change', e => { store.set('name', e.target.value); seedPersonality(e.target.value || 'Pixel'); toast('a new name is a new dog: temperament redrawn'); });
+$('dogName').value = store.get('name', 'Pixel');
+document.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b)); document.querySelectorAll('.pane').forEach(p => p.classList.toggle('on', p.id === b.dataset.p)); });
+function renderCueButtons() {
+  const cues = Object.keys(brain.W).filter(c => !c.startsWith('gesture:')).slice(0, 14);
+  $('cueBtns').innerHTML = cues.map(c => `<button class="btn" data-cue="${c.replace(/"/g, '')}">${c}</button>`).join('') + '<button class="btn" data-cue="__free">free</button>';
+  $('cueBtns').querySelectorAll('button').forEach(b => b.onclick = () => { audio(); if (b.dataset.cue === '__free') brain.release(); else if (HUM.ready) humCue(b.dataset.cue); else { $('heard').textContent = '"' + b.dataset.cue + '"'; brain.cue(b.dataset.cue); } });
+}
+function renderHeat(hiCue, hiAct) {
+  const cues = Object.keys(brain.W).slice(-16);
+  const cell = w => { const t = clamp(w, 0, 1); const c = `rgba(254,3,134,${(0.06 + t * 0.9).toFixed(2)})`; return `background:${c};color:${t > 0.55 ? '#fff' : '#1a1a1a'}`; };
+  const L = ON('L.learn');
+  $('heat').innerHTML = '<tr><th></th>' + ACTIONS.map(a => `<th>${a.slice(0, 4)}</th>`).join('') + (L ? '<th>attn</th>' : '') + '</tr>' + cues.map(c => `<tr><th class="r">${c.replace('gesture:', 'g:')}</th>` + ACTIONS.map(a => { const v = brain.V(c, a); return `<td style="${cell(v)}${c === hiCue && a === hiAct ? ';outline:2px solid #1a1a1a' : ''}">${Math.round(clamp(v, 0, 1) * 99)}</td>`; }).join('') + (L ? `<td style="${cell(brain.al[c] ?? 0.6)}">${Math.round((brain.al[c] ?? 0.6) * 99)}</td>` : '') + '</tr>').join('');
+}
+
+// ---------- cortex: local vision language model on WebGPU, in a worker ----------
+const VLM = { gemma: { id: 'onnx-community/gemma-4-E2B-it-ONNX', name: 'Gemma 4 E2B' }, lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', name: 'LFM2-VL 450M' } };
+const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'gemma'), nid: 0, wait: new Map(), ms: 0 };
+$('vlmPick').value = vlm.kind;
+$('vlmPick').onchange = e => { vlm.kind = e.target.value; store.set('vlm', vlm.kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; setVlm('off'); } };
+function setVlm(st) { $('cortexSt').textContent = st; const ready = vlm.state === 'ready'; $('bThink').disabled = !ready; $('askIn').disabled = !ready; $('bVlmLoad').disabled = vlm.state === 'loading' || ready; }
+setVlm(navigator.gpu ? 'off' : 'needs WebGPU');
+function vlmLoad() {
+  if (!navigator.gpu) { toast('the cortex model needs a WebGPU browser'); return; }
+  if (vlm.worker) return;
+  const BODY = document.getElementById('vlmWorker').textContent;
+  const onmsg = e => {
+    const m = e.data;
+    if (m.t === 'progress') { vlm.alive = true; const p = m.total ? m.loaded / m.total : 0; $('vlmBar').style.width = (p * 100).toFixed(1) + '%'; $('vlmPct').textContent = Math.round(p * 100) + '%'; $('cortexSt').textContent = (m.loaded / 1e6).toFixed(0) + ' / ' + (m.total / 1e6).toFixed(0) + ' MB' + (vlm.inPage ? ' (in page)' : ''); }
+    else if (m.t === 'ready') { vlm.state = 'ready'; $('vlmBar').style.width = '100%'; $('vlmPct').textContent = '100%'; setVlm('ready ' + VLM[vlm.kind].name); toast('cortex online: ' + VLM[vlm.kind].name); }
+    else if (m.t === 'answer' || m.t === 'error') { if (m.t === 'error' && m.id == null) { vlm.state = 'off'; setVlm('failed: ' + m.msg.slice(0, 60)); if (vlm.worker) vlm.worker.terminate(); vlm.worker = null; return; } const w = vlm.wait.get(m.id); vlm.wait.delete(m.id); if (w) (m.t === 'answer' ? w.res(m) : w.rej(new Error(m.msg))); }
+  };
+  const inPage = () => { // fallback when module workers from blob URLs are refused
+    vlm.inPage = true;
+    const h = new Function('post', BODY)(m => onmsg({ data: m }));
+    vlm.worker = { postMessage: m => { setTimeout(() => h(m), 0); }, terminate() {} };
+    vlm.worker.postMessage({ t: 'load', id: VLM[vlm.kind].id, kind: vlm.kind });
+  };
+  vlm.state = 'loading'; vlm.alive = false; setVlm('loading ' + VLM[vlm.kind].name);
+  try {
+    const src = 'const h = (new Function("post", ' + JSON.stringify(BODY) + '))(m => postMessage(m)); onmessage = e => h(e.data);';
+    const w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })), { type: 'module' });
+    w.onmessage = onmsg;
+    w.onerror = e => { if (!vlm.alive && vlm.state === 'loading') { console.warn('worker failed, running in page', e); w.terminate(); inPage(); } };
+    vlm.worker = w;
+    w.postMessage({ t: 'load', id: VLM[vlm.kind].id, kind: vlm.kind });
+  } catch (e) { inPage(); }
+}
+$('bVlmLoad').onclick = vlmLoad;
+let vlmChain = Promise.resolve();
+function vlmAsk(canvas, prompt, max = 80) {
+  const job = vlmChain.then(() => vlmAsk1(canvas, prompt, max)); vlmChain = job.catch(() => {}); return job;
+}
+function vlmAsk1(canvas, prompt, max) {
+  return new Promise((res, rej) => {
+    if (vlm.state !== 'ready') return rej(new Error('not ready'));
+    const id = ++vlm.nid; vlm.wait.set(id, { res, rej });
+    const img = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height);
+    vlm.worker.postMessage({ t: 'ask', id, prompt, max, rgba: img.data.buffer, w: img.width, h: img.height }, [img.data.buffer]);
+  });
+}
+const pct = v => Math.round(v * 100) + '%';
+let thinking = false, lastAuto = 0;
+async function think() {
+  if (vlm.state !== 'ready' || thinking) return; thinking = true; $('cortexSt').textContent = 'thinking';
+  const d = brain.d, vis = Object.values(percepts).filter(p => p.vis).map(p => p.id.replace(/\d+$/, ''));
+  // memory stream retrieval: recency (0.995 per game hour) plus importance plus relevance to what is in view (Park et al. 2023)
+  const hNow = CLOCK.day * 24 + CLOCK.h, mems = brain.mem.map(m => ({ m, s: Math.pow(0.995, hNow - m.h) + m.imp / 6 + (vis.some(v => m.txt.includes(v)) ? 0.5 : 0) })).sort((a, b) => b.s - a.s).slice(0, 4).map(x => x.m.txt);
+  const prompt = `You are the mind of a dog in a backyard. The picture is what your eyes see right now. How you feel: hunger ${pct(d.hunger)}, tiredness ${pct(d.fatigue)}, wanting to play ${pct(d.play)}, wanting company ${pct(d.social)}, curiosity ${pct(d.curiosity)}, urge to chase ${pct(d.prey)}. ${ball.held ? 'You have the ball in your mouth.' : ''} Your nose and ears also notice: ${vis.join(', ') || 'nothing much'}. It is ${Math.floor(CLOCK.h)} o'clock. Things you remember: ${mems.join('; ') || 'nothing yet'}.
+Reply in exactly three lines and nothing else:
+SAW: what you see, under 10 words
+THOUGHT: your inner thought as a dog, first person, under 12 words
+GOAL: one word from explore, sniff, eat, fetch, chase, greet, beg, playbow, zoomies, rest, sleep, idle`;
+  try {
+    const r = await vlmAsk(rawEye, prompt, 72); vlm.ms = r.ms;
+    const txt = r.text.trim();
+    const saw = (txt.match(/SAW:\s*(.+)/i) || [])[1] || '';
+    const thought = ((txt.match(/THOUGHT:\s*(.+)/i) || [])[1] || txt.split('\n')[0] || '...').replace(/^["']|["']$/g, '');
+    const gl = ((txt.match(/GOAL:\s*(.+)/i) || [])[1] || txt).toLowerCase();
+    const goal = BEH.find(b => new RegExp('\\b' + b + '\\b').test(gl)) || 'idle';
+    brain.cortexGoal = { b: goal, until: now + 20 };
+    brain.say(thought.slice(0, 80), 5);
+    $('cortexOut').textContent = (saw ? 'saw ' + saw.trim() + '. ' : '') + '"' + thought.trim() + '" goal: ' + goal;
+    $('cortexSt').textContent = 'ready, ' + (r.ms / 1000).toFixed(1) + ' s, ' + r.tokens + ' tok';
+  } catch (e) { $('cortexSt').textContent = 'error'; console.warn('cortex', e); }
+  thinking = false;
+}
+$('bThink').onclick = think;
+$('askIn').addEventListener('keydown', async e => {
+  if (e.key !== 'Enter' || !e.target.value.trim() || thinking) return;
+  const q = e.target.value.trim().slice(0, 200); e.target.value = ''; thinking = true; $('cortexSt').textContent = 'thinking';
+  brain.named();
+  try {
+    const r = await vlmAsk(rawEye, `You are a dog. The picture is what you see right now with your own eyes. Your human asks: "${q}". Answer in one or two short sentences, in a dog's voice.`, 64);
+    const a = r.text.trim().split('\n').filter(Boolean).slice(0, 2).join(' ');
+    $('cortexOut').textContent = 'you: ' + q + '\ndog: ' + a; brain.say(a.slice(0, 90), 6);
+    $('cortexSt').textContent = 'ready, ' + (r.ms / 1000).toFixed(1) + ' s';
+  } catch (err) { $('cortexSt').textContent = 'error'; }
+  thinking = false;
+});
+
+// ---------- instruments ----------
+function rows(el, items) {
+  if (!el._built) { el.innerHTML = items.map(([k]) => `<div class="row" data-k="${k}"><span class="lab">${k}</span><div class="bar"><i></i></div><span class="v">0</span></div>`).join(''); el._built = true; }
+  items.forEach(([k, v, cur, pink], i) => { const r = el.children[i]; r.classList.toggle('cur', !!cur); r.querySelector('i').style.width = (clamp(v, 0, 1) * 100).toFixed(1) + '%'; r.querySelector('.bar').classList.toggle('p', !!pink || !!cur); r.querySelector('.v').textContent = v.toFixed(2); });
+}
+const cpgCtx = $('cpg').getContext('2d'), footCtx = $('foot').getContext('2d'), affCtx = $('affect').getContext('2d');
+function drawInstruments() {
+  // CPG rings
+  const c = cpgCtx, W = 340, Hh = 150; c.clearRect(0, 0, W, Hh);
+  const cx = 75, cy = 75, R = 56; c.strokeStyle = '#1a1a1a'; c.lineWidth = 1.5; c.beginPath(); c.arc(cx, cy, R, 0, 7); c.stroke();
+  c.fillStyle = '#efe9db'; c.beginPath(); c.moveTo(cx, cy); c.arc(cx, cy, R - 6, -Math.PI / 2, -Math.PI / 2 + dog.duty * Math.PI * 2); c.closePath(); c.fill();
+  c.font = '15px VT323, monospace';
+  dog.legs.forEach((l, i) => { const a = -Math.PI / 2 + l.ph * Math.PI * 2; c.fillStyle = l.stance ? '#1a1a1a' : '#FE0386'; c.beginPath(); c.arc(cx + Math.cos(a) * R, cy + Math.sin(a) * R, 7, 0, 7); c.fill(); c.fillStyle = '#1a1a1a'; c.fillText(l.id, cx + Math.cos(a) * (R + 13) - 7, cy + Math.sin(a) * (R + 13) + 4); });
+  // gait mix bars
+  GAITS.forEach((g, i) => { const y = 20 + i * 27; c.fillStyle = '#1a1a1a'; c.fillText(g.name, 166, y); c.strokeRect(226, y - 11, 104, 12); c.fillStyle = i >= 3 ? '#FE0386' : '#1a1a1a'; c.fillRect(226, y - 11, 104 * (dog.gaitW[i] || 0), 12); });
+  // footfalls
+  const f = footCtx; f.clearRect(0, 0, 340, 96); const n = footLog.length, bw = 340 / 120;
+  for (let li = 0; li < 4; li++) { for (let k = 0; k < n; k++) if (footLog[k][li]) { f.fillStyle = li < 2 ? '#1a1a1a' : '#444'; f.fillRect(k * bw, 6 + li * 22, bw + 0.5, 16); } f.fillStyle = '#9a9184'; f.fillRect(0, 22 + li * 22, 340, 1); }
+  // affect
+  const a = affCtx; a.clearRect(0, 0, 340, 120); a.strokeStyle = '#e8e0d0'; a.beginPath(); a.moveTo(170, 0); a.lineTo(170, 120); a.moveTo(0, 60); a.lineTo(340, 60); a.stroke();
+  a.fillStyle = '#9a9184'; a.font = '15px VT323, monospace'; a.fillText('sad', 6, 114); a.fillText('happy', 296, 114); a.fillText('calm', 150, 114); a.fillText('alert', 150, 14);
+  const px = 170 + brain.v * 160, py = 110 - brain.a * 100; a.fillStyle = '#FE0386'; a.beginPath(); a.arc(px, py, 8, 0, 7); a.fill(); a.strokeStyle = '#1a1a1a'; a.stroke();
+  // text bits
+  $('gaitName').textContent = NG.active ? 'neural ' + NG.guidance.toLowerCase() : dog.standing ? 'stand' : GAITS[dog.gaitW.indexOf(Math.max(...dog.gaitW))].name;
+  $('kFr').textContent = (dog.v * dog.v / (9.81 * (dog.legLen || 0.45))).toFixed(2); $('kSrc').textContent = NG.active ? 'neural mocap' : 'pattern generator';
+  $('kGuide').textContent = NG.active ? NG.guidance : '-'; $('kNnMs').textContent = NG.ms ? NG.ms.toFixed(0) + ' ms, ' + (1000 / Math.max(NG.ms, 100)).toFixed(0) + ' Hz' : '-';
+  $('kCont').textContent = NG.active ? NG.cont.map(x => x > 0.55 ? 'X' : '.').join(' ') : '-';
+  // sleep, clock, bond
+  const hh = Math.floor(CLOCK.h), mm = Math.floor((CLOCK.h - hh) * 60), ck = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+  $('chipClock').textContent = ON('L.day') ? ck : 'day off'; $('kClock').textContent = ck + ' day ' + (CLOCK.day + 1);
+  $('kSp').textContent = (brain.Sp || 0).toFixed(2); $('kCirc').textContent = (brain.circ ?? 0).toFixed(2); $('kBond').textContent = brain.bond.toFixed(2) + (brain.mutual ? ' mutual gaze' : '');
+  $('kWag').textContent = dog.org && ON('L.secondary') ? WAG[dog.org.wag.mode].n : '-'; $('slpStage').textContent = brain.cur === 'sleep' ? brain.stage : 'awake';
+  { const hc = $('hyp').getContext('2d'), W = 340, Hh = 64, st = { onset: 1, wake: 0.5, nrem: 3, rem: 2, goto: 0, awake: 0 }; hc.clearRect(0, 0, W, Hh); hc.fillStyle = '#9a9184'; hc.font = '13px VT323, monospace'; ['wake', 'rem', 'nrem'].forEach((n, i) => hc.fillText(n, 2, 14 + i * 20)); hc.strokeStyle = '#1a1a1a'; hc.lineWidth = 2; hc.beginPath(); brain.hyp.forEach((x, i) => { const v = st[x] || 0, y = x === 'rem' ? 30 : x === 'nrem' ? 50 : 10; const px = 38 + i * (W - 40) / 160; i ? hc.lineTo(px, y) : hc.moveTo(px, y); }); hc.stroke(); }
+  $('utilMode').textContent = ON('L.sample') ? 'sampled' : 'argmax'; $('pendNote').textContent = brain.pending ? 'next: ' + brain.pending.b + ' in ' + Math.max(0, (brain.pending.at - now) * 1000).toFixed(0) + ' ms' : (ON('L.drives') ? 'drive reduction reward, ' : '') + (ON('L.sample') ? 'softmax choice with commitment' : 'highest score wins');
+  $('kFocus').textContent = ON('L.salience') ? attention.label || '-' : 'off';
+  $('kWind').textContent = ON('L.plume') ? TV('W.wind').toFixed(1) + ' m/s at ' + Math.round(((wind.a * 180 / Math.PI) % 360 + 360) % 360) + ' deg' : 'off'; $('kPuffs').textContent = puffs.length; $('kLR').textContent = sniff.cL.toFixed(3) + ' / ' + sniff.cR.toFixed(3);
+  $('sniffSt').textContent = sniff.inBout > 0 ? 'sniffing ' + TV('Se.sniffHz').toFixed(1) + ' Hz' : brain.sn ? brain.sn.mode : '-';
+  $('kSpeed').textContent = dog.v.toFixed(2) + ' m/s'; $('kFreq').textContent = dog.standing ? '-' : dog.freq.toFixed(2) + ' Hz'; $('kDuty').textContent = dog.duty.toFixed(2); $('kTurn').textContent = dog.w.toFixed(2) + ' rad/s';
+  const P = dog.posture; const pm = Object.entries(P).sort((x, y) => y[1] - x[1])[0]; $('kPost').textContent = pm[1] > 0.3 ? pm[0] : 'stand';
+  rows($('utilRows'), BEH.map(b => [b, Math.min(brain.util[b] || 0, 1), b === brain.cur]));
+  rows($('driveRows'), Object.entries(brain.d).map(([k, v]) => [k, v, false, k === 'prey']).concat([['bond', brain.bond, false, true]]));
+  $('behName').textContent = brain.cur + (brain.sub && brain.cur === 'fetch' ? ' / ' + brain.sub : brain.cmd && brain.cur === 'obey' ? ' / ' + brain.cmd.action : '');
+  $('behT').textContent = brain.t.toFixed(1) + 's';
+  $('perList').innerHTML = Object.values(percepts).filter(p => p.seen > -1e8).sort((x, y) => y.sal - x.sal).slice(0, 8).map(p => `<div><span class="${p.vis ? 'vis' : ''}">${p.id}${p.net > 0.2 ? ' +net' : ''}</span><span>${p.vis ? 'seen' : 'remembered ' + Math.round(now - p.seen) + 's'}</span><span>${(p.dist || 0).toFixed(1)}m</span></div>`).join('') || '<div><span>nothing yet</span><span></span><span></span></div>';
+  if (dog.ready) { const n = headWorld(dog.noseL, tmpV[0]); const s = scentAt(n.x, n.z); $('scentBar').style.width = clamp(s * 100, 0, 100) + '%'; $('scentV').textContent = s.toFixed(2); }
+  $('hearBar').style.width = clamp(hearLevel * 100, 0, 100) + '%'; $('hearV').textContent = hearLevel.toFixed(2);
+}
+
+// ---------- main loop ----------
+let now = 0, last = performance.now(), acc = 0, fpsN = 0, fpsT = 0, instT = 0;
+function resize() { const r = stage.getBoundingClientRect(); renderer.setSize(r.width, r.height, false); camera.aspect = r.width / Math.max(r.height, 1); camera.updateProjectionMatrix(); }
+new ResizeObserver(resize).observe(stage);
+const bubble = $('bubble');
+function frame() {
+  const tnow = performance.now(); let dt = Math.min((tnow - last) / 1000, 1 / 20) * (window.__simSpeed || 1); last = tnow; now += dt;
+  fpsN++; fpsT += dt; if (fpsT > 0.5) { $('chipFps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
+  if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').classList.remove('on'); }
+  if (dog.ready && world) {
+    const tempo = +$('tempo').value;
+    clockTick(dt, tempo); lightTick(); for (const t of TRAITS) PDRIFT[t].step(dt * tempo / 60);
+    humTick(dt, now);
+    sense(now); loomCheck(dt); plumeTick(dt); puffDraw();
+    sniffTick(dt, brain.cur === 'sniff' || brain.cur === 'investigate' || (brain.cur === 'explore' && Math.sin(now * 0.7) > 0.3));
+    brain.tick(dt);
+    if (brain.pointT && now - brain.pointT < 2.5 && brain.cur !== 'sleep') lookAt(marker.position);
+    steer(dt); locomotion(dt);
+    poseDog(dt, now);
+    // physics
+    acc += dt; let steps = 0; while (acc >= 1 / 60 && steps < 3 * (window.__simSpeed || 1)) { world.step(); acc -= 1 / 60; steps++; }
+    for (const o of dyn) {
+      if (o === ball && ball.held) { const m = headWorld(dog.mouthL, tmpV[0]); ball.rb.setNextKinematicTranslation({ x: m.x, y: m.y, z: m.z }); }
+      else if (o === ball && ball.humanHeld) { const m = handPos(tmpV[0]); ball.rb.setNextKinematicTranslation({ x: m.x, y: m.y - 0.04, z: m.z }); }
+      const t = o.rb.translation(), q = o.rb.rotation(); o.mesh.position.set(t.x, t.y, t.z); o.mesh.quaternion.set(q.x, q.y, q.z, q.w);
+      const vy = o.rb.linvel().y; if (o.prevVy < -1.2 && vy > -0.2 && !o.held && !o.humanHeld) { emitSound(o.mesh.position, clamp(-o.prevVy * 0.12, 0.1, 0.7), 'bounce'); thud(o.mesh.position, -o.prevVy); } o.prevVy = vy;
+      if (t.y < -3) { o.rb.setTranslation({ x: 0, y: 1, z: 3 }, true); o.rb.setLinvel({ x: 0, y: 0, z: 0 }, true); }
+    }
+    squirrelTick(dt);
+    hearLevel = Math.max(0, hearLevel - dt * 0.8);
+    // pant sound
+    if (dog.heat > 0.5 && brain.cur !== 'sleep') { pantT -= dt; if (pantT < 0) { pantT = 0.33; pant(dog.root.position); } }
+    eyeTimer += dt; if (eyeTimer > 0.1) { eyeTimer = 0; renderEye(); }
+    if (!eyeDetect.t || now - eyeDetect.t > Math.max(0.45, net.ms * 0.004)) { eyeDetect.t = now; eyeDetect(); }
+    camTick(now); micTick(dt);
+    // the cortex thinks on events: when summed importance passes a budget, never more often than a floor (Generative Agents style)
+    if ($('autoThink').checked && vlm.state === 'ready' && !thinking && ((brain.imp > TV('Br.reflect') && now - lastAuto > TV('Br.cortexMin')) || now - lastAuto > 60)) { lastAuto = now; brain.imp = 0; think(); }
+  }
+  // you
+  if (HUM.ready) { const hp = humHead(tmpV[2]).add(V3(0, 0.32, 0)).project(camera), r2 = stage.getBoundingClientRect(), hb = $('hbubble');
+    if (hp.z < 1 && camMode !== 2 && camMode !== 4 && HUM.sayT > 0) { hb.style.display = 'block'; hb.style.left = ((hp.x + 1) / 2 * r2.width) + 'px'; hb.style.top = ((1 - hp.y) / 2 * r2.height - 8) + 'px'; hb.textContent = HUM.line; } else hb.style.display = 'none'; }
+  marker.material.opacity = Math.max(0, marker.material.opacity - dt * 0.35);
+  food.scale.set(1, Math.max(foodAmt, 0.02), 1); food.visible = foodAmt > 0.02; food.position.y = 0.02 + 0.03 * foodAmt;
+  // camera
+  if (dog.ready) {
+    if (camMode === 1) flyCam(dt);
+    if (camMode === 0) { const tg = tmpV[0].copy(dog.root.position).add(V3(0, 0.35, 0)); controls.target.lerp(tg, 1 - Math.exp(-dt * 2.5)); }
+    if (camMode === 0) { const off = tmpV[3].copy(camera.position).sub(controls.target); const hz = Math.hypot(off.x, off.z); const want = clamp(hz, 3.2, 14); if (hz < 0.01) off.set(0, off.y, 1); if (Math.abs(want - hz) > 0.01) { off.x *= want / Math.max(hz, 0.01); off.z *= want / Math.max(hz, 0.01); } off.y = clamp(off.y, 0.9, 6); camera.position.lerp(tmpV[4].copy(controls.target).add(off), 1 - Math.exp(-dt * 3)); }
+    if (camMode === 3) { const c = Math.cos(dog.yaw), s = Math.sin(dog.yaw); const want = tmpV[0].set(dog.pos.x + c * 2.4 + s * 0.3, dog.root.position.y + 0.55, dog.pos.z - s * 2.4 + c * 0.3); camera.position.lerp(want, 1 - Math.exp(-dt * 6)); controls.target.lerp(tmpV[1].copy(dog.root.position).add(V3(0, 0.3, 0)), 1 - Math.exp(-dt * 8)); }
+    controls.update();
+    // bubble
+    const hp = headWorld(V3(0, 0.35, 0), tmpV[1]).project(camera);
+    const r = stage.getBoundingClientRect();
+    if (hp.z < 1 && camMode !== 2) { bubble.style.display = 'block'; bubble.style.left = ((hp.x + 1) / 2 * r.width) + 'px'; bubble.style.top = ((1 - hp.y) / 2 * r.height - 8) + 'px'; bubble.textContent = brain.line; bubble.style.opacity = brain.sayT > 0 ? 1 : 0.45; }
+    else bubble.style.display = 'none';
+  }
+  if (camMode === 4 && HUM.map && !HUM.away) { updateHumCam(dt); povCam.aspect = camera.aspect; povCam.updateProjectionMatrix(); humHeadHide(true); renderer.render(scene, povCam); humHeadHide(false); povCam.aspect = 2; povCam.updateProjectionMatrix(); }
+  else if (camMode === 2 && dog.ready) { updateEyeCam(); eyeCam.aspect = camera.aspect; eyeCam.updateProjectionMatrix(); dog.mesh.visible = false; renderer.render(scene, eyeCam); dog.mesh.visible = true; eyeCam.aspect = 2; eyeCam.updateProjectionMatrix(); }
+  else renderer.render(scene, camera);
+  instT += dt; if (instT > 0.1) { instT = 0; if (dog.ready) drawInstruments(); }
+}
+
+// ---------- boot ----------
+tuneLoad(); CLOCK.h = TV('W.hour');
+tuneUI.build($('pTune'));
+if (!store.get('tune', null)) seedPersonality(store.get('name', 'Pixel'));
+TUNE.onChange = k => { if (k === 'L.neural' && TV(k) && !NG.ready) nnLoadUI(); if (k === 'W.hour') CLOCK.h = TV('W.hour'); };
+function nnLoadUI() { $('bNnLoad').disabled = true; NG.load(st => { $('nnSt').textContent = st; }).then(() => { $('bNnLoad').disabled = NG.ready; if (NG.ready) toast('neural gait online'); else $('bNnLoad').disabled = false; }); }
+$('bNnLoad').onclick = nnLoadUI;
+$('showSal').onchange = e => { attention.show = e.target.checked; };
+(async () => {
+  try {
+    await renderer.init();
+    const gpu = renderer.backend.isWebGPUBackend; $('chipGpu').textContent = gpu ? 'WEBGPU' : 'WEBGL2'; $('chipGpu').classList.add('on');
+    resize();
+    $('loadNote').textContent = 'starting physics';
+    await initPhysics(); initProps();
+    $('loadNote').textContent = 'loading the dog';
+    const glbBuf = await (await fetch('data:model/gltf-binary;base64,' + document.getElementById('dogGLB').textContent.trim())).arrayBuffer();
+    const gltf = await new GLTFLoader().parseAsync(glbBuf, '');
+    setupDog(gltf, 'dog.glb');
+    try {
+      $('loadNote').textContent = 'waking Moheeb';
+      const hb = await (await fetch('data:model/gltf-binary;base64,' + document.getElementById('humanGLB').textContent.trim())).arrayBuffer();
+      const hg = await new GLTFLoader().parseAsync(hb, '');
+      setupHuman(hg, JSON.parse(document.getElementById('humanAnims').textContent));
+      renderHumTrain();
+    } catch (e) { console.warn('human failed', e); toast('Moheeb failed to load'); }
+    brain.init();
+    $('load').style.display = 'none';
+    renderer.setAnimationLoop(frame);
+    setTimeout(() => { if ($('netOn').checked) loadNet(); }, 1500);
+    setTimeout(() => { if (ON('L.neural')) nnLoadUI(); }, 2600);
+    window.__hackle = { HUM, startTask, humThink, humSnap, Voice, vlm, vlmLoad, think, dog, brain, motor, percepts, net, throwBall, ball: () => ball, tossTreat, camera, controls, setCam: m => setCamMode(m), setEyeWho, V3, squirrel, spawnSquirrel, NG, NR, TUNE, CLOCK, attention, ORG, sniff, puffs, wind, applyPreset, startShake, humPoint, trail, time: () => now };
+  } catch (e) { console.error(e); $('loadNote').textContent = 'failed: ' + e.message; }
+})();
+}
+</script>
+<script type="text/plain" id="vlmWorker">
+// body of the cortex runner: run inside a module worker, or on the main thread if workers fail; post() sends results back
+const TJS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js';
+let T = null, proc = null, model = null, kind = null;
+const files = {};
+function prog(p) {
+  if (p.status !== 'progress' || !p.total) return;
+  files[p.file] = [p.loaded, p.total];
+  let a = 0, b = 0; for (const k in files) { a += files[k][0]; b += files[k][1]; }
+  post({ t: 'progress', loaded: a, total: b });
+}
+return async m => {
+  try {
+    if (m.t === 'load') {
+      T = await import(TJS); kind = m.kind;
+      const Cls = kind === 'gemma' ? T.Gemma4ForConditionalGeneration : T.Lfm2VlForConditionalGeneration;
+      proc = await T.AutoProcessor.from_pretrained(m.id, { progress_callback: prog });
+      model = await Cls.from_pretrained(m.id, { dtype: 'q4f16', device: 'webgpu', progress_callback: prog });
+      post({ t: 'ready' });
+    } else if (m.t === 'ask') {
+      const img = new T.RawImage(new Uint8ClampedArray(m.rgba), m.w, m.h, 4).rgb();
+      const messages = [{ role: 'user', content: [{ type: 'image' }, { type: 'text', text: m.prompt }] }];
+      const prompt = proc.apply_chat_template(messages, { add_generation_prompt: true, enable_thinking: false });
+      const inputs = kind === 'gemma' ? await proc(prompt, img, null, { add_special_tokens: false }) : await proc(img, prompt, { add_special_tokens: false });
+      const t0 = performance.now();
+      const out = await model.generate({ ...inputs, max_new_tokens: m.max || 80, do_sample: false });
+      const n = inputs.input_ids.dims.at(-1);
+      const text = proc.batch_decode(out.slice(null, [n, null]), { skip_special_tokens: true })[0];
+      post({ t: 'answer', id: m.id, text, ms: performance.now() - t0, tokens: out.dims.at(-1) - n });
+    }
+  } catch (err) { post({ t: 'error', id: m.t === 'load' ? null : m.id, msg: String((err && err.message) || err) }); }
+};
+</script>
+<script type="text/plain" id="voiceB64">
+@@VOICE_B64@@
+</script>
+<script type="application/json" id="humanAnims">
+@@ANIMS@@
+</script>
+<script type="application/octet-stream" id="humanGLB">
+@@HUMAN_GLB@@
+</script>
+<script type="application/octet-stream" id="dogGLB">
+@@DOG_GLB@@
+</script>
+</body>
+</html>

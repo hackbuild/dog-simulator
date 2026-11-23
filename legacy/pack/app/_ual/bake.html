@@ -1,0 +1,98 @@
+<!DOCTYPE html><html><head><script type="importmap">{"imports":{"three":"../vendor/three/three.webgpu.js","three/addons/":"../vendor/three/addons/"}}</script></head><body style="margin:0">
+<script type="module">
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const PREFIX = new Set(['mixamorig', 'bip', 'cc', 'base', 'j', 'bi', 'c', 'def', 'org', 'armature', 'root', 'rig', 'skeleton', 'bone', 'jnt', 'joint', 'sk']);
+function classifyBone(raw) {
+  if (!raw) return null;
+  let n = String(raw).replace(/^.*[|:]/, '');
+  const toks = n.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2').split(/[^A-Za-z]+/).filter(Boolean).map(s => s.toLowerCase());
+  let side = '';
+  const rest = [];
+  for (const t of toks) {
+    if (t === 'left' || t === 'l') side = 'L';
+    else if (t === 'right' || t === 'r') side = 'R';
+    else if (PREFIX.has(t) && rest.length === 0) continue;
+    else rest.push(t);
+  }
+  const part = rest.join('');
+  const key = {
+    hips: 'hips', pelvis: 'hips', hip: side ? 'upperLeg' : 'hips', spine: 'spine', chest: 'chest', upperchest: 'upperChest',
+    neck: 'neck', head: 'head', jaw: 'jaw',
+    shoulder: 'shoulder', clavicle: 'shoulder', collar: 'shoulder',
+    arm: 'upperArm', upperarm: 'upperArm', uparm: 'upperArm', forearm: 'lowerArm', lowerarm: 'lowerArm', lowarm: 'lowerArm',
+    hand: 'hand', thigh: 'upperLeg', upleg: 'upperLeg', upperleg: 'upperLeg', leg: 'lowerLeg', calf: 'lowerLeg', shin: 'lowerLeg', lowerleg: 'lowerLeg', lowleg: 'lowerLeg',
+    foot: 'foot', eye: 'eye',
+  }[part];
+  if (!key) return null;
+  const sided = ['shoulder', 'upperArm', 'lowerArm', 'hand', 'upperLeg', 'lowerLeg', 'foot', 'eye'];
+  if (sided.includes(key)) return side ? key + side : null;
+  return key;
+}
+
+
+const ROLES = ['hips','spine','chest','upperChest','neck','head','shoulderL','upperArmL','lowerArmL','handL','shoulderR','upperArmR','lowerArmR','handR','upperLegL','lowerLegL','footL','upperLegR','lowerLegR','footR'];
+const depth = o => { let d = 0; while (o.parent) { d++; o = o.parent; } return d; };
+function roleMap(root) {
+  const m = {}, sp = [];
+  root.traverse(o => { if (!o.isBone) return; const k = classifyBone(o.name); if (!k) return; if (k === 'spine') { sp.push(o); return; } if (!m[k] || depth(o) < depth(m[k])) m[k] = o; });
+  sp.sort((a, b) => depth(a) - depth(b)); if (sp[0]) m.spine = sp[0]; if (sp[1]) m.chest = sp[1]; if (sp[2]) m.upperChest = sp[2];
+  return m;
+}
+const L = new GLTFLoader();
+const src = await L.loadAsync('./AnimationLibrary_Godot_Standard.gltf');
+const tgt = await L.loadAsync('./moheeb.glb');
+const S = src.scene, T = tgt.scene; S.updateMatrixWorld(true); T.updateMatrixWorld(true);
+const sm = roleMap(S), tm = roleMap(T);
+const missing = ROLES.filter(r => !sm[r] || !tm[r]);
+const yawOf = m => { const a = m.handL.getWorldPosition(new THREE.Vector3()), b = m.handR.getWorldPosition(new THREE.Vector3()); return a.x > b.x ? 0 : Math.PI; };
+const mixer = new THREE.AnimationMixer(S);
+const clipBy = n => src.animations.find(a => a.name === n);
+function pose(name, t) { mixer.stopAllAction(); const ac = mixer.clipAction(clipBy(name)); ac.reset(); ac.play(); mixer.setTime(t); S.updateMatrixWorld(true); }
+pose('A_TPose', 0);
+const ys = yawOf(sm), Fs = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), ys), Fsi = Fs.clone().invert();
+const Cs0 = {}; for (const r of ROLES) Cs0[r] = Fsi.clone().multiply(sm[r].getWorldQuaternion(new THREE.Quaternion()));
+const Ps0 = sm.hips.getWorldPosition(new THREE.Vector3());
+const sGround = (() => { const a = sm.footL.getWorldPosition(new THREE.Vector3()); return a.y; })();
+const yt = yawOf(tm), Ft = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,1,0), yt), Fti = Ft.clone().invert();
+const Ct0 = {}; for (const r of ROLES) Ct0[r] = Fti.clone().multiply(tm[r].getWorldQuaternion(new THREE.Quaternion()));
+const bindLocal = {}; for (const r of ROLES) bindLocal[r] = tm[r].quaternion.clone();
+const sHip = Ps0.y - sGround;
+const tHipP = tm.hips.getWorldPosition(new THREE.Vector3()), tFoot = tm.footL.getWorldPosition(new THREE.Vector3());
+const tBox = new THREE.Box3().setFromObject(T, true);
+const info = { ys, yt, missing, sHip, tHipFrac: (tHipP.y - tBox.min.y) / (tBox.max.y - tBox.min.y), srcBones: Object.fromEntries(ROLES.map(r => [r, sm[r] && sm[r].name])), tgtBones: Object.fromEntries(ROLES.map(r => [r, tm[r] && tm[r].name])) };
+// order target roles parents first
+const ordered = ROLES.slice().sort((a, b) => depth(tm[a]) - depth(tm[b]));
+const FPS = 30;
+function bake(name) {
+  const clip = clipBy(name); const n = Math.max(2, Math.round(clip.duration * FPS) + 1);
+  const q = new Int16Array(n * ROLES.length * 4), p = new Int16Array(n * 3), foot = [];
+  for (let f = 0; f < n; f++) {
+    pose(name, Math.min(clip.duration, f / FPS));
+    for (const r of ROLES) tm[r].quaternion.copy(bindLocal[r]);
+    T.updateMatrixWorld(true);
+    for (const r of ordered) {
+      const Ws = Fsi.clone().multiply(sm[r].getWorldQuaternion(new THREE.Quaternion()));
+      const D = Ws.multiply(Cs0[r].clone().invert());
+      const Wt = Ft.clone().multiply(D.multiply(Ct0[r]));
+      const pw = tm[r].parent.getWorldQuaternion(new THREE.Quaternion()).invert();
+      tm[r].quaternion.copy(pw.multiply(Wt)); tm[r].updateMatrixWorld(true);
+    }
+    ROLES.forEach((r, i) => { const o = (f * ROLES.length + i) * 4, qq = tm[r].quaternion; q[o] = Math.round(qq.x * 32767); q[o + 1] = Math.round(qq.y * 32767); q[o + 2] = Math.round(qq.z * 32767); q[o + 3] = Math.round(qq.w * 32767); });
+    const ph = sm.hips.getWorldPosition(new THREE.Vector3()).sub(Ps0).applyQuaternion(Fsi).divideScalar(sHip);
+    p[f * 3] = Math.round(ph.x * 10000); p[f * 3 + 1] = Math.round(ph.y * 10000); p[f * 3 + 2] = Math.round(ph.z * 10000);
+    const fl = sm.footL.getWorldPosition(new THREE.Vector3()).applyQuaternion(Fsi).divideScalar(sHip), fr = sm.footR.getWorldPosition(new THREE.Vector3()).applyQuaternion(Fsi).divideScalar(sHip);
+    foot.push([fl.y, fl.z, fr.y, fr.z]);
+  }
+  // ground speed: stance foot backward speed (in hip heights per second)
+  let sp = [];
+  for (let f = 1; f < n; f++) for (const k of [0, 2]) { const ymin = Math.min(...foot.map(x => x[k])); if (foot[f][k] < ymin + 0.03) sp.push(-(foot[f][k + 1] - foot[f - 1][k + 1]) * FPS); }
+  sp.sort((a, b) => a - b); const speed = sp.length ? sp[sp.length >> 1] : 0;
+  const b64 = a => { const u8 = new Uint8Array(a.buffer); let s = ''; for (let i = 0; i < u8.length; i += 32768) s += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return btoa(s); };
+  return { dur: clip.duration, n, loop: /_Loop$/.test(name), speed: +speed.toFixed(3), q: b64(q), p: b64(p) };
+}
+window.DBG = () => { const out = []; for (const t of [0, 0.3, 0.6]) { pose('Walk_Loop', t); out.push([t, sm.hips.quaternion.toArray().map(x => +x.toFixed(3)), sm.upperLegL.quaternion.toArray().map(x => +x.toFixed(3)), sm.hips.position.toArray().map(x => +x.toFixed(3))]); } const c = clipBy('Walk_Loop'); out.push(c.tracks.slice(0, 6).map(t => t.name + ':' + t.times.length)); return out; };
+window.INFO = info;
+window.bakeAll = names => { const out = { fps: FPS, roles: ROLES, clips: {} }; for (const nm of names) out.clips[nm] = bake(nm); return out; };
+window.READY = true;
+</script></body></html>
