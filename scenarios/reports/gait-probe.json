@@ -1,0 +1,63 @@
+{
+  "file": "dist/dog-simulator.html",
+  "seed": 7,
+  "seconds": 16,
+  "speeds": [
+    {
+      "motorSpeed": 0.6,
+      "hostSlideP95mm": 9.715379055637136,
+      "scale": 0.9566286360130516,
+      "asked": 0.3877926845255905,
+      "got": 0.38680472431782054,
+      "networkShare": 1,
+      "slideP50mm": 0,
+      "slideP95mm": 9.72713239062018,
+      "slideMaxmm": 47.80938220703989,
+      "stanceSamples": 1247,
+      "guidance": "Walk",
+      "evalMs": 5
+    },
+    {
+      "motorSpeed": 1.2,
+      "hostSlideP95mm": 2.4412877902795067,
+      "scale": 0.9566286360130516,
+      "asked": 0.8413019324038158,
+      "got": 0.7769265091955911,
+      "networkShare": 1,
+      "slideP50mm": 0,
+      "slideP95mm": 3.509853528411378,
+      "slideMaxmm": 28.62874463857351,
+      "stanceSamples": 849,
+      "guidance": "Walk",
+      "evalMs": 4.800000190734863
+    },
+    {
+      "motorSpeed": 2,
+      "hostSlideP95mm": 9.001595985483808,
+      "scale": 0.9566286360130516,
+      "asked": 1.9106052677658483,
+      "got": 1.7885724214836851,
+      "networkShare": 1,
+      "slideP50mm": 0,
+      "slideP95mm": 9.640949448019786,
+      "slideMaxmm": 25.730558726096742,
+      "stanceSamples": 608,
+      "guidance": "Walk",
+      "evalMs": 5.699999809265137
+    },
+    {
+      "motorSpeed": 3,
+      "hostSlideP95mm": 7.725134486777756,
+      "scale": 0.9566286360130516,
+      "asked": 2.4784947550763214,
+      "got": 2.2880908985924058,
+      "networkShare": 1,
+      "slideP50mm": 0,
+      "slideP95mm": 7.908494797047255,
+      "slideMaxmm": 24.957385430436364,
+      "stanceSamples": 493,
+      "guidance": "Trot",
+      "evalMs": 4.800000190734863
+    }
+  ]
+}
