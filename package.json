@@ -12,7 +12,7 @@
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
-    "build": "npm run build --workspaces --if-present",
+    "build": "if ls packages/*/package.json >/dev/null 2>&1; then npm run build --workspaces --if-present; else echo 'build: no workspace packages yet'; fi",
     "test": "vitest run --passWithNoTests && node --test tools/test/*.test.mjs",
     "typecheck": "tsc -b",
     "lint:voice": "git ls-files | grep -Ev '\\.(png|jpe?g|glb|bin|wasm|wav)$|^(LICENSES/|RULES.md|CLAUDE.md|tools/|legacy/)|package-lock.json|Cargo.lock' | xargs node tools/lint-voice.mjs",
