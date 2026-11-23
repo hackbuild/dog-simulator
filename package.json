@@ -18,7 +18,12 @@
     "lint:voice": "git ls-files | grep -Ev '\\.(png|jpe?g|glb|bin|wasm|wav)$|^(LICENSES/|RULES.md|CLAUDE.md|tools/|legacy/)|package-lock.json|Cargo.lock' | xargs node tools/lint-voice.mjs",
     "build:legacy": "node tools/build-html.mjs legacy",
     "lock": "node tools/lock-assets.mjs",
-    "lock:check": "node tools/lock-assets.mjs --check"
+    "lock:check": "node tools/lock-assets.mjs --check",
+    "build:det": "node tools/build-html.mjs legacy --mods legacy/det/src --out dist/hackle-det.html",
+    "build:app": "node tools/build-html.mjs app",
+    "check:boot": "node tools/runner/boot.mjs",
+    "check:determinism": "node tools/runner/determinism.mjs dist/hackle-det.html --seconds 600",
+    "scenarios": "node scenarios/run.mjs"
   },
   "devDependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

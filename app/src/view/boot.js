@@ -1,0 +1,43 @@
+// ---------- boot ----------
+// the network host is not in this build, so its layer starts off
+tuneLoad(); TUNE.v['L.neural'] = 0; CLOCK.h = TV('W.hour');
+tuneUI.build($('pTune'));
+if (!store.get('tune', null)) seedPersonality(store.get('name', 'Pixel'));
+TUNE.onChange = k => { if (k === 'L.neural' && TV(k) && !NG.ready) nnLoadUI(); if (k === 'W.hour') CLOCK.h = TV('W.hour'); };
+function nnLoadUI() { $('bNnLoad').disabled = true; NG.load(st => { $('nnSt').textContent = st; }).then(() => { $('bNnLoad').disabled = NG.ready; if (NG.ready) toast('neural gait online'); else $('bNnLoad').disabled = false; }); }
+$('bNnLoad').onclick = nnLoadUI;
+$('showSal').onchange = e => { attention.show = e.target.checked; };
+(async () => {
+  try {
+    await renderer.init();
+    const gpu = renderer.backend.isWebGPUBackend; $('chipGpu').textContent = gpu ? 'WEBGPU' : 'WEBGL2'; $('chipGpu').classList.add('on');
+    resize();
+    $('loadNote').textContent = 'starting physics';
+    await initPhysics(); initProps();
+    $('loadNote').textContent = 'loading the dog';
+    const glbBuf = await (await fetch('data:model/gltf-binary;base64,' + document.getElementById('dogGLB').textContent.trim())).arrayBuffer();
+    const gltf = await new GLTFLoader().parseAsync(glbBuf, '');
+    setupDog(gltf, 'dog.glb');
+    try {
+      $('loadNote').textContent = 'waking Moheeb';
+      const h64 = document.getElementById('humanGLB').textContent.trim();
+      const hg = h64 ? await new GLTFLoader().parseAsync(await (await fetch('data:model/gltf-binary;base64,' + h64)).arrayBuffer(), '') : { scene: placeholderHuman() };
+      setupHuman(hg, JSON.parse(document.getElementById('humanAnims').textContent));
+      renderHumTrain();
+    } catch (e) { console.warn('human failed', e); toast('Moheeb failed to load'); }
+    brain.init();
+    $('load').style.display = 'none';
+    if (TEST) {
+      // lockstep: no detector (its timing is wall clock), the gait network loaded before step 0
+      $('netOn').checked = false;
+      for (const k of TEST.off) TUNE.v[k] = 0;
+      if (ON('L.neural')) await NG.load(st => { $('nnSt').textContent = st; });
+      installSim();
+    } else {
+      renderer.setAnimationLoop(frame);
+      setTimeout(() => { if ($('netOn').checked) loadNet(); }, 1500);
+      setTimeout(() => { if (ON('L.neural')) nnLoadUI(); }, 2600);
+    }
+    window.__hackle = { HUM, startTask, humThink, humSnap, Voice, vlm, vlmLoad, think, dog, brain, motor, percepts, net, throwBall, ball: () => ball, tossTreat, camera, controls, setCam: m => setCamMode(m), setEyeWho, V3, squirrel, spawnSquirrel, NG, NR, TUNE, CLOCK, attention, ORG, sniff, puffs, wind, applyPreset, startShake, humPoint, trail, time: () => now };
+  } catch (e) { console.error(e); $('loadNote').textContent = 'failed: ' + e.message; }
+})();

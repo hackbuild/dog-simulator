@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HACKLE browser dog</title>
+<link rel="icon" href="data:,">
+<style>/*@@FONTS@@*/</style>
+<style>
+/*
+VOICE: a field instrument for a living thing, hack.build bench language, light paper.
+IDEA: the dog is the picture; every panel is a probe wired into one part of its nervous system.
+PICTURE: the 3D yard with the dog, its eye view inset, footfall diagram and brain bars as live instruments.
+COLOUR and TYPE: paper #f5f0e6, ink #1a1a1a, pink #FE0386 accent; Permanent Marker display, VT323 readouts, Plex Mono utility, Special Elite notes.
+LAYOUT: stage left (fills), instrument column right 380px; stacks under 900px.
+*/
+:root{color-scheme:light;--paper:#f5f0e6;--raised:#fffdf7;--sunk:#efe9db;--edge:#e8e0d0;--ink:#1a1a1a;--ink2:#444;--ink3:#6b6459;--ink4:#9a9184;--pink:#FE0386;--ok:#1f9d55;--warn:#c77700;--err:#c3251f;--info:#2b6cb0}
+:root[data-theme=dark]{color-scheme:light}
+*{box-sizing:border-box;min-width:0}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:14px/1.45 "IBM Plex Mono",ui-monospace,monospace;overflow:hidden}
+button,input,select{font:inherit;color:inherit}
+#app{display:grid;grid-template-rows:52px minmax(0,1fr);height:100%}
+header{display:flex;align-items:center;gap:14px;padding:0 14px;border-bottom:2px solid var(--ink);background:var(--raised)}
+.mark{font-family:"Permanent Marker",cursive;font-size:26px;line-height:1;letter-spacing:.5px}
+.mark b{color:var(--pink);font-weight:400}
+.tag{font-family:"Special Elite",serif;color:var(--ink3);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips{margin-left:auto;display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden}
+.chip{font-family:VT323,monospace;font-size:17px;line-height:1;padding:4px 7px;border:1.5px solid var(--ink);background:var(--paper);white-space:nowrap}
+.chip.on{background:var(--ink);color:var(--paper)}
+.chip.pk{border-color:var(--pink);color:var(--pink)}
+main{display:grid;grid-template-columns:minmax(0,1fr) 380px;min-height:0}
+#stage{position:relative;overflow:hidden;background:#eef2ef}
+#stage canvas.gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#side{border-left:2px solid var(--ink);background:var(--paper);display:flex;flex-direction:column;min-height:0}
+.tabs{display:flex;border-bottom:2px solid var(--ink);background:var(--raised)}
+.tabs button{flex:1;border:0;border-right:1.5px solid var(--ink);background:transparent;padding:10px 0;font-family:VT323,monospace;font-size:15px;letter-spacing:0;cursor:pointer;min-height:44px;overflow:hidden;white-space:nowrap}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--paper)}
+.pane{display:none;overflow:auto;padding:12px;flex:1;min-height:0}
+.pane.on{display:block}
+.blk{background:var(--raised);border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink);margin:0 4px 16px 0}
+.bh{background:var(--ink);color:var(--paper);font-family:VT323,monospace;font-size:19px;padding:3px 9px;display:flex;justify-content:space-between;gap:8px}
+.bh span:last-child{color:#ffd1e8}
+.bb{padding:9px 10px}
+.big{font-family:"Permanent Marker",cursive;font-size:28px;line-height:1.05}
+.note{font-family:"Special Elite",serif;color:var(--ink3);font-size:13px;line-height:1.4}
+.row{display:grid;grid-template-columns:84px minmax(0,1fr) 42px;align-items:center;gap:8px;margin:4px 0;font-size:12.5px}
+.row .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:11px;background:var(--sunk);border:1px solid var(--ink);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--ink)}
+.bar.p i{background:var(--pink)}
+.row .v{font-family:VT323,monospace;font-size:16px;text-align:right}
+.row.cur .lab{color:var(--pink);font-weight:600}
+.btns{display:flex;flex-wrap:wrap;gap:6px}
+.btn{border:1.5px solid var(--ink);background:var(--raised);box-shadow:3px 3px 0 var(--ink);padding:7px 10px;min-height:38px;cursor:pointer;display:inline-flex;gap:6px;align-items:center;font-size:13px}
+.btn:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn:focus-visible,.tabs button:focus-visible{outline:3px solid var(--pink);outline-offset:2px}
+.btn.pk{background:var(--pink);color:#fff}
+.btn.on{background:var(--ink);color:var(--paper)}
+.btn svg{width:16px;height:16px;flex:none}
+.tog{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px;cursor:pointer}
+.tog input{width:18px;height:18px;accent-color:#FE0386}
+canvas.inst{width:100%;display:block;background:var(--paper);border:1px solid var(--edge)}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12.5px}
+.kv b{font-weight:400;color:var(--ink3)}
+.kv span{font-family:VT323,monospace;font-size:17px;line-height:1.1}
+/* stage overlays */
+#eyecard{position:absolute;left:12px;top:12px;width:min(320px,46%);background:var(--raised);border:1.5px solid var(--ink);box-shadow:4px 4px 0 var(--ink)}
+#eyecard .bh{font-size:17px}
+.eyewho{display:flex;gap:2px}#eyeMode{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:14px}.eyewho{flex:none}.eyewho button{white-space:nowrap;font:inherit;font-size:15px;background:none;border:0;color:inherit;opacity:.5;padding:0 6px 0 0;cursor:pointer;letter-spacing:inherit}.eyewho button.on{opacity:1;text-decoration:underline;text-underline-offset:3px}
+#eyewrap{position:relative;aspect-ratio:2/1}
+#eyewrap canvas{position:absolute;inset:0;width:100%;height:100%}
+#tool{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;pointer-events:none}
+#tool>*{pointer-events:auto}
+#bubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:var(--raised);border:1.5px solid var(--ink);padding:4px 9px;font-family:"Special Elite",serif;font-size:14px;white-space:nowrap;box-shadow:3px 3px 0 var(--ink);max-width:260px;overflow:hidden;text-overflow:ellipsis}
+#hbubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:#fff;border:1.5px solid var(--pink);color:var(--ink);padding:4px 9px;font-family:"Special Elite",serif;font-size:14px;max-width:280px;box-shadow:3px 3px 0 var(--pink);white-space:normal;text-align:center}
+#bubble:after{content:"";position:absolute;left:50%;bottom:-8px;width:10px;height:10px;background:var(--raised);border-right:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);transform:translateX(-50%) rotate(45deg)}
+#hint{position:absolute;right:12px;top:12px;font-family:"Special Elite",serif;font-size:12.5px;background:rgba(255,253,247,.88);border:1px solid var(--edge);padding:5px 8px;max-width:280px;color:var(--ink2)}
+#load{position:absolute;inset:0;display:grid;place-items:center;background:var(--paper);z-index:5}
+#load .big{font-size:34px}
+#load .note{margin-top:6px;text-align:center}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:6px 12px;font-family:VT323,monospace;font-size:19px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:4;white-space:nowrap}
+#toast.on{opacity:1}
+#drop{position:absolute;inset:0;border:4px dashed var(--pink);display:none;place-items:center;background:rgba(245,240,230,.7);z-index:6;font-family:"Permanent Marker",cursive;font-size:30px}
+#photoView{display:none;margin-top:8px;position:relative}
+#photoView canvas{width:100%;display:block;border:1px solid var(--ink)}
+#cam{width:100%;display:none;border:1px solid var(--ink);margin-top:8px;transform:scaleX(-1)}
+table.heat{border-collapse:collapse;font-size:11px;width:100%}
+table.heat th{font-weight:400;color:var(--ink3);padding:2px;text-align:center;white-space:nowrap}
+table.heat th.r{text-align:right;padding-right:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+table.heat td{width:26px;height:20px;border:1px solid var(--edge);text-align:center;font-family:VT323,monospace;font-size:14px}
+input[type=range]{width:100%;accent-color:#FE0386}
+input[type=text]{border:1.5px solid var(--ink);background:var(--raised);padding:6px 8px;font-size:16px;width:100%}
+.heard{font-family:VT323,monospace;font-size:19px;min-height:24px;padding:3px 6px;background:var(--sunk);border:1px solid var(--edge);margin-top:6px}
+.lst{font-size:12.5px;display:grid;gap:2px}
+.lst div{display:grid;grid-template-columns:1fr auto auto;gap:8px}
+.lst .vis{color:var(--pink)}
+.about p{margin:0 0 9px}
+.about a{color:var(--ink)}
+details.tdet>summary{list-style:none;cursor:pointer}
+details.tdet>summary::-webkit-details-marker{display:none}
+details.tdet[open]>summary span:last-child:after{content:" open"}
+.trow{grid-template-columns:150px minmax(0,1fr) 46px}
+.trow .lab{font-size:12px}
+#eyeSal{pointer-events:none}
+@media (max-width:900px){
+  body{overflow:auto}
+  #app{height:auto;min-height:100%}
+  main{grid-template-columns:minmax(0,1fr);grid-template-rows:62vh auto}
+  #side{border-left:0;border-top:2px solid var(--ink)}
+  .pane{max-height:none;overflow:visible}
+  .tag{display:none}
+}
+@media (max-width:600px){#eyecard{width:56%}#eyeMode{display:none}#hint{display:none}.chips .chip:nth-child(n+3){display:none}#tool{gap:4px;left:8px;right:8px;bottom:8px}#tool .btn{min-height:34px;padding:4px 7px;font-size:12px;box-shadow:2px 2px 0 var(--ink)}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div id="app">
+<header>
+  <div class="mark">HACKLE<b>.</b></div>
+  <div class="tag">a dog with a brain, a body and eyes, running in your browser</div>
+  <div class="chips">
+    <span class="chip" id="chipGpu">GPU ...</span>
+    <span class="chip" id="chipPhys">PHYS ...</span>
+    <span class="chip" id="chipNet">EYE NET off</span>
+    <span class="chip" id="chipClock">10:00</span>
+    <span class="chip" id="chipFps">-- fps</span>
+  </div>
+</header>
+<main>
+<section id="stage" aria-label="3D yard">
+  <div id="load"><div><div class="big">waking the dog<b style="color:var(--pink)">...</b></div><div class="note" id="loadNote">loading model</div></div></div>
+  <div id="eyecard"><div class="bh"><span class="eyewho"><button id="eyeWhoDog" class="on" title="what the dog sees">DOG EYE</button><button id="eyeWhoHis" title="what Moheeb sees">HIS EYES</button></span><span id="eyeMode">dichromat</span></div><div id="eyewrap"><canvas id="eye" width="320" height="160"></canvas><canvas id="eyeBoxes" width="320" height="160"></canvas><canvas id="eyeSal" width="320" height="160"></canvas></div></div>
+  <div id="hint">click ground: point. shift+click: Moheeb throws there. click dog: pet. drag: orbit. right drag, two fingers or WASD: move the camera freely, Q and E for height, F to follow the dog again. WASD drives the dog in manual mode.</div>
+  <div id="bubble">...</div>
+  <div id="hbubble" style="display:none"></div>
+  <div id="toast"></div>
+  <div id="drop">show the dog this photo</div>
+  <div id="tool">
+    <button class="btn pk" id="bThrow"><svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5c3 1 7 1 10 0M3 11c3-1 7-1 10 0" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Throw ball</button>
+    <button class="btn" id="bTreat"><svg viewBox="0 0 16 16"><rect x="3" y="5" width="10" height="6" rx="1" fill="currentColor"/></svg>Treat</button>
+    <button class="btn" id="bGood"><svg viewBox="0 0 16 16"><path d="M2 9l4 4 8-10" fill="none" stroke="currentColor" stroke-width="2"/></svg>Good dog</button>
+    <button class="btn" id="bNo"><svg viewBox="0 0 16 16"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2"/></svg>No</button>
+    <button class="btn" id="bFill"><svg viewBox="0 0 16 16"><path d="M2 8h12l-2 5H4z" fill="currentColor"/></svg>Fill bowl</button>
+    <button class="btn" id="bSquirrel"><svg viewBox="0 0 16 16"><circle cx="6" cy="10" r="3" fill="currentColor"/><path d="M9 11c4 0 5-4 3-7-2-2-5 0-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Squirrel</button>
+    <button class="btn" id="bCam"><svg viewBox="0 0 16 16"><path d="M1 5h4l1-2h4l1 2h4v8H1z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="9" r="2.4" fill="currentColor"/></svg><span id="camLab">Follow</span></button>
+    <button class="btn" id="bMic"><svg viewBox="0 0 16 16"><rect x="6" y="1" width="4" height="9" rx="2" fill="currentColor"/><path d="M3 8a5 5 0 0010 0M8 13v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="micLab">Talk</span></button>
+  </div>
+</section>
+<aside id="side">
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-p="pBrain">BRAIN</button>
+    <button role="tab" aria-selected="false" data-p="pBody">BODY</button>
+    <button role="tab" aria-selected="false" data-p="pSense">SENSE</button>
+    <button role="tab" aria-selected="false" data-p="pTrain">TRAIN</button>
+    <button role="tab" aria-selected="false" data-p="pHuman">HUMAN</button>
+    <button role="tab" aria-selected="false" data-p="pTune">TUNE</button>
+    <button role="tab" aria-selected="false" data-p="pAbout">HOW</button>
+  </div>
+  <div class="pane on" id="pBrain">
+    <div class="blk"><div class="bh"><span>BEHAVIOR</span><span id="behT">0.0s</span></div><div class="bb"><div class="big" id="behName">idle</div><div class="note" id="behWhy">standing around</div></div></div>
+    <div class="blk"><div class="bh"><span>UTILITY</span><span id="utilMode">sampled</span></div><div class="bb" id="utilRows"></div><div class="bb note" id="pendNote" style="padding-top:0">drive reduction reward, softmax choice with commitment</div></div>
+    <div class="blk"><div class="bh"><span>DRIVES</span><span>need 0..1</span></div><div class="bb" id="driveRows"></div>
+      <div class="bb" style="padding-top:0"><div class="row"><span class="lab">tempo</span><input type="range" id="tempo" min="0.25" max="8" step="0.25" value="1"><span class="v" id="tempoV">1x</span></div></div></div>
+    <div class="blk"><div class="bh"><span>AFFECT</span><span>valence x arousal</span></div><div class="bb"><canvas class="inst" id="affect" width="340" height="120"></canvas></div></div>
+    <div class="blk"><div class="bh"><span>SLEEP AND CLOCK</span><span id="slpStage">awake</span></div><div class="bb"><canvas class="inst" id="hyp" width="340" height="64"></canvas>
+      <div class="kv" style="margin-top:6px"><b>time</b><span id="kClock">10:00</span><b>sleep pressure</b><span id="kSp">0</span><b>body clock</b><span id="kCirc">0</span><b>bond</b><span id="kBond">0.5</span><b>wag mode</b><span id="kWag">-</span></div>
+      <div class="note" style="margin-top:6px">Sleep pressure builds while awake and drains asleep; the body clock peaks near 7 and 19 with a midday dip. Sleep runs onset, NREM, short REM with paddling paws, and often a wake after REM. Pet dogs sleep about 11 hours a day.</div></div></div>
+    <div class="blk" id="cortexBlk"><div class="bh"><span>CORTEX</span><span id="cortexSt">checking</span></div><div class="bb">
+      <div class="note">A vision language model running on your GPU looks at the dog eye frame, reads its drives, and returns what it saw, an inner thought and a goal. Nothing leaves the browser. Weights download once and stay cached.</div>
+      <div class="row" style="grid-template-columns:84px 1fr;margin-top:8px"><span class="lab">model</span><select id="vlmPick" style="border:1.5px solid var(--ink);background:var(--raised);padding:6px;font-size:14px"><option value="gemma">Gemma 4 E2B (about 3.3 GB)</option><option value="lfm">LFM2-VL 450M (about 320 MB, faster)</option></select></div>
+      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bVlmLoad">Load model</button><button class="btn" id="bThink" disabled>Look and think</button><label class="tog"><input type="checkbox" id="autoThink">on its own every 30s</label></div>
+      <div class="row" style="grid-template-columns:84px minmax(0,1fr) 42px"><span class="lab">download</span><div class="bar p"><i id="vlmBar"></i></div><span class="v" id="vlmPct">0</span></div>
+      <div class="row" style="grid-template-columns:84px 1fr"><span class="lab">ask the dog</span><input type="text" id="askIn" placeholder="what do you see? (enter)" disabled></div>
+      <div class="heard" id="cortexOut">no thoughts yet</div></div></div>
+  </div>
+  <div class="pane" id="pBody">
+    <div class="blk"><div class="bh"><span>GAIT CPG</span><span id="gaitName">stand</span></div><div class="bb">
+      <canvas class="inst" id="cpg" width="340" height="150"></canvas>
+      <div class="kv" style="margin-top:8px"><b>speed</b><span id="kSpeed">0</span><b>stride freq</b><span id="kFreq">0</span><b>duty</b><span id="kDuty">0</span><b>turn rate</b><span id="kTurn">0</span><b>posture</b><span id="kPost">stand</span><b>Froude</b><span id="kFr">0</span><b>body source</b><span id="kSrc">cpg</span></div></div></div>
+    <div class="blk"><div class="bh"><span>NEURAL GAIT</span><span id="nnSt">off</span></div><div class="bb">
+      <div class="note">A codebook matching network trained on real dog motion capture (AI4AnimationPy, Paul and Sebastian Starke) predicts the next half second of a 27 bone dog: walk, pace, trot, canter, sit, lie. It runs on the CPU in a worker and is retargeted onto this rig. Bows, paw lifts and shakes hand back to the procedural body with an inertialized blend.</div>
+      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bNnLoad" disabled>neural gait not in this build</button></div>
+      <div class="kv" style="margin-top:6px"><b>guidance</b><span id="kGuide">-</span><b>inference</b><span id="kNnMs">-</span><b>contacts</b><span id="kCont">-</span></div>
+      <div class="note" style="margin-top:6px">Model and mocap are CC BY-NC 4.0 (non commercial), web port by sweriko. Toggle it under TUNE, layers.</div></div></div>
+    <div class="blk"><div class="bh"><span>FOOTFALLS</span><span>LF RF LH RH</span></div><div class="bb"><canvas class="inst" id="foot" width="340" height="96"></canvas><div class="note">Hildebrand plot of the last 4 s: dark is stance. Walk shows a four beat lateral sequence, trot pairs the diagonals, gallop goes rotary.</div></div></div>
+    <div class="blk"><div class="bh"><span>CONTROL</span><span>drive it</span></div><div class="bb">
+      <label class="tog"><input type="checkbox" id="manual">manual drive (WASD or arrows, shift to run)</label>
+      <label class="tog"><input type="checkbox" id="xray">x-ray: skeleton, IK targets, contacts</label>
+      <label class="tog"><input type="checkbox" id="prints" checked>footprints</label>
+      <label class="tog"><input type="checkbox" id="ikOn" checked>leg IK and terrain adaptation</label>
+      <label class="tog"><input type="checkbox" id="sound" checked>sound</label>
+    </div></div>
+    <div class="blk"><div class="bh"><span>MODEL</span><span id="mdlName">dog.glb</span></div><div class="bb"><div class="kv" id="mdlInfo"></div>
+      <div class="note" style="margin-top:6px">Drop another Meshy quadruped GLB on the stage to swap bodies.</div></div></div>
+  </div>
+  <div class="pane" id="pSense">
+    <div class="blk"><div class="bh"><span>VISION</span><span id="netSt">off</span></div><div class="bb">
+      <label class="tog"><input type="checkbox" id="dogColor" checked>dichromat color and 20/75 acuity</label>
+      <label class="tog"><input type="checkbox" id="netOn">YOLOv8n on the eye feed (WebGPU, falls back to WASM)</label>
+      <label class="tog"><input type="checkbox" id="showSal">show saliency and the current fixation on the eye</label>
+      <div class="kv"><b>looking at</b><span id="kFocus">-</span></div>
+      <div class="lst" id="detList"></div>
+    </div></div>
+    <div class="blk"><div class="bh"><span>PERCEPTS</span><span>fov 240</span></div><div class="bb"><div class="lst" id="perList"></div></div></div>
+    <div class="blk"><div class="bh"><span>SHOW IT</span><span>photo or webcam</span></div><div class="bb">
+      <div class="btns"><label class="btn" for="photoIn">Pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="btn" id="bWebcam">Webcam</button></div>
+      <div class="note" style="margin-top:6px">The dog runs the same detector on whatever you show it: cats get barked at, food gets begged for, balls get a play bow. Webcam and microphone ask for permission; Chrome or Edge work best. With the cortex model loaded, the dog also tells you what it thinks of the photo.</div>
+      <div id="photoView"><canvas id="photo" width="320" height="240"></canvas></div>
+      <video id="cam" playsinline muted></video>
+    </div></div>
+    <div class="blk"><div class="bh"><span>NOSE AND EARS</span><span id="sniffSt">-</span></div><div class="bb"><label class="tog"><input type="checkbox" id="showPuffs">show scent puffs in the yard</label><div class="kv"><b>wind</b><span id="kWind">-</span><b>puffs</b><span id="kPuffs">0</span><b>left / right</b><span id="kLR">-</span></div><div class="row"><span class="lab">scent</span><div class="bar p"><i id="scentBar"></i></div><span class="v" id="scentV">0</span></div><div class="row"><span class="lab">sound</span><div class="bar"><i id="hearBar"></i></div><span class="v" id="hearV">0</span></div></div></div>
+  </div>
+  <div class="pane" id="pTrain">
+    <div class="blk"><div class="bh"><span>CUES</span><span>say or click</span></div><div class="bb">
+      <div class="btns" id="cueBtns"></div>
+      <div class="heard" id="heard">say "sit", "spin", or any new word</div>
+      <div class="row" style="grid-template-columns:84px 1fr"><span class="lab">dog name</span><input type="text" id="dogName" value="Pixel"></div>
+      <div class="row" style="grid-template-columns:84px 1fr"><span class="lab">type a cue</span><input type="text" id="cueIn" placeholder="press enter"></div>
+    </div></div>
+    <div class="blk"><div class="bh"><span>ASSOCIATIONS</span><span>RW + Pearce-Kaye-Hall</span></div><div class="bb"><div style="overflow-x:auto"><table class="heat" id="heat"></table></div>
+      <div class="note" style="margin-top:6px">Rows are cues, columns are actions. Cells show net strength, excitation minus a separate inhibition that fades faster, so an extinguished cue partly comes back after a break. The attn column is each cue's associability: it rises after surprises and falls as the outcome becomes predictable. Credit decays with delay (eligibility trace), so a slow treat can reward whatever the dog is doing when it lands. If nothing is strong the dog offers tricks it was rewarded for before; teach a new word by praising whatever it does.</div>
+      <div class="btns" style="margin-top:8px"><button class="btn" id="bReset">Reset learning</button></div></div></div>
+  </div>
+  <div class="pane" id="pHuman">
+    <div class="blk"><div class="bh"><span>MOHEEB</span><span id="humMode">ai</span></div><div class="bb">
+      <div class="big" id="humTask">idle</div><div class="note" id="humWhy">standing on the porch</div>
+      <label class="tog"><input type="checkbox" id="humAI" checked>AI Moheeb runs his own day (off: you drive him with the buttons)</label>
+      <label class="tog"><input type="checkbox" id="humMindOn">let the cortex model drive him every 25s (load it in BRAIN first)</label>
+      <div class="btns" style="margin-top:6px"><button class="btn" id="bCall">Call the dog</button><button class="btn" id="bPet">Pet the dog</button><button class="btn" id="bTrainNow">Train a new word</button></div>
+      <div class="heard" id="humMind" style="white-space:pre-wrap">his own mind is off</div></div></div>
+    <div class="blk"><div class="bh"><span>VOICE</span><span>pocket tts</span></div><div class="bb">
+      <div class="note">Starts with the browser voice. Load Pocket TTS to speak in his cloned voice (the clip from FERRULE is embedded); the engine downloads once from Hugging Face.</div>
+      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bVoiceLoad">Load his voice</button><label class="tog"><input type="checkbox" id="humVoiceOn" checked>speak out loud</label></div>
+      <div class="heard" id="voiceSt">browser voice</div></div></div>
+    <div class="blk"><div class="bh"><span>TRAINING</span><span>he teaches</span></div><div class="bb" id="humTrain"></div>
+      <div class="bb note" style="padding-top:0">He says a cue, waits for what the dog does, then praises a match (sometimes with a treat) or says no. Those are the same rewards the TRAIN tab learns from, so the dog really picks up his words, including made up ones like boop.</div></div>
+    <div class="blk"><div class="bh"><span>SAID</span><span>latest first</span></div><div class="bb lst" id="humSaid"></div></div>
+  </div>
+  <div class="pane" id="pTune"></div>
+  <div class="pane about" id="pAbout">
+    <div class="blk"><div class="bh"><span>STACK</span><span>all local</span></div><div class="bb note" style="color:var(--ink2)">
+      <p>Body: your Meshy GLB, drawn by three.js WebGPURenderer with a WebGL2 fallback. Two motion sources share the rig: a central pattern generator (walk, pace, trot, canter, gallop picked by Froude number with hysteresis, Raibert foot placement, two bone IK) and a neural gait from dog motion capture (AI4AnimationPy codebook matching, retargeted by rotation deltas from both bind poses with leg length scaled paw targets locked by predicted contacts). Switches between them, and between postures, are inertialized (Holden) so nothing snaps.</p>
+      <p>On top: critically damped springs for posture and gaze, a tail chain driven by eight discrete wag modes with an owner side bias (Ren 2022, Quaranta 2007), spring ears kicked by head motion, centripetal lean and fore and hind load shift, a mass scaled shake off (Dickerson 2012), breathing jittered per cycle, pink noise drift so a still dog is never frozen, and paw paddling in REM.</p>
+      <p>Brain: drives reward by how much they reduce internal deficits (Keramati and Gutkin 2011). The choice is sampled from a softmax with a commitment bonus, urgent options start after an ex-Gaussian latency while the head turns first, and quiet changes wait for the current act to finish. Sleep pressure plus a two peak body clock run onset, NREM, REM and wake. Play bows need eye contact, a scolding brings the appeasement set keyed to his posture (Horowitz 2009), mutual gaze builds a bond (MacLean and Hare 2015), pointing is followed by gesture type and bond (Clark 2019), and exploring is bolder with him in view. Learning keeps Rescorla-Wagner with Pearce-Kaye-Hall associability, a separate inhibitory weight that fades faster, eligibility traces so a late treat can teach the wrong thing, and free operant offers.</p>
+      <p>Senses: Itti-Koch saliency on the dog eye frame (intensity, blue yellow, edges, motion weighted highest) with top down drive bias and inhibition of return kept in world directions; looming startle from time to contact; per dog sound direction error (Guerineau 2022); acuity that falls from bright to dim light (Lind 2017); a puff plume with whiffs and blanks plus decaying ground trails, sampled only on sniffs at 4 to 7 Hz in bouts (Craven 2010), tracked by surging upwind and casting crosswind (Celani 2014). YOLOv8n still runs on the eye feed.</p>
+      <p>Human: Moheeb with retargeted Quaternius UAL clips (CC0). His gaze follows saccade statistics (Eyes Alive), SmartBody gaze ratios and Stahl head recruitment; root motion uses velocity springs and the walking curvature law; planted feet lock; reaches follow minimum jerk; the throw is a phased kinematic chain with jitter; he breathes, sways, shows mood in his posture, approaches the dog from the side, and points.</p>
+      <p>Cortex: Gemma 4 E2B or LFM2-VL 450M on WebGPU sets goals on events, using a memory stream ranked by recency, importance and relevance (Park 2023). Reflexes and timing stay in JS.</p>
+      <p>Every number above is live in the TUNE tab, including seven temperament traits (Jones and Gosling 2005). Each layer can be switched off to compare against the old canned build.</p>
+      <p>Licenses: neural gait model and mocap CC BY-NC 4.0 (Meta AI4AnimationPy, port by sweriko), so this build is for non commercial use. Animation clips CC0 (Quaternius). Everything else here is original.</p>
+    </div></div>
+  </div>
+</aside>
+</main>
+</div>
+<script type="module">/*@@APP@@*/</script>
+<script type="text/plain" id="vlmWorker">
+// body of the cortex runner: run inside a module worker, or on the main thread if workers fail; post() sends results back
+const TJS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js';
+let T = null, proc = null, model = null, kind = null;
+const files = {};
+function prog(p) {
+  if (p.status !== 'progress' || !p.total) return;
+  files[p.file] = [p.loaded, p.total];
+  let a = 0, b = 0; for (const k in files) { a += files[k][0]; b += files[k][1]; }
+  post({ t: 'progress', loaded: a, total: b });
+}
+return async m => {
+  try {
+    if (m.t === 'load') {
+      T = await import(TJS); kind = m.kind;
+      const Cls = kind === 'gemma' ? T.Gemma4ForConditionalGeneration : T.Lfm2VlForConditionalGeneration;
+      proc = await T.AutoProcessor.from_pretrained(m.id, { progress_callback: prog });
+      model = await Cls.from_pretrained(m.id, { dtype: 'q4f16', device: 'webgpu', progress_callback: prog });
+      post({ t: 'ready' });
+    } else if (m.t === 'ask') {
+      const img = new T.RawImage(new Uint8ClampedArray(m.rgba), m.w, m.h, 4).rgb();
+      const messages = [{ role: 'user', content: [{ type: 'image' }, { type: 'text', text: m.prompt }] }];
+      const prompt = proc.apply_chat_template(messages, { add_generation_prompt: true, enable_thinking: false });
+      const inputs = kind === 'gemma' ? await proc(prompt, img, null, { add_special_tokens: false }) : await proc(img, prompt, { add_special_tokens: false });
+      const t0 = performance.now();
+      const out = await model.generate({ ...inputs, max_new_tokens: m.max || 80, do_sample: false });
+      const n = inputs.input_ids.dims.at(-1);
+      const text = proc.batch_decode(out.slice(null, [n, null]), { skip_special_tokens: true })[0];
+      post({ t: 'answer', id: m.id, text, ms: performance.now() - t0, tokens: out.dims.at(-1) - n });
+    }
+  } catch (err) { post({ t: 'error', id: m.t === 'load' ? null : m.id, msg: String((err && err.message) || err) }); }
+};
+</script>
+<script type="text/plain" id="voiceB64">
+@@VOICE_B64@@
+</script>
+<script type="application/json" id="humanAnims">
+@@ANIMS@@
+</script>
+<script type="application/octet-stream" id="humanGLB">
+@@HUMAN_GLB@@
+</script>
+<script type="application/octet-stream" id="dogGLB">
+@@DOG_GLB@@
+</script>
+</body>
+</html>

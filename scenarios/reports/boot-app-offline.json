@@ -1,0 +1,25 @@
+{
+  "file": "dist/dog-simulator.html",
+  "chrome": "Chrome/150.0.7871.125",
+  "offline": true,
+  "booted": true,
+  "backend": "WEBGPU",
+  "human": true,
+  "dropDistance": 0.19,
+  "fetch": {
+    "thrown": true,
+    "picked": true,
+    "dropped": true
+  },
+  "fetchOk": true,
+  "simSeconds": 8.600000000000007,
+  "neural": {
+    "ready": false,
+    "active": false
+  },
+  "errors": [],
+  "blocked": [],
+  "served": 0,
+  "wallSeconds": 47,
+  "pass": true
+}

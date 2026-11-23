@@ -12,7 +12,12 @@ not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 | `legacy/pack/src/nn_gait.js`, `legacy/pack/src/nn_infer.js`, `legacy/pack/nn/quadruped.json` | CC-BY-NC-4.0. A port of sweriko/ai4anim-webgpu, itself derived from AI4AnimationPy (Paul Starke, Sebastian Starke, Meta). Kept in `legacy/` for parity only; never moved into `app/src`. |
 | `legacy/pack/nn/bind.json` | unknown; the rig binding for the network above (inferred derived) |
 | other files in `legacy/pack/` | owner authored (inferred), MIT with this repository |
-| `legacy/pack/work/hanims_min.json` | clip data baked from the Universal Animation Library (CC0-1.0) onto the owner rig |
+| `legacy/pack/work/hanims_min.json` | clip data baked from the Universal Animation Library (CC0-1.0) onto the owner rig; embedded in the app build |
+| `legacy/det/src/` | as the `legacy/pack/src/` file each one copies; `nn_gait.js` and `nn_infer.js` stay CC-BY-NC-4.0 |
+| `app/src/human/placeholder.js` | MIT; capsule humanoid on the auto rig bone layout, no likeness data |
+
+The app build embeds dog.glb, whose licence is unknown; dist/ is outside git
+and no build is published until that is settled.
 
 ## Binary assets, kept out of git in `assets-local/`
 
