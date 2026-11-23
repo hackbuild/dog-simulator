@@ -421,9 +421,11 @@ const brain = {
       // walk with him a little behind and to the side; sniff detours, then trot to catch up
       const hf = V3(Math.sin(HUM.yaw), 0, Math.cos(HUM.yaw)), hl = V3(Math.cos(HUM.yaw), 0, -Math.sin(HUM.yaw)), side = this.fSide || (this.fSide = RNG() < 0.5 ? 1 : -1);
       const spot = V3(HUM.pos.x - hf.x * 0.7 + hl.x * side * 0.9, 0, HUM.pos.z - hf.z * 0.7 + hl.z * side * 0.9), far = dist2(dog.pos, HUM.pos);
-      if (!this.fSniff && far < 3 && RNG() < dt / 9) this.fSniff = now + ORG.exg(2, 0.5, 1.5);
+      // sniff detours start only from beside him, and a lag past 1.8 m is closed at a trot; before, detours started up to 3 m back
+      // and the dog only trotted past 3 m, so it hung 2 to 3 m behind (stroll-follow, 2026-11-22)
+      if (!this.fSniff && far < 1.6 && RNG() < dt / 9) this.fSniff = now + ORG.exg(2, 0.5, 1.5);
       if (this.fSniff && now < this.fSniff) { motor.mode = 'stop'; dog.head.tPitch = 0.95; dog.head.tYaw = Math.sin(now * 2.5) * 0.3; }
-      else { this.fSniff = 0; motor.mode = 'goto'; motor.target.copy(spot); motor.speed = far > 3 ? 2.6 : clamp(HUM.v * 1.1 + 0.2, 0.6, 2); motor.stopDist = 0.4; if (RNG() < 0.02) lookAt(humHead(V3())); else lookForward(0.1); }
+      else { this.fSniff = 0; motor.mode = 'goto'; motor.target.copy(spot); motor.speed = far > 3 ? 2.6 : far > 1.8 ? 2.2 : clamp(HUM.v * 1.1 + 0.2, 0.6, 2); motor.stopDist = 0.4; if (RNG() < 0.02) lookAt(humHead(V3())); else lookForward(0.1); }
       if (!this.stroll) this.done = true;
     } else if (b === 'waitdoor') {
       // waits by the gate, lies down, whines now and then, ears up at every sound; often dozes off

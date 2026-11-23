@@ -21,3 +21,6 @@ Versions follow semver per package. Nothing is published to npm yet.
 - app: passing rule, dog yield, stall waypoint and two circle dog for
   the human (handoff issue 3); task change releases a held kneel; fetch
   ends while the human is away. golden/cpg now recorded on the app.
+- app: the ball no longer stands the seated human up; the dog keeps up
+  on a stroll. scenarios: phone-nudge sets the social drive it needs,
+  stroll-follow holds the squirrel off, bench-sit checks he stays seated.

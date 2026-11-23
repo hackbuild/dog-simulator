@@ -112,8 +112,11 @@ export const SCENARIOS = [
     expect: [{ label: "the sniff search reaches its decide phase", check: (R, rows, probes) => probes.some(([, m]) => m === "decide") }],
   },
   {
+    // the first squirrel comes at 25 s in every run, mid walk, and a chase with the way back costs
+    // 12 to 18 s of the 55 s walk (seeds 2, 3, 9, 21, measured); this scenario measures following, so
+    // the squirrel is held off until the walk is over (scenarios/README.md, findings)
     name: "stroll-follow", seed: 9, seconds: 110,
-    actions: [{ at: 0.5, js: "h.startTask('stroll', {}, 'scenario: stroll');" }],
+    actions: [{ at: 0, js: "h.squirrel.next = 70;" }, { at: 0.5, js: "h.startTask('stroll', {}, 'scenario: stroll');" }],
     shots: [{ at: 40, path: "stroll-follow.png", js: sideShot }],
     expect: [{ label: "the dog stays within 3 m for 80 percent of the walk", check: (R) => { const w = R.filter((r) => r.task === "stroll"); return w.length > 0 && w.filter((r) => dist(r.dogX, r.dogZ, r.humX, r.humZ) < 3).length / w.length >= 0.8; } }],
   },
@@ -124,8 +127,10 @@ export const SCENARIOS = [
     expect: [{ label: "the dog obeys or refuses each cue (obey or confused appears)", check: (R) => R.some((r) => r.cur === "obey" || r.cur === "confused") }],
   },
   {
+    // the nudge needs a dog that wants company (social drive over 0.55, brain.js); the drive starts
+    // at 0.40 and rises about 0.1 per 100 s, so the scenario sets it: without this no seed can pass
     name: "phone-nudge", seed: 11, seconds: 50,
-    actions: [{ at: 0, js: place("human", 0, -1.5, 0) + place("dog", 0, 1.5, Math.PI) }, { at: 0.5, js: "h.startTask('phone', { dur: 45 }, 'scenario: phone');" }],
+    actions: [{ at: 0, js: place("human", 0, -1.5, 0) + place("dog", 0, 1.5, Math.PI) + " h.brain.d.social = 0.8;" }, { at: 0.5, js: "h.startTask('phone', { dur: 45 }, 'scenario: phone');" }],
     shots: [{ at: 30, path: "phone-nudge.png", js: sideShot }],
     expect: [{ label: "the dog nudges while he is on the phone", check: (R) => R.some((r) => r.cur === "nudge") }],
   },
@@ -133,6 +138,10 @@ export const SCENARIOS = [
     name: "bench-sit", seed: 12, seconds: 40,
     actions: [{ at: 0.5, js: "h.startTask('sit', { dur: 60 }, 'scenario: bench');" }],
     shots: [{ at: 30, path: "bench-sit.png", js: "h.setCam(1); const H = h.HUM.pos; h.controls.target.set(H.x, 0.7, H.z); h.camera.position.set(H.x + 1.5, 1.6, H.z + 3.2); h.controls.update();" }],
-    expect: [{ label: "the human sits facing out (yaw within 0.3 rad of pi)", check: (R) => R.some((r) => r.task === "sit" && Math.abs(Math.atan2(Math.sin(Math.PI - r.humYaw), Math.cos(Math.PI - r.humYaw))) < 0.3 && r.humV < 0.05 && r.t > 15) }],
+    expect: [
+      { label: "the human sits facing out (yaw within 0.3 rad of pi)", check: (R) => R.some((r) => r.task === "sit" && Math.abs(Math.atan2(Math.sin(Math.PI - r.humYaw), Math.cos(Math.PI - r.humYaw))) < 0.3 && r.humV < 0.05 && r.t > 15) },
+      // a 60 s sit outlasts the run: nothing the dog does (bringing the ball) stands him up
+      { label: "he stays on the bench for the whole run", check: (R) => R.filter((r) => r.t > 1).every((r) => r.task === "sit") },
+    ],
   },
 ];

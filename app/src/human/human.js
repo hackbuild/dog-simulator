@@ -548,7 +548,9 @@ function humTask(dt) {
       if (!T.s) { m.mode = 'goto'; m.target.copy(SEAT); m.speed = 1.2; m.stopDist = 0.25; m.face = null; if (m.done) { T.s = 'turn'; m.done = false; } }
       // back to the bench before sitting: wait until he actually faces away from the backrest, not on a stale done flag from the walk
       else if (T.s === 'turn') { m.mode = 'face'; m.face = V3(SEAT.x, 0, SEAT.z - 5); const e = Math.abs(wrapA(Math.PI - HUM.yaw)), ke = Math.min(1, dt * 5); HUM.pos.x += (SEAT.x - HUM.pos.x) * ke; HUM.pos.z += (SEAT.z - HUM.pos.z) * ke; if (e < 0.12 && Math.abs(HUM.w) < 0.4) { T.s = 'down'; T.k = 0; haSit(true); } if (T.t > 30) { T.s = 'down'; T.k = 0; haSit(true); } }
-      if (T.s === 'down') { m.mode = 'stop'; T.k += dt; HUM.look = dist2(HUM.pos, dog.pos) < 8 ? dogFace : null; if (T.k > 3 && RNG() < dt * 0.04) humSay(pick(H_LINES.chat), 3.5); if (T.k > T.args.dur || (brain.cur === 'fetch' && ball && ball.held && dist2(dog.pos, HUM.pos) < 2)) { haSit(false); T.s = 'up'; T.k = 0; } }
+      if (T.s === 'down') { m.mode = 'stop'; T.k += dt; HUM.look = dist2(HUM.pos, dog.pos) < 8 ? dogFace : null; if (T.k > 3 && RNG() < dt * 0.04) humSay(pick(H_LINES.chat), 3.5); if (T.k > T.args.dur) { haSit(false); T.s = 'up'; T.k = 0; }
+        // the dog bringing the ball does not stand him up: he stays seated, says so once, and the ball waits at his feet for after
+        else if (brain.cur === 'fetch' && ball && ball.held && dist2(dog.pos, HUM.pos) < 2 && !T.ballSaid) { T.ballSaid = 1; humSay(pick(['Later, bud. I am sitting.', 'Leave it there, I will get it in a bit.']), 2.5); } }
       if (T.s === 'up') { m.mode = 'stop'; T.k += dt; if (!HA.sit) end(); }
       if (T.t > 400) { haSit(false); end(); }
       break;
