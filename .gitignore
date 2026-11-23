@@ -18,3 +18,5 @@ pkg/
 *.wasm.b64
 assets-local/
 scenarios/shots/
+# ux walk screenshots and scratch runs
+.local/
