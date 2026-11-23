@@ -46,7 +46,7 @@
   },
   "dependencies": {
     "@hackbuild/gait": "0.1.0",
-    "@hackbuild/motion-net": "0.1.0",
+    "@hackbuild/motion-net": "0.2.0",
     "@hackbuild/tunables": "0.1.0",
     "@hackbuild/senses": "0.1.0",
     "@hackbuild/drives": "0.1.0",

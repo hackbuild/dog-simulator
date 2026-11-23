@@ -109,6 +109,8 @@ function installSim() {
       for (let i = 0; i < n; i++) {
         simStep(STEP); steps++;
         if (eyeWait) { const w = eyeWait; eyeWait = null; await w; }
+        // a gait prediction asked for in this step lands before the next one
+        if (NG.inflight) await NG.inflight;
         for (const x of simState()) mix(x); str(brain.cur + '|' + (brain.sub || '') + '|' + (HUM.task ? HUM.task.name : ''));
         if (steps % 15 === 0) row();
       }

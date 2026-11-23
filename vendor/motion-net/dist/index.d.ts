@@ -1,33 +1,15 @@
 import { type WasmSource } from "./load.js";
-import { type FetchOptions, type WeightSource } from "./fetch.js";
-import { type CodebookFile } from "./manifest.js";
-import { type SessionOptions } from "./session.js";
-import { CodebookGait, type BindPose, type CodebookGaitOptions } from "./quadruped.js";
 export type { WasmSource } from "./load.js";
-export * from "./manifest.js";
-export * from "./fetch.js";
-export { createCpuModel, type Accumulation, type CpuModel } from "./cpu.js";
-export { createHost, type HostReply, type HostRequest } from "./host.js";
-export { createSession, type Backend, type NetSession, type SessionOptions, type Where } from "./session.js";
-export { createGpuModel, requestDevice, MATVEC_WGSL, POINTWISE_WGSL, type GpuModel } from "./webgpu.js";
-export * from "./quadruped.js";
+export * from "./layout.js";
+export * from "./weights.js";
+export * from "./engine.js";
+/** Loads the wasm for the page side helpers (golden trace). The predictor loads its own copy. */
 export declare function load(source?: WasmSource): Promise<void>;
 export declare function loadSync(source: ArrayBuffer | ArrayBufferView | WebAssembly.Module): void;
-/** The native and wasm agreement trace of the small seeded nets. */
+/** The seeded random network trace that the native and wasm builds must agree on. */
 export declare function goldenTrace(seed: number): Float64Array;
-export interface QuadrupedSource {
-    /** The quadruped json (model, skeleton, control, guidances, bin), or a URL to it. */
-    manifest: CodebookFile | string | URL;
-    /** The quadruped weights: a URL, ArrayBuffer or File. CC BY-NC 4.0. */
-    weights: WeightSource;
-    /** The 27 bind matrices, or a URL to them. */
-    bind: BindPose | string | URL;
-    fetch?: FetchOptions;
-    session?: SessionOptions;
-    gait?: CodebookGaitOptions;
-}
-/**
- * Loads the quadruped codebook network from caller sources and returns its
- * gait host. Load @hackbuild/gait first; the host fills gait's motor state.
- */
-export declare function loadQuadrupedGait(src: QuadrupedSource): Promise<CodebookGait>;
+/** Uniform numbers in [0, 1); the family contract. */
+export type Rng = () => number;
+/** The linear congruential generator of the specification's test vectors. */
+export declare function lcg(seed: number): Rng;
+export * from "./host.js";

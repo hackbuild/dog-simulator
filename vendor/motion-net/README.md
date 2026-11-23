@@ -1,209 +1,141 @@
 # @hackbuild/motion-net
 
-A runtime for small motion networks, and a quadruped gait host over the
-published codebook matching network. The kernels are the Rust crate
-`crates/motion-net` compiled to wasm32 with SIMD128; a WGSL path runs the
-same models on WebGPU. Code is MIT. No weights ship in this package or
-this repository: the caller gives a URL, ArrayBuffer or File, and the
-weight licence is stated on first load.
+A runtime and a quadruped gait host for the published categorical codebook
+matching network (Starke et al., "Categorical Codebook Matching for
+Embodied Character Controllers", SIGGRAPH 2024).
 
-- Models: dense stacks (`kind: "mlp"`, one activation per layer, optional
-  input and output normalization) and codebook matching (`kind:
-  "codebook"`: an estimator picks a soft code per group, a denoiser refines
-  it, a FiLM decoder conditioned on time decodes a sequence of frames).
-  Both are written from the published descriptions of the architectures.
-- A neutral `NetManifest` (model plus a tensor table of offset, count,
-  shape and f16 or f32) and `codebookManifest(file)` for the upstream
-  quadruped file layout.
-- `createSession(manifest, weights, opts)`: WebGPU first, then the wasm
-  kernels in a blob worker, then the same kernels in the page. Each step
-  down is said through `onNotice` ("no webgpu adapter. the network runs on
-  cpu.", "blob workers are refused here. the network runs in the page at a
-  lower rate.").
-- CPU accumulation: `f64` (default) gives the same sums as a JavaScript
-  double precision port; `f32` ran about 2.8 times faster (measured, see
-  below) and stays within 3.1e-7 of it on the quadruped network.
-- `fetchVerified` and `readWeights`: one buffer sized from content-length,
-  optional Cache Storage copy, SHA-256 check, progress.
-- `CodebookGait`, a gait host for the quadruped network that implements
-  `@hackbuild/gait`'s `LocomotionBackend` and fills its `MotorState`
-  (source `neural`, phase, duty and stride frequency from predicted
-  touchdown timing through gait's `PhaseEstimator`).
-- `NeuralFallback`: the network with a procedural gait behind it.
+Licences:
 
-## The quadruped network
+- This code is MIT. It was written from a functional specification of the
+  network (weight format, equations, input and output layout, test
+  vectors) and the published paper, by a team that did not read the
+  earlier implementation in this repository or the upstream code.
+- The weights are CC BY-NC 4.0 (Paul Starke and Sebastian Starke, Meta,
+  AI4AnimationPy). They are loaded at run time from a URL, an ArrayBuffer
+  or a File, and are not included in this package, its builds or the
+  example site. The licence line is stated on the first load in a page.
 
-The weights are AI4AnimationPy's quadruped codebook network by Paul Starke
-and Sebastian Starke (Meta), in the web export by sweriko, licensed CC
-BY-NC 4.0: non commercial use only. A session that loads them is non
-commercial. `loadQuadrupedGait` states this through `onNotice` the first
-time it loads them. Sizes from the file (vendor): input 339, latent 1024
-in 256 groups of 4, output 412 per frame, 16 frames over 0.5 s, 3 denoiser
-passes, 17,704,644 bytes of mostly f16 weights.
+## What it does
 
-The host follows HACKLE lesson 6 and plan item 5.4.2:
-
-- Every request is stamped with the sim time it was made; its sequence
-  starts playing at its age on arrival, with its own playhead advanced at
-  the playback rate, so a timescale change never jumps the pose.
-- The previous sequence blends into a new one over one request interval
-  from its arrival (smoothstep).
-- Playback speed follows the requested trajectory length, between the
-  file's minimum and maximum timescale.
-- `health()` gives `staleSeconds` (sim seconds since the request time of
-  the sequence in use), `inferenceMs`, `slowFrames`, `ok` and a `reason`.
-  Stale above 0.30 s or 3 frames in a row longer than 1/15 s (inferred
-  starting values).
-- Past the last decoded frame the root coasts on its last velocity,
-  halving every 0.15 s (inferred), in place of a clamp.
-- Turn in place: a turn rate with no speed gives zero root velocity, a
-  trajectory that turns, and the walk guidance. `turnInPlace: false`
-  turns it off and the capability says so.
-- `enter(from)` seeds root, speed and pose from the outgoing backend and
-  requests at once; `follow(root)` keeps the root on the procedural body
-  while that one drives, and moves a root the caller pushed out of an
-  obstacle: the pose, the sequences in play and the requested
-  trajectories move with it, so the next frame does not play back into
-  the obstacle (before this, a root held at a wall read 73 m/s of
-  speed in the host test, computed).
-- Only the frames used before the next request are decoded (`decodeFrames:
-  "auto"`): 9 of 16 at 10 Hz with 40 ms latency (computed).
-- An in page session predicts at half the file's rate.
-
-`NeuralFallback` hands the body to the procedural backend when `health()`
-is not ok, holds it there 2 s (inferred), keeps the network predicting
-meanwhile, and calls `onSwitch(to, reason)` on every switch so the caller
-inertializes bones and paw targets (`@hackbuild/organic`
-`PoseInertializer`). Diagnostics read `motorState()`, which names the
-active source.
-
-Differences from the HACKLE host, each found by a test here: the speed
-controller integrates the error into a bias instead of adding `kp` times
-the error each frame, which oscillated against a network that follows its
-request at once; the error uses the speed the body shows (predicted speed
-times timescale); the guidance follows the commanded speed; the request
-is made after the pose update so its stamp matches its pose (a one frame
-lag gave a 2 cm offset and a speed ripple at each arrival); the standing
-root hold applies only when the prediction has no travel and never to yaw.
+- `loadWeights({ manifest, bin, sha256? })`: reads the JSON manifest and
+  the flat binary from a URL, bytes or a File, checks the SHA-256 when one
+  is given, and checks every tensor's dtype, shape, count, alignment and
+  range against the dimensions in the manifest before anything runs. A
+  failure throws a message that names the tensor. `UPSTREAM` holds one
+  public copy pinned to a commit and its SHA-256 (computed from a
+  download).
+- The forward pass in Rust (`crates/motion-net`): binary16 weights decoded
+  exactly to f32, code estimate, three refinement passes, and the time
+  conditioned decoder for 16 frames. The first decoder layer is affine in
+  time, so it runs as two matrix products instead of sixteen; layers 2 and
+  3 run batched over the frames. The dot product keeps 16 running sums in
+  a fixed order: four f32x4 registers on wasm32 SIMD128, an array natively,
+  so both builds give the same bits.
+- `Predictor.create(weights, { worker })`: runs the network in a worker
+  made from a blob, which also starts from file://. The worker drives the
+  wasm through a plain C ABI, with no generated glue to import. When a
+  worker is refused or does not start in 10 s, the same code runs in the
+  page (`mode` and `fallbackReason` say which).
+- `QuadrupedHost`: implements the `LocomotionBackend` contract of
+  `@hackbuild/gait` (structurally, without depending on it) and fills its
+  `MotorState` with source `neural`. Per frame it
+  - smooths the command (speed and turn rate, or a world velocity and
+    facing) and picks a style label by speed (Idle, Walk, Trot, Canter;
+    any of the nine labels can be held);
+  - builds the input from the dog's own current pose and velocities, a 16
+    sample trajectory, and the style pose, and asks for a new prediction
+    every 0.1 s with one in flight;
+  - plays each prediction from the time it was requested, so latency is
+    skipped rather than replayed, and hides the seam to the previous one
+    with a decaying offset;
+  - integrates the network's root motion, lets the root take over the
+    drift of the network's planted paws, and leans the trajectory with an
+    integral loop on speed and turn rate until the dog meets the command;
+  - pins each paw while its contact value says stance, bends the limb with
+    a two bone solve to reach the pin, and blends a released paw back;
+  - holds the last pose and brings the root to rest when a prediction is
+    late, and drops one that lands after a newer one.
+  It exposes the root transform and velocity, 27 bone positions and
+  rotations (right handed, +Z forward, +X to the dog's left, as in the
+  gait package), contact values, per paw phase, the style, wall clock
+  latency and evaluation time, and per frame foot slide. Every constant in
+  `DEFAULT_TUNING` carries the reason for its value beside it.
 
 ## Install
 
-Not published yet. From a clone:
-
-    npm ci && npm run build -w @hackbuild/gait -w @hackbuild/motion-net
-
-## Use
-
-```ts
-import { load as loadGait } from "@hackbuild/gait";
-import { loadQuadrupedGait, NeuralFallback } from "@hackbuild/motion-net";
-
-await loadGait();
-// your copies of the files; the weights are CC BY-NC 4.0
-const neural = await loadQuadrupedGait({
-  manifest: "/nn/quadruped.json",
-  weights: "/nn/quadruped.bin",
-  bind: "/nn/bind.json",
-  fetch: { sha256: "<hash of your copy>", cache: "motion-net" },
-  session: { onNotice: (line) => (status.textContent = line) },
-});
-const legs = new NeuralFallback(neural, proceduralBackend, { onSwitch: (to, why) => inertializeFrom(to, why) });
-
-function frame(dt: number) {
-  const root = legs.update(dt, { speed: 1.2, turnRate: 0.3 });
-  const motor = legs.motorState(); // diagnostics show motor.source
-  const { positions, rotations, contacts } = neural.pose(); // network units, 27 bones
-}
+```sh
+npm install @hackbuild/motion-net three
 ```
 
-Any model:
-
 ```ts
-import { createSession, type NetManifest } from "@hackbuild/motion-net";
-const s = await createSession(manifest, weights, { prefer: ["webgpu", "wasm-simd"] });
-const out = await s.run(input);
+import { Predictor, QuadrupedHost, UPSTREAM, loadWeights } from "@hackbuild/motion-net";
+
+const weights = await loadWeights({ manifest: UPSTREAM.manifest, bin: UPSTREAM.bin, sha256: UPSTREAM.binSha256 });
+const predictor = await Predictor.create(weights);
+const dog = new QuadrupedHost(predictor, weights.styles);
+// each frame
+const root = dog.update(dt, { speed: 1.2, turnRate: 0.3 });
+dog.positions; // 27 x 3, world, meters
+dog.rotations; // 27 x 4 quaternions
 ```
-
-`dist/motion-net.iife.js` is the single file build (`HackbuildMotionNet`,
-both wasm copies inlined: one for the page, one inside the worker source).
-
-## Develop
-
-    npm run build -w @hackbuild/motion-net
-    npx vitest run packages/motion-net
-    cargo test -p hackbuild-motion-net
-
-Parity with the legacy CPU port needs the owner's local files, which stay
-out of git (weights CC BY-NC 4.0, the legacy file outside this
-repository):
-
-    node packages/motion-net/scripts/make-golden.mjs <legacy-infer.cjs> <dir with quadruped.json, quadruped.bin>
-    HB_QUADRUPED_DIR=<that dir> npx vitest run packages/motion-net
-
-The inputs come from a seed in `scripts/inputs.mjs`; the outputs go to
-`test/golden/`, which is gitignored. Without them the two weight tests are
-skipped and say so.
 
 ## What is verified, and what is not
 
 ### Verified on this machine
 
-- 2026-11-22: `cargo test -p hackbuild-motion-net` passed 11 of 11 tests
-  (counted); clippy clean natively and for wasm32 with the wasm feature.
-- 2026-11-22: `npx vitest run packages/motion-net` passed 17 of 17 tests
-  (counted), the 2 weight tests included, on the local quadruped files.
-- 2026-11-22: the golden trace (a seeded small codebook net and mlp, both
-  accumulations) is bit identical between the native and the wasm build
-  (measured).
-- 2026-11-22: quadruped parity with the legacy JavaScript port over 4
-  seeded inputs: f64 accumulation max abs difference 0 (bit equal), f32
-  accumulation 3.07e-7; worst full 16 frame run 56.5 ms f64 and 20.0 ms
-  f32 in Node 22 on this Mac (measured). The legacy port took 60 to 99 ms
-  on the same inputs (measured).
-- 2026-11-22: all 65,536 halves decode the same in JavaScript and wasm;
-  the small codebook net matches a plain double precision reference within
-  2e-6 (f64) and 5e-5 (f32); the split first FiLM layer equals per frame
-  FiLM (computed).
-- 2026-11-22: real weights, in page session, 120 frames at 30 Hz paced at
-  real time (time scale 1): root travelled 3.62 m in 4 s at a 1 m/s command
-  with the walk guidance, every bone position finite, health ok, inference
-  15 ms for a 9 frame decode (measured).
-- 2026-11-22: against a scripted network in sim time: health goes from no
-  prediction to ok to stale past 0.30 s; 3 slow frames fail health; speed
-  converges to the command with a frame to frame speed change under 0.05
-  m/s after 2 s; turn in place turns more than 1 rad with under 2 cm of root
-  travel; the coast halves velocity in 0.15 s; the motor state recovers a 2
-  Hz contact cycle within 0.2 Hz; the fallback hands over at the neural
-  root, holds 2 s, and returns (computed).
-- 2026-11-22: both WGSL modules pass naga 30.0.2 validation (measured).
+- 2026-11-23: `cargo test -p hackbuild-motion-net` passed 8 of 8 tests
+  (counted), clippy clean natively and for wasm32 with SIMD128. A plain
+  double precision evaluation of the equations matches the crate's forward
+  pass within 1e-5 relative on a random network (measured).
+- 2026-11-23: the golden trace (two evaluations of a seeded random network
+  loaded from binary16 and binary32 bytes, and binary16 decodes) is bit
+  identical between the native build and the wasm SIMD128 build (measured,
+  vitest).
+- 2026-11-23: the three test vectors of the specification pass on the
+  published weights: worst listed value error 4.8e-7 relative, worst
+  checksum error 7.8e-8 relative, against a tolerance of 1e-4 and 1e-5
+  (measured). One evaluation takes 4 to 6 ms in Node on an Apple M1
+  (measured). These tests need the weights and run only when
+  `HB_MOTION_NET_BIN` and `HB_MOTION_NET_MANIFEST` point at local copies;
+  otherwise they are skipped and the test output says so. CI has no
+  weights, so CI does not run them.
+- 2026-11-23: host on the published weights, 60 Hz, page engine in Node,
+  over the last 8 s of 16 s runs (measured): commanded 0.6, 1, 1.6, 2.4 and
+  3.5 m/s gave 0.598, 0.999, 1.626, 2.395 and 3.515 m/s; stance paw slide
+  p95 per frame 0, 0, 5.7, 4.8 and 10.2 mm with pins, against 7.4, 9.6,
+  11.8, 17.6 and 17.4 mm for the network's own paws; 1 rad/s at 1 m/s gave
+  0.999 rad/s; idle travels under 5 cm in 3 s. Gated on the weights as
+  above.
+- 2026-11-23: host on a kinematic stand in (no weights, runs in CI): speed
+  within 5 percent at 0.6, 1.2 and 2.5 m/s, turn rate within 10 percent,
+  idle, a world velocity with a facing, no NaN on zero, negative, NaN or
+  infinite dt or commands, a 1.5 s late prediction held and recovered with
+  the largest bone move 47 mm in one frame, a stale prediction dropped,
+  stride frequency and duty recovered from contacts (measured).
+- 2026-11-23: the example page on the published weights in Chrome 150 on
+  an Apple M1 at real frame rate, through `tools/check-examples.mjs`: the
+  network ran in the blob worker, 4.5 ms per evaluation, 5 ms wall clock
+  latency, 59.9 fps p50, pinned stance slide p95 5.6 mm per frame against
+  10.8 mm for the network's paws, while wandering through speeds
+  and turns (measured). The screenshot shows a standing four legged
+  skeleton; a person watching the gait at frame rate has not been
+  recorded.
+
+- 2026-11-23: `Predictor.predict` rejects an input of the wrong length and
+  keeps working; a run asked for after `dispose`, a worker crash after
+  start, and an engine error with no run id each reject the pending runs
+  instead of leaving them open (tested on a small synthetic network in
+  the page engine; the worker crash path is untested).
 
 ### Not verified by anything
 
-- The WebGPU path has never run: Node has no WebGPU and no browser was
-  driven. Its numbers against the CPU path are unknown.
-- The blob worker path has never run (Node has no global Worker); the in
-  page path speaks the same protocol and is tested.
-- Motion of the network on a real dog rig, in a real browser at real frame
-  rate. Nobody has looked at it. The retarget onto a rig (the HACKLE
-  `nnRig` and `nnApply` work) is not in this package.
-- The 0.30 s stale bound, the 2 s hold and the 0.15 s coast halflife are
-  starting values, not tuned against a slide metric.
-- The last 81 output values per frame are not read (inferred: a guidance
-  pose echo).
-
-See `docs/browser-checks.md` at the repository root.
-
-## Size budget
-
-| file | raw | gzip |
-|---|---|---|
-| `motion_net_bg.wasm` | 83,994 bytes | 36,572 bytes |
-| `motion-net.iife.js` (wasm inlined twice, gait wasm included) | 323,171 bytes | 126,039 bytes |
-
-Measured 2026-11-22. Budget: wasm under 100 KB raw.
-
-## Licence
-
-Code MIT (`LICENSE` at the repository root). This README is CC-BY-4.0, its
-code samples also MIT. The quadruped weights are CC BY-NC 4.0 and are not
-part of this package.
+- The worker and the in page fallback from file://, and the fallback on a
+  page whose policy refuses blob workers. Node has no worker, so tests run
+  the page path only.
+- Retargeting the 27 bone skeleton onto another rig; the host gives the
+  network's own skeleton, and the bone axes follow the source rig's
+  conventions.
+- Pace, Sit, Stand, Lie and Jump through the host: they can be held as a
+  style, and nothing measures how they look.
+- At a gallop (above about 3 m/s) the limbs cannot always reach their pins
+  and the paw slides up to about 10 mm per frame p95 (measured above).

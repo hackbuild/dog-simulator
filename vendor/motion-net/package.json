@@ -1,7 +1,7 @@
 {
   "name": "@hackbuild/motion-net",
-  "version": "0.1.0",
-  "description": "A runtime for small motion networks (dense stacks, codebook matching) on WebGPU or wasm SIMD in a worker, and a quadruped gait host over the published codebook network. Ships no weights.",
+  "version": "0.2.0",
+  "description": "Runtime and quadruped gait host for a categorical codebook matching motion network. Loads external CC BY-NC 4.0 weights at run time. Rust core on wasm SIMD128, worker with an in-page fallback.",
   "type": "module",
   "license": "MIT",
   "author": "Moheeb Zara <hackbuildvideo@gmail.com>",
@@ -25,12 +25,11 @@
     },
     "./wasm": "./dist/wasm/motion_net_bg.wasm"
   },
+  "unpkg": "dist/motion-net.iife.js",
+  "jsdelivr": "dist/motion-net.iife.js",
   "files": [
     "dist",
     "README.md",
     "LICENSE"
-  ],
-  "dependencies": {
-    "@hackbuild/gait": "0.1.0"
-  }
+  ]
 }

@@ -1,41 +1,31 @@
-// @hackbuild/motion-net: a runtime for small motion networks (dense
-// stacks and codebook matching) on WebGPU or wasm SIMD, in a worker with
-// an in page fallback, and a quadruped gait host over the published
-// codebook network. Weights never ship here: the caller gives a URL,
-// ArrayBuffer or File, and the licence of the weights is stated on load.
-import { loadWasm, loadWasmSync } from "./load.js";
+// @hackbuild/motion-net: a runtime for the categorical codebook matching
+// quadruped network and a gait host that drives a dog from it. The network
+// runs in Rust on wasm SIMD128 inside a worker, or in the page when a
+// worker is refused. Weights are CC BY-NC 4.0 and are fetched at run time.
+import { assertReady, loadWasm, loadWasmSync } from "./load.js";
 import * as wasm from "./wasm/motion_net.js";
-import { readWeights } from "./fetch.js";
-import { codebookManifest, QUADRUPED_LICENCE } from "./manifest.js";
-import { createSession } from "./session.js";
-import { CodebookGait, readGuidance } from "./quadruped.js";
-export * from "./manifest.js";
-export * from "./fetch.js";
-export { createCpuModel } from "./cpu.js";
-export { createHost } from "./host.js";
-export { createSession } from "./session.js";
-export { createGpuModel, requestDevice, MATVEC_WGSL, POINTWISE_WGSL } from "./webgpu.js";
-export * from "./quadruped.js";
+export * from "./layout.js";
+export * from "./weights.js";
+export * from "./engine.js";
+const PKG = "@hackbuild/motion-net";
+/** Loads the wasm for the page side helpers (golden trace). The predictor loads its own copy. */
 export async function load(source) {
     await loadWasm(source);
 }
 export function loadSync(source) {
     loadWasmSync(source);
 }
-/** The native and wasm agreement trace of the small seeded nets. */
+/** The seeded random network trace that the native and wasm builds must agree on. */
 export function goldenTrace(seed) {
+    assertReady(PKG);
     return wasm.goldenTrace(seed);
 }
-const json = async (src) => (typeof src === "string" || src instanceof URL ? (await (await fetch(src)).json()) : src);
-/**
- * Loads the quadruped codebook network from caller sources and returns its
- * gait host. Load @hackbuild/gait first; the host fills gait's motor state.
- */
-export async function loadQuadrupedGait(src) {
-    await loadWasm();
-    const [file, bind, weights] = await Promise.all([json(src.manifest), json(src.bind), readWeights(src.weights, src.fetch)]);
-    const manifest = codebookManifest(file, QUADRUPED_LICENCE, src.fetch?.sha256);
-    const guidance = readGuidance(file, weights);
-    const session = await createSession(manifest, weights, src.session);
-    return new CodebookGait(session, { file, bind, guidance }, src.gait);
+/** The linear congruential generator of the specification's test vectors. */
+export function lcg(seed) {
+    let s = seed >>> 0;
+    return () => {
+        s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+        return s / 4294967296;
+    };
 }
+export * from "./host.js";

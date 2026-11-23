@@ -39,6 +39,8 @@ const motor = { mode: 'stop', target: V3(), speed: 0, stopDist: 0.3, face: null,
 const manualKeys = {};
 function steer(dt) {
   let vCmd = 0, wCmd = 0, yTo = null;
+  // the network turns about 0.3 s behind its command, so its heading loops run at half gain
+  const kW = NG.active ? NG.TURN_GAIN : 1;
   if ($('manual').checked) {
     const k = manualKeys; const run = k.shift ? 4.8 : 1.6;
     vCmd = (k.w || k.arrowup ? run : 0) - (k.s || k.arrowdown ? 0.6 : 0);
@@ -51,7 +53,7 @@ function steer(dt) {
   } else if (motor.mode === 'goto') {
     const to = tmpV[0].copy(motor.target).sub(dog.pos); to.y = 0;
     const dist = to.length(), stopD = NG.active ? Math.max(motor.stopDist, NG.gait.capabilities.minStopDistance) : motor.stopDist; // the network cannot stop on a coin
-    if (dist < stopD) { motor.done = true; vCmd = 0; if (motor.face) { const fa = Math.atan2(motor.face.x - dog.pos.x, motor.face.z - dog.pos.z); wCmd = clamp(wrapA(fa - dog.yaw) * 4, -2.5, 2.5); if (Math.abs(wrapA(fa - dog.yaw)) < 0.12) wCmd = 0; } }
+    if (dist < stopD) { motor.done = true; vCmd = 0; if (motor.face) { const fa = Math.atan2(motor.face.x - dog.pos.x, motor.face.z - dog.pos.z); wCmd = clamp(wrapA(fa - dog.yaw) * 4 * kW, -2.5, 2.5); if (Math.abs(wrapA(fa - dog.yaw)) < 0.12) wCmd = 0; } }
     else {
       motor.done = false;
       const dir = to.divideScalar(dist);
@@ -68,13 +70,15 @@ function steer(dt) {
       dir.add(avoid).normalize();
       const want = Math.atan2(dir.x, dir.z), err = wrapA(want - dog.yaw);
       const wMax = lerp(3.2, 1.6, ss(1.5, 4.5, dog.v));
-      wCmd = clamp(err * 3.2, -wMax, wMax);
+      wCmd = clamp(err * 3.2 * kW, -wMax, wMax);
       vCmd = motor.speed * clamp(Math.cos(err) * 1.2, 0, 1) * clamp((dist - stopD) / 0.9 + 0.15, 0, 1);
+      // the network needs room to stop: its speed is held under a constant deceleration profile
+      if (NG.active) vCmd = Math.min(vCmd, Math.sqrt(2 * NG.DECEL * Math.max(dist - stopD, 0)));
       if (Math.abs(err) > 1.4) vCmd = Math.min(vCmd, 0.35);
       if (dist < 1.1 && Math.abs(err) > 0.5) vCmd = Math.min(vCmd, 0.12);
     }
   } else if (motor.mode === 'turn') { wCmd = motor.turnRate; vCmd = 0; }
-  else if (motor.mode === 'face' && motor.face) { const fa = Math.atan2(motor.face.x - dog.pos.x, motor.face.z - dog.pos.z); const e = wrapA(fa - dog.yaw); wCmd = Math.abs(e) > 0.15 ? clamp(e * 4, -2.4, 2.4) : 0; motor.done = Math.abs(e) < 0.15; }
+  else if (motor.mode === 'face' && motor.face) { const fa = Math.atan2(motor.face.x - dog.pos.x, motor.face.z - dog.pos.z); const e = wrapA(fa - dog.yaw); wCmd = Math.abs(e) > 0.15 ? clamp(e * 4 * kW, -2.4, 2.4) : 0; motor.done = Math.abs(e) < 0.15; }
   const postureBusy = dog.posture.sit + dog.posture.down + dog.posture.bow > 0.35;
   if (postureBusy) { vCmd = 0; wCmd *= 0.0; }
   vCmd *= brain ? brain.speedMul() : 1;
@@ -194,13 +198,11 @@ function locomotion(dt) {
     NG.active = false; dog.org.inert.capture(); dog.org.src = 'cpg'; dog.standing = true; dog.legs.forEach(l => { l.stance = true; l.step = null; });
   }
   if (!NG.active) { integrate(dt); gaitUpdate(dt); return; }
-  // goal for the network: the speed and a facing a little ahead of the turn, from the same motor
-  let v = Math.max(dog.v, 0), h = dog.yaw + clamp(dog.w * 0.45, -1.3, 1.3);
-  if (motor.mode === 'turn' && Math.abs(dog.w) > 0.2) h = dog.yaw + Math.sign(dog.w) * 1.1;
-  const P = dog.postureT;
-  const r = NG.update(dt, v / TV('B.nnSpeed') / NR.s, h, { sit: P.sit, down: P.down });
-  const nx = r.x * NR.s, nz = r.z * NR.s, q = V3(nx, 0, nz); pushOut(q, 0.24);
-  if (q.x !== nx || q.z !== nz) NG.follow(q.x, q.z, r.yaw);
+  // the network takes the same motor's speed (in its own meters) and turn rate
+  const v = Math.max(dog.v, 0), P = dog.postureT;
+  const r = NG.update(dt, v / TV('B.nnSpeed') / NR.s, dog.w, { sit: P.sit, down: P.down });
+  const q = V3(r.x, 0, r.z); pushOut(q, 0.24);
+  if (q.x !== r.x || q.z !== r.z) NG.follow(q.x - r.x, q.z - r.z);
   dog.pos.x = q.x; dog.pos.z = q.z; dog.yaw = r.yaw;
   dog.standing = NG.speed < 0.1; dog.freq = 0;
   const g = NG.guidance; dog.gaitW = [g === 'Walk' ? 1 : 0, g === 'Pace' ? 1 : 0, g === 'Trot' ? 1 : 0, g === 'Canter' ? 1 : 0, 0];

@@ -74,9 +74,9 @@ const sub = (s, k, v) => {
 export function licenceComment() {
   const text = (p) => readFileSync(join(NM, p), "utf8").replace(/-->/g, "- ->").trim();
   const parts = [
-    "dog-simulator, one self contained file. App code MIT (https://github.com/hackbuild/dog-simulator, LICENSE),",
-    "except @hackbuild/motion-net, CC-BY-NC-4.0 until its clean-room rewrite is vendored. Full list: LICENCES.md.",
-    "Bundled: three.js (MIT, see its header in the script), @hackbuild/gait, tunables, senses, drives, cameras (MIT),",
+    "dog-simulator, one self contained file. App code MIT (https://github.com/hackbuild/dog-simulator, LICENSE).",
+    "Full list: LICENCES.md. The neural gait weights (CC-BY-NC-4.0) are fetched at run time and are not in this file.",
+    "Bundled: three.js (MIT, see its header in the script), @hackbuild/gait, motion-net, tunables, senses, drives, cameras (MIT),",
     "@dimforge/rapier3d-compat (Apache-2.0), fonts IBM Plex Mono and VT323 (OFL-1.1), Permanent Marker and",
     "Special Elite (Apache-2.0), Quaternius Universal Animation Library clips (CC0-1.0).",
     "",

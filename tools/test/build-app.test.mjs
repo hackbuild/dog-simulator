@@ -5,7 +5,7 @@
 // isolation check runs everywhere.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { existsSync, mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { buildApp } from "../build-app.mjs";
@@ -21,8 +21,9 @@ test(`app build is self contained (${owner ? "owner" : "public"} build)`, async 
   assert.ok(!html.includes("rapier3d-compat@"), "rapier from a cdn");
   assert.ok(!html.includes("<script type=\"importmap\"") && !html.includes("type = 'importmap'"), "import map");
   for (const s of ["nnInferHost", "NRoot", "NSeq", "setupActor"]) assert.ok(!html.includes(s), `gait host code: ${s}`);
-  // the network manifest and bind stay out of the file; only the pinned weight URL is in it
-  assert.ok(!html.includes("codebook_channels"), "network manifest bundled");
+  // the network manifest and bind stay out of the file; only the pinned weight URL is in it. The
+  // MIT loader names the manifest keys it reads, so the check is on keys only the data carries
+  for (const k of ["ik_chains", "synchronization_sensitivity", "sequence_window"]) assert.ok(!html.includes(k), `network manifest bundled: ${k}`);
   assert.ok(!html.includes("0.471712"), "legacy bind matrices bundled");
   const urls = html.match(/sweriko\/ai4anim-webgpu\/[0-9a-f]+\//g) ?? [];
   assert.deepEqual([...new Set(urls)], ["sweriko/ai4anim-webgpu/b539455f849f284a1e814eb11ab649eb594319dc/"], "weights from the pinned commit only");
@@ -31,6 +32,13 @@ test(`app build is self contained (${owner ? "owner" : "public"} build)`, async 
   assert.ok(inputs.length > 10, "esbuild metafile lists the inputs");
   assert.deepEqual(inputs.filter((p) => p.startsWith("legacy/") || p.includes("/legacy/")), [], "bundle input under legacy/");
   assert.deepEqual(inputs.filter((p) => /(^|\/)nn_[^/]*$/.test(p)), [], "bundle input named like the legacy network code");
+  // every vendored package in the bundle is MIT; motion-net is the clean-room rewrite
+  const vendored = [...new Set(inputs.filter((p) => p.startsWith("vendor/")).map((p) => p.split("/")[1]))];
+  assert.ok(vendored.includes("motion-net"), "motion-net is bundled from vendor/");
+  for (const v of vendored) assert.equal(JSON.parse(readFileSync(join(ROOT, "vendor", v, "package.json"), "utf8")).license, "MIT", `vendor/${v} licence`);
+  assert.ok(!/CC-BY-NC/i.test(readFileSync(join(ROOT, "vendor/motion-net/LICENSE"), "utf8")), "vendor/motion-net LICENSE names CC-BY-NC");
+  // the page's licence comment says the code is MIT throughout
+  assert.ok(!/except @hackbuild\/motion-net/.test(html.slice(0, 4000)), "licence comment still excepts motion-net");
   assert.ok(inputs.every((p) => /^(app\/src\/|node_modules\/|vendor\/|hackle:)/.test(p)), `unexpected bundle input: ${inputs.filter((p) => !/^(app\/src\/|node_modules\/|vendor\/|hackle:)/.test(p)).join(", ")}`);
   // the page carries the notices of the bundled Apache-2.0 and OFL-1.1 code and fonts
   assert.match(html.slice(0, 200000), /Apache License\s+Version 2\.0/, "rapier licence text");
