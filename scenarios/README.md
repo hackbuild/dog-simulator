@@ -13,10 +13,11 @@ Lockstep scenarios on a built file. `list.mjs` holds the scenarios,
   changes behaviour and legacy/det stays as the handoff behaved, so only
   the app build is held to them.
 - `golden/neural/`: the scenarios for handoff issues 1 and 3 with the
-  neural gait on, app build: `@hackbuild/motion-net` (MIT) runs the
-  network and its gait host, `app/src/dog/neural.js` retargets it. Needs
-  `assets-local/quadruped.bin` (CC-BY-NC-4.0), served by the runner in
-  place of the pinned upstream URL. `--nnacc f32|f64` picks the sums.
+  neural gait on, app build: `@hackbuild/motion-net` (MIT, clean room)
+  runs the network and its `QuadrupedHost`, `app/src/dog/neural.js` maps
+  it onto the dog. Needs `assets-local/quadruped.bin` (CC-BY-NC-4.0),
+  served by the runner in place of the pinned upstream URL. `--nnacc` is
+  ignored since 2026-11-23: the engine has one fixed order of sums.
   The layer starts off in the app; the variant opens with `&on=L.neural`.
 - `golden/neural-legacy/`: the same runs with the legacy network host
   (CC-BY-NC-4.0), legacy/det builds only (`--variant neural-legacy`).
@@ -80,6 +81,47 @@ Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 4 decimals, plus an FNV hash over full precision state at every step.
 
 ## Trace changes
+
+### 2026-11-23, clean-room motion-net
+
+`vendor/gait` and `vendor/motion-net` re-vendored from hackbuild-motion
+babcc9f. motion-net is the clean-room MIT rewrite (a509079, engine
+babcc9f): a network engine in a worker and a `QuadrupedHost` that pins
+stance paws and runs its own speed and turn loops. The earlier
+`app/src/dog/neural.js` was deleted unread and written again against the
+new API; lockstep awaits each prediction after the step that asked for
+it, so a prediction lands on the same step on every run.
+
+- cpg: 31 of 31 owner goldens identical on the final build, 29 of 31
+  passing as before (measured).
+- public set: 13 of 13 identical, 10 of 13 passing as before (measured).
+- neural: every trace differs from the first prediction, so
+  `golden/neural/` is re-recorded on the new build. Expectations, 12
+  issue runs: 12 of 12 with the earlier host (as recorded), 9 of 12 with
+  the first cut of the new adapter, 12 of 12 after the adapter fixes
+  below (measured). The 3 failures were corridor-pass seeds 2, 3 and 21,
+  human stall 2.75, 2.5 and 2 s (measured): on the call the dog ran up to
+  2 m past him, since the network slows from 3 m/s over about a second
+  and its Sit style does not brake, then crossed his path as he set off.
+  The re-recorded goldens replay 12 of 12 identical (measured).
+- Adapter rules while the network drives (`NG` in neural.js, read by
+  body.js `steer`): heading loops at half gain (at full gain the heading
+  swung about 1 rad either side of the goal, measured); a goto approach
+  capped by a 1.2 m/s^2 stopping profile (stall on corridor-pass seeds 2,
+  3, 21 fell to 1, 1.5 and 0.75 s, measured; longer linear ramps of 1.8 to
+  3.5 m left 1.5 to 3.25 s); Sit and Lie styles held until the root is
+  under 0.3 m/s; a root faster than asked is asked for less in proportion.
+- Gait on the app rig, lockstep, a circle of radius 7 m
+  (`tools/runner/gait-probe.mjs`, last 8 of 16 s per speed): the motor
+  asked 0.39, 0.84, 1.91 and 2.48 m/s and the root ran 0.39, 0.78, 1.79
+  and 2.29 m/s (92 to 100 percent); stance paw slide per step p50 0 mm at
+  each speed, p95 9.7, 3.5, 9.6 and 7.9 mm, of which the host's own paws
+  account for 9.7, 2.4, 9.0 and 7.7 mm (measured,
+  `reports/gait-probe.json`). Before the paw offset was held in the world
+  during stance the p50 was 2 to 3 mm (measured).
+- `tools/build-html.mjs --infer` (legacy/det with the earlier kernels)
+  is removed: it spoke the earlier motion-net API. `golden/neural-legacy`
+  is unchanged.
 
 ### 2026-11-23, audit fix pass
 

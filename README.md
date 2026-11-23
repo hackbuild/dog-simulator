@@ -5,12 +5,13 @@ A dog and its person living in a browser tab. The dog walks, sniffs, plays fetch
 Status: 2026-11-22, the handoff build (in `legacy/`) moved here and made
 deterministic. `app/src` holds the app; `legacy/` holds the pack as
 received and its deterministic copy; `scenarios/` holds golden traces.
-Licence status, 2026-11-23: the app build is not MIT throughout yet. An
-audit found that the vendored `@hackbuild/motion-net` was adapted from the
-CC-BY-NC network host rather than written from the published architecture
-description, so it is now labelled CC-BY-NC-4.0 and the app build includes
-CC-BY-NC code through it. A clean-room MIT replacement is being written;
-this repository switches to it when it lands.
+Licence status, 2026-11-23: the app build is MIT throughout again. The
+vendored `@hackbuild/motion-net` is the clean-room MIT rewrite
+(hackbuild-motion a509079 to babcc9f, written from a functional
+specification and the published paper by builders who did not read the
+CC-BY-NC code), and `app/src/dog/neural.js` was rewritten against it.
+The network weights stay CC-BY-NC-4.0, are fetched at run time and are
+not in any build.
 
 ## Build
 
@@ -54,12 +55,14 @@ esbuild bundles them into the single file with their wasm inlined as base64.
 The dog can walk on the quadruped codebook network (AI4AnimationPy by Paul
 Starke and Sebastian Starke, Meta; web export by sweriko). Weights and
 manifest are CC-BY-NC-4.0, non commercial use only, and are fetched at
-runtime from the pinned upstream commit; the page states the licence when
-they load. The code that runs them: `@hackbuild/motion-net` (kernels and
-the gait host, CC-BY-NC-4.0 until the clean-room replacement lands) and
-`app/src/dog/neural.js` (MIT; bind pose computed from the network, retarget
-onto this dog). The layer `L.neural` starts off and
-loads the network when you turn it on, so the file opens offline.
+runtime from the pinned upstream commit with a SHA-256 check; the page
+states the licence when they load. The code that runs them is MIT:
+`@hackbuild/motion-net` (the network on wasm SIMD128 in a worker, and its
+`QuadrupedHost`, a `@hackbuild/gait` LocomotionBackend) and
+`app/src/dog/neural.js` (rest pose computed from the Idle style pose in the
+weights, paw targets and body height, pitch and roll onto this dog, the
+switch rules). The layer `L.neural` starts off and loads the network when
+you turn it on, so the file opens offline.
 
 ## Checks in Chrome
 
@@ -68,6 +71,7 @@ loads the network when you turn it on, so the file opens offline.
     npm run scenarios -- compare --file dist/dog-simulator.html
     npm run scenarios -- compare --set public      # the set CI runs
     npm run check:speed -- dist/dog-simulator.html --seed 7 --seconds 60
+    node tools/runner/gait-probe.mjs dist/dog-simulator.html   # neural gait speed and paw slide
 
 puppeteer-core drives the system Chrome; requests are served from pinned
 local files and any other request fails the run.
@@ -82,6 +86,34 @@ local files and any other request fails the run.
 in RULES.md and CONTRIBUTING.md.
 
 ## What is verified, and what is not
+
+### Verified, 2026-11-23, clean-room motion-net
+
+- gait and motion-net vendored from hackbuild-motion babcc9f;
+  `vendor:check` passes. The licence isolation test asserts every
+  vendored package in the bundle is MIT, no bundle input comes from
+  `legacy/` or is named like the legacy network code, and no manifest
+  data is in the file.
+- 31 of 31 cpg owner goldens replay identical (the network never loads
+  with `L.neural` off); 29 of 31 meet their expectations, as before
+  (scent-trail and phone-nudge-late, measured).
+- The public build replays its 13 goldens identical, 10 of 13 passing
+  as before (measured, this machine).
+- Neural issue runs: 12 of 12 expectations with the new host and
+  adapter (measured; 12 of 12 with the earlier host, 9 of 12 with the
+  first cut of the new adapter, see scenarios/README.md).
+  `golden/neural` re-recorded on the new build. The new goldens replay 12 of 12
+  identical (measured).
+- Gait on the app rig, lockstep: root speed 92 to 100 percent of what
+  the motor asked between 0.39 and 2.48 m/s; stance paw slide p50 0 mm,
+  p95 3.5 to 9.7 mm per step (measured, `tools/runner/gait-probe.mjs`).
+- Real frame rate, headful Chrome, machine GPU, 60 s (`#seed=7&on=L.neural`):
+  webgpu, 60 fps in every sample, the network in its worker at 6 to 11 ms
+  a prediction and 6 to 11 ms wall clock latency, the network kept the
+  body in 29 of 30 samples, no hold (measured). Nobody watched it.
+- Size: dist/dog-simulator.html 15,090,554 to 14,778,215 bytes, the
+  public file 6,386,942 to 6,074,603 bytes (measured, before and after
+  this change).
 
 ### Verified, 2026-11-22, Chrome 150 headless on macOS 12
 
@@ -149,13 +181,14 @@ in RULES.md and CONTRIBUTING.md.
 - Motion quality: judged by metrics and stills only. Nobody has watched
   the fixes in a browser at real frame rate.
 - The neural gait in the app build at real frame rate: nobody has watched
-  it. The worker path of motion-net has not been seen to run here; the
-  WebGPU path ran (above).
-- Size: dist/dog-simulator.html is 15,090,554 bytes with the owner pack
-  and dist/dog-simulator-public.html 6,386,942 bytes (measured
-  2026-11-23, both over the 9.3 MB budget). Rapier is 4.3 MB of the
-  5.87 MB script and the dog model 7.3 MB of base64 (measured
-  2026-11-23); the licence comment adds about 46 KB (measured).
+  it, with the earlier host or the clean-room one. The Sit and Lie styles,
+  the paw tilt and the body pitch and roll mapping are judged by numbers
+  only. The worker fallback to the page has not been seen to run here.
+- Size: dist/dog-simulator.html is 14,778,215 bytes with the owner pack
+  and dist/dog-simulator-public.html 6,074,603 bytes (measured
+  2026-11-23, the owner file over the 9.3 MB budget). Rapier is 4.3 MB of the
+  5.56 MB script (5.88 MB before the clean-room motion-net) and the dog
+  model 7.3 MB of base64 (measured 2026-11-23); the licence comment adds about 46 KB (measured).
 - CI runs the public scenario set only; the owner set and the neural
   goldens need `assets-local/` and run locally.
 
@@ -163,6 +196,6 @@ in RULES.md and CONTRIBUTING.md.
 
 | path | licence |
 |---|---|
-| code | MIT (LICENSE), except `vendor/motion-net` (CC-BY-NC-4.0 until its rewrite lands) |
+| code | MIT (LICENSE), `vendor/motion-net` included (clean room, 2026-11-23) |
 | `legacy/` | as received: three files CC-BY-NC-4.0 (`nn_gait.js`, `nn_infer.js`, `quadruped.json`), licence texts as they say; see LICENCES.md |
 | README, CHANGELOG, docs | CC-BY-4.0 (LICENSES/CC-BY-4.0.txt), code samples also MIT |

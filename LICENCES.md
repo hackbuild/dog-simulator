@@ -1,6 +1,7 @@
 # Licences of assets and dependencies
 
-Audit date 2026-11-22, corrected 2026-11-23 after the repository audit.
+Audit date 2026-11-22, corrected 2026-11-23 after the repository audit and again on 2026-11-23
+when the clean-room motion-net was vendored: the app build is MIT throughout.
 Every asset and dependency the builds use, with its source and licence. "unknown" means the pack and the package metadata do
 not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 
@@ -19,12 +20,12 @@ not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 | `legacy/pack/work/hanims_min.json` | clip data baked from the Universal Animation Library (CC0-1.0) onto the owner rig; embedded in the app build |
 | `legacy/det/src/` | as the `legacy/pack/src/` file each one copies; `nn_gait.js` and `nn_infer.js` stay CC-BY-NC-4.0 |
 | `app/src/human/placeholder.js` | MIT; capsule humanoid on the auto rig bone layout, no likeness data |
-| `app/src/dog/neural.js` | MIT; the app side of the neural gait over @hackbuild/motion-net. Holds no network data: the bind pose is computed from the network at load, `legacy/pack/nn/bind.json` is not read |
+| `app/src/dog/neural.js` | MIT; the app side of the neural gait over @hackbuild/motion-net, rewritten on 2026-11-23 against the clean-room API by a builder who did not read the earlier file or the CC-BY-NC host. Holds no network data: the rest pose is computed at load from the Idle style pose in the fetched weights; `legacy/pack/nn/bind.json` is not read |
 | `tools/stub-dog.mjs` and the stub dog it writes | MIT; a box dog written from code, used when the build reads nothing from `assets-local/` |
 | `vendor/tunables`, `vendor/senses`, `vendor/drives`, `vendor/cameras` | MIT; built packages of hackbuild/hackbuild-agents at the commit in `vendor/lock.json`, bundled into the app build |
 | `vendor/scenario` | MIT; built package of hackbuild/hackbuild-agents, used by the scenario runner only, never bundled |
 | `vendor/gait` | MIT; built package of hackbuild/hackbuild-motion at the commit in `vendor/lock.json` |
-| `vendor/motion-net` | CC-BY-NC-4.0. Built package of hackbuild/hackbuild-motion at the commit in `vendor/lock.json`. An audit on 2026-11-23 found it was adapted from the CC-BY-NC host above, and hackbuild-motion relabelled it. It is embedded in the app build, so the app build is non commercial until the clean-room MIT replacement is vendored. |
+| `vendor/motion-net` | MIT, clean room. Built package of hackbuild/hackbuild-motion at babcc9f (2026-11-23), bundled into the app build. hackbuild-motion removed the earlier CC-BY-NC package in a88ea62 and wrote the replacement from a functional specification and the published paper (a509079, engine layer babcc9f), by builders who did not read the CC-BY-NC code. The package holds no weights. |
 
 The app build embeds dog.glb, whose licence is unknown; dist/ is outside git
 and no build is published until that is settled.
@@ -48,7 +49,8 @@ and no build is published until that is settled.
 |---|---|---|---|
 | three | 0.187.0 | legacy: jsDelivr; app: bundled | MIT |
 | @hackbuild/gait, @hackbuild/tunables, @hackbuild/senses, @hackbuild/drives, @hackbuild/cameras | 0.1.0 | app: bundled from `vendor/` | MIT |
-| @hackbuild/motion-net | 0.1.0 | app: bundled from `vendor/` | CC-BY-NC-4.0 until the clean-room rewrite is vendored (see above) |
+| @hackbuild/motion-net | 0.2.0 | app: bundled from `vendor/` | MIT (clean room, see above) |
+| quadruped network weights and manifest | sweriko/ai4anim-webgpu at b539455f | fetched at run time when `L.neural` is turned on, SHA-256 checked, never in the build | CC-BY-NC-4.0 (Paul Starke and Sebastian Starke, Meta, AI4AnimationPy); the page states the licence on load |
 | Rust crates inside the vendored wasm (gait, motion-net, senses, drives): libm 0.2.16, wasm-bindgen 0.2.129, cfg-if 1.0.5, once_cell 1.21.4 | as listed | compiled into the wasm the packages inline | MIT OR Apache-2.0 (vendor) |
 | @dimforge/rapier3d-compat | 0.21.0 | legacy: jsDelivr; app: bundled | Apache-2.0 |
 | onnxruntime-web | 1.23.2 | jsDelivr, on demand for the detector | MIT |
