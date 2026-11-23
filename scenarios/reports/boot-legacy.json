@@ -1,0 +1,25 @@
+{
+  "file": "dist/hackle-legacy.html",
+  "chrome": "Chrome/150.0.7871.125",
+  "offline": false,
+  "booted": true,
+  "backend": "WEBGPU",
+  "human": true,
+  "dropDistance": 0.43,
+  "fetch": {
+    "thrown": true,
+    "picked": true,
+    "dropped": true
+  },
+  "fetchOk": true,
+  "simSeconds": 14.529500000000073,
+  "neural": {
+    "ready": true,
+    "active": true
+  },
+  "errors": [],
+  "blocked": [],
+  "served": 20,
+  "wallSeconds": 337,
+  "pass": true
+}
