@@ -16,7 +16,8 @@ not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 | `legacy/det/src/` | as the `legacy/pack/src/` file each one copies; `nn_gait.js` and `nn_infer.js` stay CC-BY-NC-4.0 |
 | `app/src/human/placeholder.js` | MIT; capsule humanoid on the auto rig bone layout, no likeness data |
 | `app/src/dog/neural.js` | MIT; the app side of the neural gait over @hackbuild/motion-net. Holds no network data: the bind pose is computed from the network at load, `legacy/pack/nn/bind.json` is not read |
-| `vendor/gait`, `vendor/motion-net` | MIT; built packages of hackbuild/hackbuild-motion at the commit in `vendor/lock.json`, written from published descriptions of the architectures |
+| `vendor/gait` | MIT; built package of hackbuild/hackbuild-motion at the commit in `vendor/lock.json` |
+| `vendor/motion-net` | CC-BY-NC-4.0. Built package of hackbuild/hackbuild-motion at the commit in `vendor/lock.json`. An audit on 2026-11-23 found it was adapted from the CC-BY-NC host above, and hackbuild-motion relabelled it. It is embedded in the app build, so the app build is non commercial until the clean-room MIT replacement is vendored. |
 
 The app build embeds dog.glb, whose licence is unknown; dist/ is outside git
 and no build is published until that is settled.

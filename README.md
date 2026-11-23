@@ -5,8 +5,12 @@ A dog and its person living in a browser tab. The dog walks, sniffs, plays fetch
 Status: 2026-11-22, the HACKLE handoff build moved here and made
 deterministic. `app/src` holds the app; `legacy/` holds the pack as
 received and its deterministic copy; `scenarios/` holds golden traces.
-2026-11-23: the app is MIT throughout; its neural gait runs on
-`@hackbuild/motion-net`, and the CC-BY-NC network host stays in `legacy/`.
+Licence status, 2026-11-23: the app build is not MIT throughout yet. An
+audit found that the vendored `@hackbuild/motion-net` was adapted from the
+CC-BY-NC network host rather than written from the published architecture
+description, so it is now labelled CC-BY-NC-4.0 and the app build includes
+CC-BY-NC code through it. A clean-room MIT replacement is being written;
+this repository switches to it when it lands.
 
 ## Build
 
@@ -41,9 +45,10 @@ The dog can walk on the quadruped codebook network (AI4AnimationPy by Paul
 Starke and Sebastian Starke, Meta; web export by sweriko). Weights and
 manifest are CC-BY-NC-4.0, non commercial use only, and are fetched at
 runtime from the pinned upstream commit; the page states the licence when
-they load. The code that runs them is MIT: `@hackbuild/motion-net` (kernels
-and the gait host) and `app/src/dog/neural.js` (bind pose computed from the
-network, retarget onto this dog). The layer `L.neural` starts off and
+they load. The code that runs them: `@hackbuild/motion-net` (kernels and
+the gait host, CC-BY-NC-4.0 until the clean-room replacement lands) and
+`app/src/dog/neural.js` (MIT; bind pose computed from the network, retarget
+onto this dog). The layer `L.neural` starts off and
 loads the network when you turn it on, so the file opens offline.
 
 ## Checks in Chrome
