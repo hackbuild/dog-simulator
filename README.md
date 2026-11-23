@@ -2,7 +2,7 @@
 
 A dog and its person living in a browser tab. The dog walks, sniffs, plays fetch, sleeps and learns cues; the person runs their day around it. One self contained HTML file.
 
-Status: 2026-11-22, the HACKLE handoff build moved here and made
+Status: 2026-11-22, the handoff build (in `legacy/`) moved here and made
 deterministic. `app/src` holds the app; `legacy/` holds the pack as
 received and its deterministic copy; `scenarios/` holds golden traces.
 Licence status, 2026-11-23: the app build is not MIT throughout yet. An
@@ -15,13 +15,22 @@ this repository switches to it when it lands.
 ## Build
 
     npm run build:app      # dist/dog-simulator.html
+    npm run build:public   # dist/dog-simulator-public.html, nothing from assets-local
     npm run build:legacy   # dist/hackle-legacy.html, the pack build byte for byte
     npm run build:det      # dist/hackle-det.html, the deterministic legacy build
 
 The builds read the dog model from `assets-local/` (outside git, listed in
 `assets.lock.json`). The owner's human model and voice reference are used
 when `assets-local/` holds them; otherwise the app builds a placeholder
-human. Licences of every asset and dependency: LICENCES.md.
+human. `build:public` reads nothing from `assets-local/`: the dog is a box
+dog written from code (`tools/stub-dog.mjs`), the human the placeholder,
+and there is no voice clip. CI builds that file. Licences of every asset
+and dependency: LICENCES.md.
+
+The human in the app is the owner, Moheeb Zara. His name, handle and
+speech habits are in the mind prompt and the UI copy of every build,
+the public one included; this is his own app and he keeps it so. His
+likeness files (human model, voice reference) are never committed.
 
 ## Libraries from the sibling repos
 
@@ -32,7 +41,8 @@ copied file. The root `package.json` lists `vendor/*` as workspaces, so
 `import ... from '@hackbuild/motion-net'` resolves without a registry, and
 esbuild bundles them into the single file with their wasm inlined as base64.
 
-    # in ../hackbuild-motion: build at a pushed, clean commit
+    # in a clone of https://github.com/hackbuild/hackbuild-motion (or hackbuild-agents)
+    # next to this one: build at a pushed, clean commit
     npm run build -w @hackbuild/gait -w @hackbuild/motion-net
     # here
     node tools/vendor-libs.mjs                     # refresh every package in vendor/lock.json
@@ -56,6 +66,8 @@ loads the network when you turn it on, so the file opens offline.
     npm run check:boot -- dist/dog-simulator.html --offline
     npm run check:determinism
     npm run scenarios -- compare --file dist/dog-simulator.html
+    npm run scenarios -- compare --set public      # the set CI runs
+    npm run check:speed -- dist/dog-simulator.html --seed 7 --seconds 60
 
 puppeteer-core drives the system Chrome; requests are served from pinned
 local files and any other request fails the run.
@@ -89,7 +101,10 @@ in RULES.md and CONTRIBUTING.md.
   owner's five fixes); the later behaviour fixes are in the app only.
 - 28 of 29 CPG traces meet their expectations; scent-trail fails, diagnosed
   in scenarios/README.md. Handoff issue 3: human stall at most 1.5 s
-  across the sweep (4.75 s before).
+  across the sweep (4.75 s before, both measured). Two of the passes need
+  scenario setup, named in their expectation labels: stroll-follow holds
+  the squirrel off and phone-nudge sets the social drive; the natural
+  variants (stroll-squirrel, phone-nudge-late) are in the list.
 - Motion metrics (jerk, sliding, state toggles, frame time) are reported
   per scenario; see scenarios/README.md.
 - UI copy is lowercase; the page was looked at as a still.
@@ -108,28 +123,46 @@ in RULES.md and CONTRIBUTING.md.
   scenario (the runner's Chrome launch), cameras (the side view). Mover
   is not adopted; scenarios/README.md says why for each part left out.
 
+### Verified, 2026-11-23, audit fix pass
+
+- hackbuild-agents packages re-vendored at 510158c: 29 of 29 cpg and 12
+  of 12 neural goldens identical before any app change (measured).
+- After the app changes of the pass: 31 of 31 cpg (two natural variants
+  added) and 12 of 12 neural goldens identical (measured).
+- The public build (`build:public`) replays its 13 goldens identical on
+  this machine; CI runs that set and the licence isolation test.
+- Neural gait at real frame rate, headful Chrome, machine GPU: webgpu
+  session, 60 fps, 7 to 9 ms a prediction, the network kept the body in
+  30 of 30 samples over 60 s (measured). On SwiftShader the wall clock
+  rule handed the body back on slow frames with holds of 2, 4 and 8 s
+  (measured). The motion was not watched by a person.
+- simSpeed 4 against 1, real time, same seed (7), app build, machine
+  GPU: the traces part at 6.25 sim s (the play drive, fourth decimal)
+  and the dog ends up to 15.4 m from where it was at simSpeed 1 within
+  60 sim s (measured, `scenarios/reports/speed-s7.json`). Real time mode
+  is not simSpeed invariant; lockstep is.
+
 ### Not verified
 
 - Motion quality: judged by metrics and stills only. Nobody has watched
   the fixes in a browser at real frame rate.
-- simSpeed 4 against simSpeed 1 step for step: not run.
 - The neural gait in the app build at real frame rate: nobody has watched
-  it. In a headless real time boot (2026-11-23, loaded machine) it loaded
-  and handed the body back to the pattern generator, since frames ran
-  slower than 1/15 s (the host's health rule). The WebGPU and worker
-  paths of motion-net have not run in this app.
-- Size: dist/dog-simulator.html is 15,039,837 bytes with the owner pack
-  after the motion-net gait and the agents packages (2026-11-23, 415,098
-  bytes more than the 14,624,739 before them; motion-net carries its wasm
-  twice, once for the page and once inside the worker source), and was
-  14,620,125 bytes with the owner pack
-  and 13,141,035 bytes without (measured), over the 9.3 MB budget. Rapier
-  is 4.3 MB of the 5.87 MB script (measured 2026-11-23), the dog model 7.3 MB of base64.
-- CI does not run the Chrome checks; they need `assets-local/`.
+  it. The worker path of motion-net has not been seen to run here; the
+  WebGPU path ran (above).
+- Whether the public goldens, recorded on macOS arm64 SwiftShader, replay
+  on CI's Linux SwiftShader.
+- Size: dist/dog-simulator.html is 15,090,554 bytes with the owner pack
+  and dist/dog-simulator-public.html 6,386,942 bytes (measured
+  2026-11-23, both over the 9.3 MB budget). Rapier is 4.3 MB of the
+  5.87 MB script and the dog model 7.3 MB of base64 (measured
+  2026-11-23); the licence comment adds about 46 KB (measured).
+- CI runs the public scenario set only; the owner set and the neural
+  goldens need `assets-local/` and run locally.
 
 ## Licence
 
 | path | licence |
 |---|---|
-| code | MIT (LICENSE) |
+| code | MIT (LICENSE), except `vendor/motion-net` (CC-BY-NC-4.0 until its rewrite lands) |
+| `legacy/` | as received: three files CC-BY-NC-4.0 (`nn_gait.js`, `nn_infer.js`, `quadruped.json`), licence texts as they say; see LICENCES.md |
 | README, CHANGELOG, docs | CC-BY-4.0 (LICENSES/CC-BY-4.0.txt), code samples also MIT |
