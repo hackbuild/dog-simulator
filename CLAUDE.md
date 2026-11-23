@@ -24,12 +24,13 @@ How an agent works in dog-simulator. RULES.md is absolute and wins over this fil
 
     app/src/     sim, dog, human, world, view, io, main.ts
     packages/    app-only workspace packages; libraries come from the sibling repos
-    legacy/      the HACKLE pack as received, byte identical, for parity
-    external/    optional pieces fetched at runtime, never bundled
+    legacy/      the handoff pack as received, byte identical, for parity
+    vendor/      built library packages from the sibling repos, pinned in vendor/lock.json
     scenarios/   scenario files and golden traces
     tools/       build-html.mjs (one self contained HTML file), house rule linters
     Owner likeness (human model, voice reference) is loaded from an owner asset pack kept
-    outside git; a neutral CC0 human is the default.
+    outside git; the default is a placeholder capsule human (MIT, app/src/human/placeholder.js)
+    and, with `node tools/build-html.mjs public`, a stub dog written from code (tools/stub-dog.mjs).
 
 The family plan and the research behind each package are kept outside this repository by the
 owner. Packages in the sibling repos (hackbuild-motion, hackbuild-browser-ai, hackbuild-agents,

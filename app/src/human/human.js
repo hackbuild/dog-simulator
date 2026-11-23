@@ -1,4 +1,4 @@
-// ---------- the human: Moheeb (FERRULE rig core, biped gait with leg IK, task planner, optional VLM mind) ----------
+// ---------- the human: Moheeb (rig core from the owner's earlier voice app, biped gait with leg IK, task planner, optional VLM mind) ----------
 // Body animation: Quaternius Universal Animation Library (CC0) clips, retargeted offline onto his rig by world space deltas from a shared T-pose
 const RIG = (() => {
 const PREFIX = new Set(['mixamorig', 'bip', 'cc', 'base', 'j', 'bi', 'c', 'def', 'org', 'armature', 'root', 'rig', 'skeleton', 'bone', 'jnt', 'joint', 'sk']);
@@ -226,7 +226,7 @@ function humanHold(on) {
   ball.rb.setBodyType(on ? RAPIER.RigidBodyType.KinematicPositionBased : RAPIER.RigidBodyType.Dynamic, true);
 }
 function handPos(out = V3()) { return HUM.hand ? HUM.hand.getWorldPosition(out) : out.copy(HUM.pos).setY(H(HUM.pos.x, HUM.pos.z) + 1.0); }
-// blocking layers each task may keep across a task change (HACKLE lesson 4); any other held layer is
+// blocking layers each task may keep across a task change (learned in earlier builds: a held layer can outlive its task); any other held layer is
 // released explicitly: a held kneel skips the rest of its hold and plays the stand up (1.3 s), where
 // before it played on through the hold window and froze the feet up to 3.9 s
 const TASK_LAYERS = { get_ball: ['kneel'], pet: ['kneel', 'crouch'], feed: ['kneel'] };

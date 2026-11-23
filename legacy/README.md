@@ -14,8 +14,10 @@ are CC-BY-NC-4.0 (see `pack/nn/AI4ANIM_NOTICE.txt`). They stay here.
 pack's inputs it writes the pack's hackle.html byte for byte
 (`tools/test/build-parity.test.mjs`).
 
-`pack/` is outside the voice lint and is never edited. The pack's Python is
-not run; its scripts carry paths for another machine.
+`pack/` is outside the voice lint and is never edited, so it keeps what
+it was received with: the pack's Python is not run, and its scripts
+(`pack/test_o.py` among them) carry absolute paths from the machine and
+tool that made the pack.
 
 `det/src/` is the deterministic copy of `pack/src`, the step 3 baseline:
 

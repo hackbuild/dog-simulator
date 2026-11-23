@@ -1,4 +1,4 @@
-// Motion metrics (HACKLE lesson 9), sampled in the page at every sim step.
+// Motion metrics (jerk, sliding, toggles and frame time, as earlier builds measured motion), sampled in the page at every sim step.
 // install() wraps window.__sim.step so each step is followed by one sample;
 // the wrapper calls the original step one step at a time, so the trace and
 // its hash are unchanged. frames() is the rAF sampler: one page.evaluate call
