@@ -27,7 +27,9 @@ $('bTreat').onclick = () => { audio(); tossTreat(); };
 $('bCall').onclick = () => { audio(); startTask('call', { user: true }, 'you asked'); };
 $('bPet').onclick = () => { audio(); startTask('pet', { user: true }, 'you asked'); };
 $('bTrainNow').onclick = () => { audio(); const p = pick(NEW_WORDS.concat([['sit', 'sit'], ['spin', 'spin'], ['paw', 'paw']])); startTask('train', { word: p[0], trick: p[1], reps: 5, user: true }, 'you asked: teach "' + p[0] + '" as ' + p[1]); };
-$('bVoiceLoad').onclick = () => { audio(); $('bVoiceLoad').disabled = true; Voice.init(t => { $('voiceSt').textContent = t; }).then(() => { $('voiceSt').textContent = 'pocket tts ready, his cloned voice'; }).catch(e => { $('voiceSt').textContent = 'pocket tts failed: ' + String(e.message || e).slice(0, 60) + '. Using the browser voice.'; $('bVoiceLoad').disabled = false; }); };
+$('bVoiceLoad').onclick = () => { audio(); $('bVoiceLoad').disabled = true; Voice.init(t => { $('voiceSt').textContent = t; }).then(r => { $('voiceSt').textContent = r.cloned ? 'pocket tts ready, his cloned voice' : 'pocket tts ready, stock voice ' + r.voice; }).catch(e => { $('voiceSt').textContent = 'pocket tts failed: ' + String(e.message || e).slice(0, 60).toLowerCase() + '. using the browser voice.'; $('bVoiceLoad').disabled = false; }); };
+// a build without the owner asset pack has no voice clip: pocket tts can only use a stock voice
+if (!voiceClip()) { $('bVoiceLoad').textContent = 'load pocket tts, stock voice'; $('voiceNote').textContent = 'starts with the browser voice. no voice clip in this build, so pocket tts speaks in a stock voice. the engine downloads once from hugging face; models cc by-nc 4.0.'; }
 $('humVoiceOn').onchange = e => { Voice.on = e.target.checked; };
 $('bGood').onclick = () => { audio(); if (HUM.ready) { humSay(pick(H_LINES.praise), 2, true); HUM.mood.pleasedT = 1; } brain.reward(0.8, 'good dog'); };
 $('bNo').onclick = () => { audio(); if (HUM.ready) { humSay(pick(H_LINES.no), 2); HUM.shakeT = 1.1; HUM.mood.frusT = Math.min(1, (HUM.mood.frusT || 0) + 0.4); } brain.reward(-0.8, 'no'); };

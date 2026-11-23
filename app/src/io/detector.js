@@ -1,4 +1,4 @@
-// ---------- YOLO on the eye ----------
+// ---------- yolov8n on the eye (Ultralytics weights, AGPL-3.0, opt in) ----------
 const COCO = ['person','bicycle','car','motorcycle','airplane','bus','train','truck','boat','traffic light','fire hydrant','stop sign','parking meter','bench','bird','cat','dog','horse','sheep','cow','elephant','bear','zebra','giraffe','backpack','umbrella','handbag','tie','suitcase','frisbee','skis','snowboard','sports ball','kite','baseball bat','baseball glove','skateboard','surfboard','tennis racket','bottle','wine glass','cup','fork','knife','spoon','bowl','banana','apple','sandwich','orange','broccoli','carrot','hot dog','pizza','donut','cake','chair','couch','potted plant','bed','dining table','toilet','tv','laptop','mouse','remote','keyboard','cell phone','microwave','oven','toaster','sink','refrigerator','book','clock','vase','scissors','teddy bear','hair drier','toothbrush'];
 const net = { sess: null, ort: null, loading: false, busy: false, ms: 0, ep: '', last: [] };
 const lb = document.createElement('canvas'); lb.width = 640; lb.height = 640; const lbCtx = lb.getContext('2d', { willReadFrequently: true });
@@ -10,12 +10,15 @@ async function loadNet() {
     const ort = await import(window.HACKLE_LIB.ort);
     ort.env.wasm.wasmPaths = ASSETS.wasmDir; ort.env.wasm.numThreads = 1; ort.env.wasm.proxy = false;
     const model = await (await fetchFirst([ASSETS.onnx])).arrayBuffer();
+    const hex = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', model)), b => b.toString(16).padStart(2, '0')).join('');
+    if (hex !== ASSETS.onnxSha) throw new Error('yolov8n.onnx does not match its pinned sha256');
+    console.info('yolov8n (ultralytics): weights agpl 3.0'); toast('yolov8n loaded. weights agpl 3.0.');
     let sess = null, ep = 'wasm';
     if (navigator.gpu) { try { sess = await ort.InferenceSession.create(model, { executionProviders: ['webgpu'] }); ep = 'webgpu'; } catch (e) { console.warn('webgpu EP failed', e); } }
     if (!sess) sess = await ort.InferenceSession.create(model, { executionProviders: ['wasm'] });
     net.sess = sess; net.ort = ort; net.ep = ep;
-    setNet('ready ' + ep, 'YOLO ' + ep.toUpperCase(), true);
-  } catch (e) { console.warn(e); setNet('failed: ' + (e.message || e).toString().slice(0, 60), 'EYE NET x'); }
+    setNet('ready ' + ep + ', weights agpl 3.0', 'yolo ' + ep, true);
+  } catch (e) { console.warn(e); setNet('failed: ' + (e.message || e).toString().slice(0, 60), 'eye net x'); }
   net.loading = false;
 }
 function setNet(s, chip, on) { $('netSt').textContent = s; $('chipNet').textContent = chip; $('chipNet').classList.toggle('on', !!on); }
@@ -110,13 +113,14 @@ $('bWebcam').addEventListener('click', async () => {
     const st = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
     navigator.mediaDevices.getUserMedia({ audio: true }).then(startMicLevel).catch(() => {});
     const v = $('cam'); v.srcObject = st; v.style.display = 'block'; await v.play(); camState.on = true; $('bWebcam').classList.add('on');
-    loadNet();
+    // yolov8n (agpl 3.0 weights) loads only when you turn it on under sense
+    if ($('netOn').checked) loadNet();
     try {
       const mp = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/vision_bundle.mjs');
       const fs = await mp.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm');
       camState.gest = await mp.GestureRecognizer.createFromOptions(fs, { baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task', delegate: 'GPU' }, runningMode: 'VIDEO', numHands: 1 });
       camState.face = await mp.FaceLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task', delegate: 'GPU' }, runningMode: 'VIDEO', outputFaceBlendshapes: true, numFaces: 1 });
-      toast('gestures and smiles on');
+      console.info('mediapipe gesture and face landmarker models (version 1): apache 2.0'); toast('gestures and smiles on. mediapipe models apache 2.0.');
     } catch (e) { console.warn('mediapipe', e); toast('webcam on, gesture models unreachable'); }
   } catch (e) { toast('camera blocked here; host the page yourself to use it'); }
 });

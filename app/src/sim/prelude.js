@@ -12,7 +12,8 @@ const STEP = 1 / 60;
 // optional runtimes fetched on demand, never bundled
 window.HACKLE_LIB = { ort: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/ort.webgpu.bundle.min.mjs' };
 // ---------- asset locations: hosted blobs first, then files beside the page ----------
-const ASSETS = { onnx: 'https://raw.githubusercontent.com/Hyuto/yolov8-onnxruntime-web/fc4a52c466d15ad4519873a0cef22fbc935b93b6/public/model/yolov8n.onnx', wasmDir: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/' };
+// yolov8n: Ultralytics weights, AGPL-3.0 (vendor), off until you turn it on; sha256 vendor file
+const ASSETS = { onnx: 'https://raw.githubusercontent.com/Hyuto/yolov8-onnxruntime-web/fc4a52c466d15ad4519873a0cef22fbc935b93b6/public/model/yolov8n.onnx', onnxSha: '505648ada344cd9f3f31e51d49c489c070819bc96cc758258a8fd51488e00579', wasmDir: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/' };
 async function fetchFirst(list) { for (const u of list) { if (u.startsWith('__')) continue; try { const r = await fetch(u); if (r.ok) return r; } catch (e) {} } throw new Error('asset not reachable'); }
 async function fetchZip(list) {
   // reads the first entry of a zip archive (stored or deflate) using the central directory

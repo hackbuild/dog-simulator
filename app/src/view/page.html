@@ -181,8 +181,8 @@ details.tdet[open]>summary span:last-child:after{content:" open"}
       <canvas class="inst" id="cpg" width="340" height="150"></canvas>
       <div class="kv" style="margin-top:8px"><b>speed</b><span id="kSpeed">0</span><b>stride freq</b><span id="kFreq">0</span><b>duty</b><span id="kDuty">0</span><b>turn rate</b><span id="kTurn">0</span><b>posture</b><span id="kPost">stand</span><b>froude</b><span id="kFr">0</span><b>body source</b><span id="kSrc">cpg</span></div></div></div>
     <div class="blk"><div class="bh"><span>neural gait</span><span id="nnSt">off</span></div><div class="bb">
-      <div class="note">a codebook matching network trained on real dog motion capture (ai4animationpy, paul and sebastian starke) predicts the next half second of a 27 bone dog: walk, pace, trot, canter, sit, lie. it runs on the cpu in a worker and is retargeted onto this rig. bows, paw lifts and shakes hand back to the procedural body with an inertialized blend.</div>
-      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bNnLoad" disabled>neural gait not in this build</button></div>
+      <div class="note">a codebook matching network trained on real dog motion capture (ai4animationpy, paul and sebastian starke) predicts the next half second of a 27 bone dog: walk, pace, trot, canter, sit, lie. it runs in a worker on webgpu when the browser has an adapter, otherwise on the cpu, and is retargeted onto this rig. bows, paw lifts and shakes hand back to the procedural body with an inertialized blend.</div>
+      <div class="btns" style="margin-top:6px"><button class="btn pk" id="bNnLoad">load the neural gait (17.7 mb, cc by-nc 4.0)</button></div>
       <div class="kv" style="margin-top:6px"><b>guidance</b><span id="kGuide">-</span><b>inference</b><span id="kNnMs">-</span><b>contacts</b><span id="kCont">-</span></div>
       <div class="note" style="margin-top:6px">model and mocap are cc by-nc 4.0 (non commercial), web port by sweriko. toggle it under tune, layers.</div></div></div>
     <div class="blk"><div class="bh"><span>footfalls</span><span>lf rf lh rh</span></div><div class="bb"><canvas class="inst" id="foot" width="340" height="96"></canvas><div class="note">hildebrand plot of the last 4 s: dark is stance. walk shows a four beat lateral sequence, trot pairs the diagonals, gallop goes rotary.</div></div></div>
@@ -199,7 +199,7 @@ details.tdet[open]>summary span:last-child:after{content:" open"}
   <div class="pane" id="pSense">
     <div class="blk"><div class="bh"><span>vision</span><span id="netSt">off</span></div><div class="bb">
       <label class="tog"><input type="checkbox" id="dogColor" checked>dichromat color and 20/75 acuity</label>
-      <label class="tog"><input type="checkbox" id="netOn">yolov8n on the eye feed (webgpu, falls back to wasm)</label>
+      <label class="tog"><input type="checkbox" id="netOn">yolov8n on the eye feed (agpl 3.0 weights, 12.8 mb download; webgpu, falls back to wasm)</label>
       <label class="tog"><input type="checkbox" id="showSal">show saliency and the current fixation on the eye</label>
       <div class="kv"><b>looking at</b><span id="kFocus">-</span></div>
       <div class="lst" id="detList"></div>
@@ -232,7 +232,7 @@ details.tdet[open]>summary span:last-child:after{content:" open"}
       <div class="btns" style="margin-top:6px"><button class="btn" id="bCall">call the dog</button><button class="btn" id="bPet">pet the dog</button><button class="btn" id="bTrainNow">train a new word</button></div>
       <div class="heard" id="humMind" style="white-space:pre-wrap">his own mind is off</div></div></div>
     <div class="blk"><div class="bh"><span>voice</span><span>pocket tts</span></div><div class="bb">
-      <div class="note">starts with the browser voice. load pocket tts to speak in his cloned voice (the clip from ferrule is embedded); the engine downloads once from hugging face.</div>
+      <div class="note" id="voiceNote">starts with the browser voice. load pocket tts to speak in his cloned voice (the voice reference from the owner asset pack is in this build); the engine downloads once from hugging face; models cc by-nc 4.0.</div>
       <div class="btns" style="margin-top:6px"><button class="btn pk" id="bVoiceLoad">load his voice</button><label class="tog"><input type="checkbox" id="humVoiceOn" checked>speak out loud</label></div>
       <div class="heard" id="voiceSt">browser voice</div></div></div>
     <div class="blk"><div class="bh"><span>training</span><span>he teaches</span></div><div class="bb" id="humTrain"></div>
@@ -242,14 +242,14 @@ details.tdet[open]>summary span:last-child:after{content:" open"}
   <div class="pane" id="pTune"></div>
   <div class="pane about" id="pAbout">
     <div class="blk"><div class="bh"><span>stack</span><span>all local</span></div><div class="bb note" style="color:var(--ink2)">
-      <p>body: your meshy glb, drawn by three.js webgpurenderer with a webgl2 fallback. two motion sources share the rig: a central pattern generator (walk, pace, trot, canter, gallop picked by froude number with hysteresis, raibert foot placement, two bone ik) and a neural gait from dog motion capture (ai4animationpy codebook matching, retargeted by rotation deltas from both bind poses with leg length scaled paw targets locked by predicted contacts). switches between them, and between postures, are inertialized (holden) so nothing snaps.</p>
+      <p>body: your meshy glb, drawn by three.js webgpurenderer with a webgl2 fallback. two motion sources share the rig: a central pattern generator (walk, pace, trot, canter, gallop picked by froude number with hysteresis, raibert foot placement, two bone ik) and a neural gait from dog motion capture (ai4animationpy codebook matching, retargeted as paw targets scaled by leg length and locked by predicted contacts, plus body pitch, roll and height). switches between them, and between postures, are inertialized (holden) so nothing snaps.</p>
       <p>on top: critically damped springs for posture and gaze, a tail chain driven by eight discrete wag modes with an owner side bias (ren 2022, quaranta 2007), spring ears kicked by head motion, centripetal lean and fore and hind load shift, a mass scaled shake off (dickerson 2012), breathing jittered per cycle, pink noise drift so a still dog is never frozen, and paw paddling in rem.</p>
       <p>brain: drives reward by how much they reduce internal deficits (keramati and gutkin 2011). the choice is sampled from a softmax with a commitment bonus, urgent options start after an ex-gaussian latency while the head turns first, and quiet changes wait for the current act to finish. sleep pressure plus a two peak body clock run onset, nrem, rem and wake. play bows need eye contact, a scolding brings the appeasement set keyed to his posture (horowitz 2009), mutual gaze builds a bond (maclean and hare 2015), pointing is followed by gesture type and bond (clark 2019), and exploring is bolder with him in view. learning keeps rescorla-wagner with pearce-kaye-hall associability, a separate inhibitory weight that fades faster, eligibility traces so a late treat can teach the wrong thing, and free operant offers.</p>
-      <p>senses: itti-koch saliency on the dog eye frame (intensity, blue yellow, edges, motion weighted highest) with top down drive bias and inhibition of return kept in world directions; looming startle from time to contact; per dog sound direction error (guerineau 2022); acuity that falls from bright to dim light (lind 2017); a puff plume with whiffs and blanks plus decaying ground trails, sampled only on sniffs at 4 to 7 Hz in bouts (craven 2010), tracked by surging upwind and casting crosswind (celani 2014). yolov8n still runs on the eye feed.</p>
+      <p>senses: itti-koch saliency on the dog eye frame (intensity, blue yellow, edges, motion weighted highest) with top down drive bias and inhibition of return kept in world directions; looming startle from time to contact; per dog sound direction error (guerineau 2022); acuity that falls from bright to dim light (lind 2017); a puff plume with whiffs and blanks plus decaying ground trails, sampled only on sniffs at 4 to 7 Hz in bouts (craven 2010), tracked by surging upwind and casting crosswind (celani 2014). yolov8n (agpl 3.0 weights, fetched when you turn it on under sense) can label the eye feed.</p>
       <p>human: moheeb with retargeted quaternius ual clips (cc0). his gaze follows saccade statistics (eyes alive), smartbody gaze ratios and stahl head recruitment; root motion uses velocity springs and the walking curvature law; planted feet lock; reaches follow minimum jerk; the throw is a phased kinematic chain with jitter; he breathes, sways, shows mood in his posture, approaches the dog from the side, and points.</p>
       <p>cortex: gemma 4 e2b or lfm2-vl 450m on webgpu sets goals on events, using a memory stream ranked by recency, importance and relevance (park 2023). reflexes and timing stay in js.</p>
       <p>every number above is live in the tune tab, including seven temperament traits (jones and gosling 2005). each layer can be switched off to compare against the old canned build.</p>
-      <p>licenses: neural gait model and mocap cc by-nc 4.0 (meta ai4animationpy, port by sweriko), so this build is for non commercial use. animation clips cc0 (quaternius). everything else here is original.</p>
+      <p>licenses: the app code is mit, except the neural gait runtime (@hackbuild/motion-net), which is cc by-nc 4.0 until its rewrite lands. three.js mit, rapier apache 2.0, fonts apache 2.0 (permanent marker, special elite) and ofl 1.1 (ibm plex mono, vt323). animation clips cc0 (quaternius). fetched only when you ask: neural gait model and mocap cc by-nc 4.0 (meta ai4animationpy, port by sweriko), yolov8n agpl 3.0, pocket tts engine apache 2.0 with cc by-nc 4.0 models, cortex and mediapipe models under their own licences. the full list is in LICENCES.md in the repository.</p>
     </div></div>
   </div>
 </aside>
@@ -272,8 +272,8 @@ return async m => {
     if (m.t === 'load') {
       T = await import(TJS); kind = m.kind;
       const Cls = kind === 'gemma' ? T.Gemma4ForConditionalGeneration : T.Lfm2VlForConditionalGeneration;
-      proc = await T.AutoProcessor.from_pretrained(m.id, { progress_callback: prog });
-      model = await Cls.from_pretrained(m.id, { dtype: 'q4f16', device: 'webgpu', progress_callback: prog });
+      proc = await T.AutoProcessor.from_pretrained(m.id, { revision: m.rev, progress_callback: prog });
+      model = await Cls.from_pretrained(m.id, { revision: m.rev, dtype: 'q4f16', device: 'webgpu', progress_callback: prog });
       post({ t: 'ready' });
     } else if (m.t === 'ask') {
       const img = new T.RawImage(new Uint8ClampedArray(m.rgba), m.w, m.h, 4).rgb();

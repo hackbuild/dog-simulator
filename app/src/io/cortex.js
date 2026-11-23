@@ -1,25 +1,29 @@
 // ---------- cortex: local vision language model on WebGPU, in a worker ----------
-const VLM = { gemma: { id: 'onnx-community/gemma-4-E2B-it-ONNX', name: 'gemma 4 e2b' }, lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', name: 'lfm2-vl 450m' } };
+// each model pinned to a Hugging Face commit; the licence line shows when it loads (vendor, model cards)
+const VLM = {
+  gemma: { id: 'onnx-community/gemma-4-E2B-it-ONNX', rev: '6f21c99d7e18237f8d2ce92aadfdbfeba877f63a', name: 'gemma 4 e2b', licence: 'weights apache 2.0' },
+  lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', rev: '308cf784b35ce25274540e1bf5592c33a0433469', name: 'lfm2-vl 450m', licence: 'weights lfm open license 1.0' }
+};
 const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'gemma'), nid: 0, wait: new Map(), ms: 0 };
 $('vlmPick').value = vlm.kind;
 $('vlmPick').onchange = e => { vlm.kind = e.target.value; store.set('vlm', vlm.kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; setVlm('off'); } };
 function setVlm(st) { $('cortexSt').textContent = st; const ready = vlm.state === 'ready'; $('bThink').disabled = !ready; $('askIn').disabled = !ready; $('bVlmLoad').disabled = vlm.state === 'loading' || ready; }
-setVlm(navigator.gpu ? 'off' : 'needs WebGPU');
+setVlm(navigator.gpu ? 'off' : 'needs webgpu');
 function vlmLoad() {
-  if (!navigator.gpu) { toast('the cortex model needs a WebGPU browser'); return; }
+  if (!navigator.gpu) { toast('no webgpu in this browser. the cortex stays off.'); return; }
   if (vlm.worker) return;
   const BODY = document.getElementById('vlmWorker').textContent;
   const onmsg = e => {
     const m = e.data;
     if (m.t === 'progress') { vlm.alive = true; const p = m.total ? m.loaded / m.total : 0; $('vlmBar').style.width = (p * 100).toFixed(1) + '%'; $('vlmPct').textContent = Math.round(p * 100) + '%'; $('cortexSt').textContent = (m.loaded / 1e6).toFixed(0) + ' / ' + (m.total / 1e6).toFixed(0) + ' MB' + (vlm.inPage ? ' (in page)' : ''); }
-    else if (m.t === 'ready') { vlm.state = 'ready'; $('vlmBar').style.width = '100%'; $('vlmPct').textContent = '100%'; setVlm('ready ' + VLM[vlm.kind].name); toast('cortex online: ' + VLM[vlm.kind].name); }
+    else if (m.t === 'ready') { vlm.state = 'ready'; $('vlmBar').style.width = '100%'; $('vlmPct').textContent = '100%'; setVlm('ready ' + VLM[vlm.kind].name + ', ' + VLM[vlm.kind].licence); console.info(VLM[vlm.kind].id + ' at ' + VLM[vlm.kind].rev + ': ' + VLM[vlm.kind].licence); toast('cortex online: ' + VLM[vlm.kind].name + '. ' + VLM[vlm.kind].licence + '.'); }
     else if (m.t === 'answer' || m.t === 'error') { if (m.t === 'error' && m.id == null) { vlm.state = 'off'; setVlm('failed: ' + m.msg.slice(0, 60)); if (vlm.worker) vlm.worker.terminate(); vlm.worker = null; return; } const w = vlm.wait.get(m.id); vlm.wait.delete(m.id); if (w) (m.t === 'answer' ? w.res(m) : w.rej(new Error(m.msg))); }
   };
   const inPage = () => { // fallback when module workers from blob URLs are refused
     vlm.inPage = true;
     const h = new Function('post', BODY)(m => onmsg({ data: m }));
     vlm.worker = { postMessage: m => { setTimeout(() => h(m), 0); }, terminate() {} };
-    vlm.worker.postMessage({ t: 'load', id: VLM[vlm.kind].id, kind: vlm.kind });
+    vlm.worker.postMessage({ t: 'load', id: VLM[vlm.kind].id, rev: VLM[vlm.kind].rev, kind: vlm.kind });
   };
   vlm.state = 'loading'; vlm.alive = false; setVlm('loading ' + VLM[vlm.kind].name);
   try {
@@ -28,7 +32,7 @@ function vlmLoad() {
     w.onmessage = onmsg;
     w.onerror = e => { if (!vlm.alive && vlm.state === 'loading') { console.warn('worker failed, running in page', e); w.terminate(); inPage(); } };
     vlm.worker = w;
-    w.postMessage({ t: 'load', id: VLM[vlm.kind].id, kind: vlm.kind });
+    w.postMessage({ t: 'load', id: VLM[vlm.kind].id, rev: VLM[vlm.kind].rev, kind: vlm.kind });
   } catch (e) { inPage(); }
 }
 $('bVlmLoad').onclick = vlmLoad;

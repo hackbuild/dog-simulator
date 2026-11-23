@@ -1,5 +1,26 @@
-// ---------- Moheeb's voice: Pocket TTS with his clone (ported from FERRULE), browser voice fallback ----------
-const POCKET_BASE = 'https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/main/';
+// ---------- his voice: Pocket TTS with a clone of the owner's voice reference (from the owner's
+// earlier voice app), browser voice fallback ----------
+// The engine is third party code run in a worker: KevinAHM/pocket-tts-web on Hugging Face, pinned
+// to one commit, and each code file is checked against its SHA-256 before it runs. Engine code
+// Apache-2.0 (CODE-LICENSE in the space), models CC-BY-NC-4.0 (onnx/ONNX-LICENSE), both vendor;
+// the models and voices it fetches are pinned by the commit, not hashed here.
+const POCKET_REV = 'd0c0c79b7712256a32d691c67f20b8ae2e020d00';
+const POCKET_BASE = 'https://huggingface.co/spaces/KevinAHM/pocket-tts-web/resolve/' + POCKET_REV + '/';
+const POCKET_SHA = {
+  'inference-worker.js': 'dace0a022e17dffcf60fdb7b86e49facf093f709b352fb306c1d6641ae0f5366',
+  'sentencepiece.js': 'fc802c6945931e685d82d0f601cda185bb43990870d712119caf5ea74e6e9c56'
+};
+const POCKET_LICENCE = 'pocket tts: engine apache 2.0, models cc by-nc 4.0, non commercial use only (kevinahm/pocket-tts-web at ' + POCKET_REV.slice(0, 7) + ')';
+async function pocketText(name) {
+  const r = await fetch(POCKET_BASE + name);
+  if (!r.ok) throw new Error(name + ' http ' + r.status);
+  const buf = await r.arrayBuffer();
+  const hex = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', buf)), b => b.toString(16).padStart(2, '0')).join('');
+  if (hex !== POCKET_SHA[name]) throw new Error(name + ' does not match its pinned sha256');
+  return new TextDecoder().decode(buf);
+}
+// the voice reference embedded at build time; empty when the build has no owner asset pack
+const voiceClip = () => (document.getElementById('voiceB64')?.textContent || '').trim();
 const SPEAK_FIX = [[/\bhack\.build\b/gi, 'hack dot build'], [/\blol\b/gi, 'haha'], [/\blmk\b/gi, 'let me know'], [/\bidk\b/gi, 'I dunno'], [/\bjk\b/gi, 'just kidding']];
 function speakable(text) {
   let t = String(text || '');
@@ -28,8 +49,9 @@ const Voice = {
   async init(onStat) {
     this.setup(); try { await this.ctx.resume(); } catch (_) {}
     onStat('fetching voice engine');
-    const code = await (await fetch(POCKET_BASE + 'inference-worker.js')).text();
-    let patched = "self.__hackleSP = async () => { const t = await (await fetch(" + JSON.stringify(POCKET_BASE + 'sentencepiece.js') + ")).text(); try { return await import(URL.createObjectURL(new Blob([t], { type: 'text/javascript' }))); } catch (e) { const u8 = new TextEncoder().encode(t); let bin = ''; for (let i = 0; i < u8.length; i += 32768) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return await import('data:text/javascript;base64,' + btoa(bin)); } };\n" + code;
+    const [code, spText] = await Promise.all([pocketText('inference-worker.js'), pocketText('sentencepiece.js')]);
+    console.info(POCKET_LICENCE); onStat(POCKET_LICENCE);
+    let patched = "self.__hackleSP = async () => { const t = " + JSON.stringify(spText) + "; try { return await import(URL.createObjectURL(new Blob([t], { type: 'text/javascript' }))); } catch (e) { const u8 = new TextEncoder().encode(t); let bin = ''; for (let i = 0; i < u8.length; i += 32768) bin += String.fromCharCode.apply(null, u8.subarray(i, i + 32768)); return await import('data:text/javascript;base64,' + btoa(bin)); } };\n" + code;
     patched = patched.replace(/import\(\s*(["'`])\.\/sentencepiece\.js(?:\?[^"'`]*)?\1\s*\)/g, 'self.__hackleSP()');
     patched = patched.replace(/CHUNK_GAP_SEC\s*=\s*0\.25/, 'CHUNK_GAP_SEC = 0.1');
     patched = patched.replace(/(\w+)\.env\.wasm\.wasmPaths\s*=/, '$1.env.wasm.numThreads = 1; $1.env.wasm.proxy = false; $1.env.wasm.wasmPaths =');
@@ -54,20 +76,26 @@ const Voice = {
       w.postMessage({ type: 'load' });
     });
     try { await start(null); } catch (e1) { console.warn('classic voice worker failed', e1); try { this.worker.terminate(); } catch (_) {} if (location.protocol === 'file:') throw e1; await start('module'); }
+    URL.revokeObjectURL(url);
     this.cur = ['marius', 'jean', 'javert'].find(v => this.voices.includes(v)) || this.defaultVoice || this.voices[0];
     this.send({ type: 'set_voice', data: { voiceName: this.cur } });
     this.mode = 'pocket'; this.ready = true;
+    const b64 = voiceClip();
+    if (!b64) { onStat('ready, stock voice ' + this.cur); this.pump(); return { cloned: false, voice: this.cur }; }
     onStat('cloning his voice');
+    let cloned = false;
     try {
-      const b64 = document.getElementById('voiceB64').textContent.trim();
+      if (b64.length < 64) throw new Error('voice clip too short');
       const bin = atob(b64), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
       const dv = new DataView(u8.buffer), cnt = (u8.length - 44) >> 1, f = new Float32Array(cnt);
       for (let i = 0; i < cnt; i++) f[i] = dv.getInt16(44 + i * 2, true) / 32768;
       await new Promise(res => { this.pend.enc = res; this.send({ type: 'encode_voice', data: { audio: f } }); setTimeout(res, 60000); });
       this.cur = 'custom'; this.send({ type: 'set_voice', data: { voiceName: 'custom' } });
+      cloned = true;
       onStat('ready, his cloned voice');
-    } catch (e) { console.warn('clone failed', e); onStat('ready, stock voice'); }
+    } catch (e) { console.warn('clone failed', e); onStat('ready, stock voice ' + this.cur); }
     this.pump();
+    return { cloned, voice: this.cur };
   },
   send(m) { try { this.worker.postMessage(m); } catch (_) {} },
   hook() {
