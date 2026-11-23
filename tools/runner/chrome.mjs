@@ -5,10 +5,13 @@ import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { fixedBody, open as openPage } from "@hackbuild/scenario";
+import { findChrome, fixedBody, open as openPage } from "@hackbuild/scenario";
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-export const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+// the system Chrome (macOS or Linux paths); CHROME_PATH overrides. CHROME_ARGS adds flags, CI
+// passes --no-sandbox since Ubuntu 24.04 blocks the user namespaces Chrome's sandbox needs
+export const CHROME = process.env.CHROME_PATH || findChrome();
+const EXTRA_ARGS = (process.env.CHROME_ARGS || "").split(" ").filter(Boolean);
 const NM = join(ROOT, "node_modules");
 const LOCK = JSON.parse(readFileSync(join(ROOT, "assets.lock.json"), "utf8"));
 
@@ -77,7 +80,7 @@ export function route(url) {
 /**
  * Launch Chrome and open a page with routing on, through @hackbuild/scenario's open().
  * opts.url: file path or URL; opts.offline: abort every non file request
- * (the self contained build check).
+ * (the self contained build check); opts.gpu: "swiftshader" (default, lockstep) or "default".
  */
 export async function open(opts) {
   const routes = [
@@ -88,7 +91,7 @@ export async function open(opts) {
   let o;
   for (let k = 1; ; k++) {
     try {
-      o = await openPage({ url: opts.url, hash: opts.hash, offline: opts.offline, routes, chrome: CHROME, headless: opts.headless ?? true, width: opts.width ?? 1360, height: opts.height ?? 860, gpu: "swiftshader" });
+      o = await openPage({ url: opts.url, hash: opts.hash, offline: opts.offline, routes, chrome: CHROME, headless: opts.headless ?? true, width: opts.width ?? 1360, height: opts.height ?? 860, gpu: opts.gpu ?? "swiftshader", args: EXTRA_ARGS });
       break;
     } catch (e) { if (k >= 3 || !/launch|WS endpoint|Timed out/i.test(String(e.message))) throw e; await new Promise((r) => setTimeout(r, 5000 * k)); }
   }

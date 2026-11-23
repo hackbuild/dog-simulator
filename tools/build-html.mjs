@@ -10,6 +10,8 @@
 //     the in place parity check; see inferShim below.
 //   node tools/build-html.mjs app [--out FILE]
 //     the TypeScript app (app/src) bundled with esbuild; see buildApp below.
+//   node tools/build-html.mjs public [--out FILE]
+//     the same app with nothing from assets-local: stub dog, placeholder human, no voice clip.
 //
 // Owner likeness (the human model and the voice reference) is read from
 // assets-local/ when present. When it is absent the legacy build embeds an
@@ -166,11 +168,11 @@ async function main(argv) {
     html = r.html;
     out = resolve(o.out ?? join(ROOT, "dist/hackle-legacy.html"));
     if (!r.likeness.human) console.log("build-html: no assets-local/moheeb.glb, the human slot is empty and the page uses its placeholder");
-  } else if (mode === "app") {
+  } else if (mode === "app" || mode === "public") {
     const { buildApp } = await import("./build-app.mjs");
-    const r = await buildApp(o);
+    const r = await buildApp({ ...o, public: mode === "public" });
     html = r.html;
-    out = resolve(o.out ?? join(ROOT, "dist/dog-simulator.html"));
+    out = resolve(o.out ?? join(ROOT, mode === "public" ? "dist/dog-simulator-public.html" : "dist/dog-simulator.html"));
   } else throw new Error(`unknown mode ${mode}`);
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, html);
