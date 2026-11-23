@@ -1,7 +1,7 @@
 # Licences of assets and dependencies
 
-Audit date 2026-11-22. Every asset and dependency the HACKLE build uses, with
-its source and licence. "unknown" means the pack and the package metadata do
+Audit date 2026-11-22, corrected 2026-11-23 after the repository audit.
+Every asset and dependency the builds use, with its source and licence. "unknown" means the pack and the package metadata do
 not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 
 ## Code in this repository
@@ -11,11 +11,18 @@ not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 | `app/`, `tools/`, `scenarios/` | MIT (LICENSE) |
 | `legacy/pack/src/nn_gait.js`, `legacy/pack/src/nn_infer.js`, `legacy/pack/nn/quadruped.json` | CC-BY-NC-4.0. A port of sweriko/ai4anim-webgpu, itself derived from AI4AnimationPy (Paul Starke, Sebastian Starke, Meta). Kept in `legacy/` for parity only; never moved into `app/src`. |
 | `legacy/pack/nn/bind.json` | unknown; the rig binding for the network above (inferred derived) |
+| `legacy/pack/nn/AI4ANIM_LICENSE.txt` | the CC-BY-NC-4.0 legal text (Creative Commons), reproduced as the licence requires |
+| `legacy/pack/nn/AI4ANIM_NOTICE.txt` | sweriko's notice for the network port; its terms are CC-BY-NC-4.0 |
+| `legacy/pack/ferrule/UAL_LICENSE.txt` | the CC0-1.0 text of the Universal Animation Library (Quaternius) |
+| `legacy/README.md` | CC-BY-4.0 with the other docs |
 | other files in `legacy/pack/` | owner authored (inferred), MIT with this repository |
 | `legacy/pack/work/hanims_min.json` | clip data baked from the Universal Animation Library (CC0-1.0) onto the owner rig; embedded in the app build |
 | `legacy/det/src/` | as the `legacy/pack/src/` file each one copies; `nn_gait.js` and `nn_infer.js` stay CC-BY-NC-4.0 |
 | `app/src/human/placeholder.js` | MIT; capsule humanoid on the auto rig bone layout, no likeness data |
 | `app/src/dog/neural.js` | MIT; the app side of the neural gait over @hackbuild/motion-net. Holds no network data: the bind pose is computed from the network at load, `legacy/pack/nn/bind.json` is not read |
+| `tools/stub-dog.mjs` and the stub dog it writes | MIT; a box dog written from code, used when the build reads nothing from `assets-local/` |
+| `vendor/tunables`, `vendor/senses`, `vendor/drives`, `vendor/cameras` | MIT; built packages of hackbuild/hackbuild-agents at the commit in `vendor/lock.json`, bundled into the app build |
+| `vendor/scenario` | MIT; built package of hackbuild/hackbuild-agents, used by the scenario runner only, never bundled |
 | `vendor/gait` | MIT; built package of hackbuild/hackbuild-motion at the commit in `vendor/lock.json` |
 | `vendor/motion-net` | CC-BY-NC-4.0. Built package of hackbuild/hackbuild-motion at the commit in `vendor/lock.json`. An audit on 2026-11-23 found it was adapted from the CC-BY-NC host above, and hackbuild-motion relabelled it. It is embedded in the app build, so the app build is non commercial until the clean-room MIT replacement is vendored. |
 
@@ -40,15 +47,22 @@ and no build is published until that is settled.
 | name | version | where it comes from | licence |
 |---|---|---|---|
 | three | 0.187.0 | legacy: jsDelivr; app: bundled | MIT |
-| @hackbuild/gait, @hackbuild/motion-net | 0.1.0 | app: bundled from `vendor/` | MIT |
+| @hackbuild/gait, @hackbuild/tunables, @hackbuild/senses, @hackbuild/drives, @hackbuild/cameras | 0.1.0 | app: bundled from `vendor/` | MIT |
+| @hackbuild/motion-net | 0.1.0 | app: bundled from `vendor/` | CC-BY-NC-4.0 until the clean-room rewrite is vendored (see above) |
+| Rust crates inside the vendored wasm (gait, motion-net, senses, drives): libm 0.2.16, wasm-bindgen 0.2.129, cfg-if 1.0.5, once_cell 1.21.4 | as listed | compiled into the wasm the packages inline | MIT OR Apache-2.0 (vendor) |
 | @dimforge/rapier3d-compat | 0.21.0 | legacy: jsDelivr; app: bundled | Apache-2.0 |
 | onnxruntime-web | 1.23.2 | jsDelivr, on demand for the detector | MIT |
 | @mediapipe/tasks-vision | 1.2.3 | jsDelivr, on demand for webcam gestures | Apache-2.0 (vendor, not rechecked) |
 | @huggingface/transformers | 4.3.2 | jsDelivr, on demand for the cortex | Apache-2.0 (vendor, not rechecked) |
 | Gemma 4 E2B, onnx-community/gemma-4-E2B-it-ONNX | n/a | Hugging Face, on demand | Gemma terms (vendor, not rechecked) |
 | LFM2-VL 450M, onnx-community/LFM2-VL-450M-ONNX | n/a | Hugging Face, on demand | LFM Open License (vendor, not rechecked) |
-| Pocket TTS web worker, KevinAHM/pocket-tts-web | main branch, unpinned | Hugging Face space, on demand | unknown |
-| Pocket TTS model weights | n/a | loaded by that worker | unknown |
+| Pocket TTS web worker, KevinAHM/pocket-tts-web | commit d0c0c79b; `inference-worker.js` and `sentencepiece.js` checked against their SHA-256 before they run | Hugging Face space, on demand | Apache-2.0 (vendor, CODE-LICENSE in the space; the space card says CC-BY-4.0). The page states the licence on load |
+| Pocket TTS model weights, KevinAHM/pocket-tts-onnx int8 bundles | the same commit, pinned by the commit, not hashed | loaded by that worker | CC-BY-NC-4.0 (vendor, onnx/ONNX-LICENSE in the space) |
+| onnxruntime-web | 1.20.0 | jsDelivr, loaded by the Pocket TTS worker | MIT |
+
+The built page carries a licence comment at its top: three.js (MIT, its own
+header), Rapier (Apache-2.0), the four fonts (Apache-2.0 and OFL-1.1), with
+the licence texts, written by `tools/build-app.mjs`.
 
 ## Fonts
 
@@ -68,6 +82,14 @@ and no build is published until that is settled.
 | typescript | 7.0.2 | Apache-2.0 |
 | vitest | 5.0.3 | MIT |
 | @types/three | 0.187.0 | MIT |
+
+## The owner persona
+
+The human in the app is the owner, Moheeb Zara: his name, his handle, his
+speech habits in the mind prompt (`app/src/human/human.js`) and the UI copy
+ship in every build, the build without the owner asset pack included. This
+is the owner's own app and the owner keeps it so (decision 2026-11-23).
+His likeness files (human model, voice reference) are never committed.
 
 ## Open owner decisions from the plan
 
