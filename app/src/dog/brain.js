@@ -292,6 +292,8 @@ const brain = {
     if (this.cortexGoal && U[this.cortexGoal.b] !== undefined) U[this.cortexGoal.b] += 0.35;
     for (const b of BEH) U[b] = U[b] === undefined || !isFinite(U[b]) ? 0 : Math.max(0, U[b]);
     if (this.cur === 'fetch' && (ball.held || this.sub === 'drop' || (percepts.ball && percepts.ball.vis && percepts.ball.speed > 0.5))) U.fetch += 0.3;
+    // he left through the gate: nobody to bring the ball to, so fetch ends and waiting at the door can win (hackle-plan 5.4 item 4)
+    if (HUM.away) U.fetch = 0;
     if (this.cur === 'chase' && this.t < 8) U.chase += 0.3;
     if (this.cur === 'zoomies' && this.t < 7) U.zoomies += 0.5;
     if (this.cur === 'playbow' && this.sub !== 'done') U.playbow += 0.6;

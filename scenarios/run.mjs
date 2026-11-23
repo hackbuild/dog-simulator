@@ -18,7 +18,8 @@ const mode = argv[0];
 const opt = (k, d) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1] : d);
 if (mode !== "record" && mode !== "compare") { console.error("usage: run.mjs record|compare [--file F] [--variant cpg|neural] [--only a,b] [--jobs n]"); process.exit(2); }
 const variant = opt("variant", "cpg");
-const file = opt("file", join(ROOT, "dist/hackle-det.html"));
+// the app build holds golden/cpg; the network host is in legacy/det only
+const file = opt("file", join(ROOT, variant === "neural" ? "dist/hackle-det.html" : "dist/dog-simulator.html"));
 const only = opt("only", "") ? opt("only").split(",") : null;
 const jobs = +opt("jobs", 3);
 const [width, height] = opt("size", "") ? opt("size").split("x").map(Number) : [];

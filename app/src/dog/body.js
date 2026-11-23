@@ -38,12 +38,16 @@ function solveLeg(l, target, endTilt) {
 const motor = { mode: 'stop', target: V3(), speed: 0, stopDist: 0.3, face: null, turnRate: 0, done: false };
 const manualKeys = {};
 function steer(dt) {
-  let vCmd = 0, wCmd = 0;
+  let vCmd = 0, wCmd = 0, yTo = null;
   if ($('manual').checked) {
     const k = manualKeys; const run = k.shift ? 4.8 : 1.6;
     vCmd = (k.w || k.arrowup ? run : 0) - (k.s || k.arrowdown ? 0.6 : 0);
     wCmd = ((k.a || k.arrowleft ? 1 : 0) - (k.d || k.arrowright ? 1 : 0)) * (vCmd > 2.5 ? 1.6 : 2.6);
     motor.done = false;
+  } else if ((yTo = dogYield(dog.posture.sit + dog.posture.down + dog.posture.bow > 0.35))) {
+    // side step out of his path; the brain keeps its goal and takes over when the yield ends
+    const err = wrapA(Math.atan2(yTo.x - dog.pos.x, yTo.z - dog.pos.z) - dog.yaw);
+    wCmd = clamp(err * 3.2, -3.2, 3.2); vCmd = Math.abs(err) > 1.4 ? 0.3 : 1.1 * clamp(Math.cos(err) * 1.2, 0, 1);
   } else if (motor.mode === 'goto') {
     const to = tmpV[0].copy(motor.target).sub(dog.pos); to.y = 0;
     const dist = to.length(), stopD = NG.active ? Math.max(motor.stopDist, 0.5) : motor.stopDist; // the network cannot stop on a coin
@@ -57,7 +61,7 @@ function steer(dt) {
         const dx = dog.pos.x - o.x, dz = dog.pos.z - o.z, dd = Math.hypot(dx, dz) - o.r - 0.3;
         if (dd < 1.6 && Math.hypot(motor.target.x - o.x, motor.target.z - o.z) > o.r + 0.35) {
           const w = (1 / Math.max(dd, 0.05) - 1 / 1.6) * 0.35; avoid.x += dx / (dd + o.r + 0.3) * w; avoid.z += dz / (dd + o.r + 0.3) * w;
-          const side = Math.sign(dir.x * dz - dir.z * dx) || 1; avoid.x += -dir.z * side * w * 0.6; avoid.z += dir.x * side * w * 0.6;
+          let side = Math.sign(dir.x * dz - dir.z * dx) || 1; if (o.kind === 'you') side = passSide(PASS.dog, o, side, now); avoid.x += -dir.z * side * w * 0.6; avoid.z += dir.x * side * w * 0.6;
         }
       }
       const r = Math.hypot(dog.pos.x, dog.pos.z); if (r > FENCE_R - 1.6) { avoid.x -= dog.pos.x / r * (r - FENCE_R + 1.6) * 1.2; avoid.z -= dog.pos.z / r * (r - FENCE_R + 1.6) * 1.2; }

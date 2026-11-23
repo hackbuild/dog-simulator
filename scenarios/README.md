@@ -3,12 +3,15 @@
 Lockstep scenarios on a built file. `list.mjs` holds the scenarios,
 `run.mjs` records or compares golden traces.
 
-    node tools/build-html.mjs legacy --mods legacy/det/src --out dist/hackle-det.html
-    node scenarios/run.mjs record --variant cpg
+    node tools/build-html.mjs app
+    node scenarios/run.mjs record --variant cpg --file dist/dog-simulator.html
     node scenarios/run.mjs compare --variant cpg --file dist/dog-simulator.html
 
-- `golden/cpg/`: every scenario with the neural gait layer off. Every build
-  must reproduce these traces exactly; the app build is checked against them.
+- `golden/cpg/`: every scenario with the neural gait layer off, recorded on
+  the app build. Up to commit bc2cf6c they came from legacy/det and both
+  builds matched them; from the avoidance fix on (handoff issue 3) the app
+  changes behaviour and legacy/det stays as the handoff behaved, so only
+  the app build is held to them.
 - `golden/neural/`: the scenarios for handoff issues 1 and 3 with the legacy
   network host on. Legacy builds only.
 - `reports/`: the results of each record and compare run, expectations
@@ -54,6 +57,39 @@ Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 4 decimals, plus an FNV hash over full precision state at every step.
 
 ## Trace changes
+
+### 2026-11-23, avoidance stall (handoff issue 3), app build only
+
+`app/src/sim/passing.js` and its hooks (HACKLE lesson 7, hackle-plan
+5.4 item 3): the human passes the dog on a side picked from where the
+dog will be in 0.5 s and held at least 1 s; the dog is two circles
+along its body for him; the dog steps aside when it stands in his path
+(within 0.6 m of his line, his goal away from the dog), timed out at
+2.5 s; a stall detector gives him a side waypoint after 2 s under
+0.2 m with a goal and no turn; the dog holds its side of him for 1 s
+too. Two more causes turned up in the stalled runs:
+
+- corridor-pass seed 21: the human stood 4 s because the kneel layer
+  of the pet task before kept playing through its hold window after the
+  task changed (lesson 4). A task change now sends a held kneel straight
+  to its stand up (1.3 s), unless the new task kneels too.
+- reunion-errand, after the change above: the dog kept fetching to a
+  human who had left through the gate for 100 s and never waited at the
+  door. Fetch now scores zero while he is away (plan 5.4 item 4).
+
+Human stall seconds (computed) on the issue 3 sweep, before and after:
+parked-in-path seeds 3, 4, 21: 0, 0, 4.25 to 0, 0, 0.5; seed 2 (new) 0;
+corridor-pass seeds 3, 4, 21: 1.5, 0, 4.75 to 1.5, 0, 1.5; seed 2 (new)
+0.5. All 8 pass, against 6 of 8 before. fetch-walkoff seed 3 now meets
+its delivery and turning bounds as well.
+
+Trace changes: every scenario where the human walks near the dog
+diverges from the first close pass (side rule and dog circles, measured
+by turning each piece off in turn): corridor-pass, fetch-walkoff,
+parked-in-path, reunion-errand (2.25 s), stroll-follow (3.25 s),
+crouch-greeting (9.5 s), repeat-cue (14.25 s), scent-trail (32 s),
+bench-sit (37 s). fetch-roundtrip and phone-nudge are identical.
+Expectation outcomes elsewhere did not move.
 
 ### 2026-11-22, the owner's five fixes (hackle-plan lesson set)
 

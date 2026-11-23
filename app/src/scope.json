@@ -1,6 +1,7 @@
 [
   "sim/prelude.js",
   "sim/organic.js",
+  "sim/passing.js",
   "world/scene.js",
   "io/audio.js",
   "dog/setup.js",

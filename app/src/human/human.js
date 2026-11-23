@@ -224,8 +224,13 @@ function humanHold(on) {
   ball.rb.setBodyType(on ? RAPIER.RigidBodyType.KinematicPositionBased : RAPIER.RigidBodyType.Dynamic, true);
 }
 function handPos(out = V3()) { return HUM.hand ? HUM.hand.getWorldPosition(out) : out.copy(HUM.pos).setY(H(HUM.pos.x, HUM.pos.z) + 1.0); }
+// blocking layers each task may keep across a task change (HACKLE lesson 4); any other held layer is
+// released explicitly: a held kneel skips the rest of its hold and plays the stand up (1.3 s), where
+// before it played on through the hold window and froze the feet up to 3.9 s
+const TASK_LAYERS = { get_ball: ['kneel'], pet: ['kneel', 'crouch'], feed: ['kneel'] };
 function startTask(name, args = {}, why = '') {
   HUM.task = { name, t: 0, s: '', args, why };
+  const A = HA.act; if (A && A.hold && !A.done && A.t < A.hold[1] && !(TASK_LAYERS[name] || []).includes(A.name)) A.t = Math.max(A.t, A.hold[1]);
   HUM.motor.mode = 'stop'; HUM.motor.face = null; HUM.motor.done = false; HUM.reach = null; haRelease();
   // a new task while seated: stand up first (the sit layer blocks the feet until the exit clip ends); a repeat sit just stays down
   if (HA.sit && HA.sit.ph !== 'exit') { if (name === 'sit') { HUM.task.s = 'down'; HUM.task.k = 0; } else haSit(false); }
@@ -236,15 +241,27 @@ function startTask(name, args = {}, why = '') {
 function humSteer(dt) {
   const m = HUM.motor; let vC = 0, wC = 0;
   if (m.mode === 'goto') {
-    const to = hv[0].copy(m.target).sub(HUM.pos); to.y = 0; const dist = to.length();
-    if (dist < m.stopDist) { m.done = true; if (m.face) { const fa = Math.atan2(m.face.x - HUM.pos.x, m.face.z - HUM.pos.z), e = wrapA(fa - HUM.yaw); wC = Math.abs(e) > 0.12 ? clamp(e * 3, -2, 2) : 0; } }
+    // a side waypoint from the stall detector stands in for the goal until he reaches it
+    const blocked = !!HA.sit || !!(HA.act && (HA.act.name === 'kneel' || HA.act.name === 'pickup' || HA.act.name === 'crouch') && !HA.act.done);
+    const wp = humStallWaypoint(blocked), tgt = wp || m.target;
+    const to = hv[0].copy(tgt).sub(HUM.pos); to.y = 0; const dist = to.length();
+    if (wp && dist < 0.3) { vC = 0; }
+    else if (dist < m.stopDist && !wp) { m.done = true; if (m.face) { const fa = Math.atan2(m.face.x - HUM.pos.x, m.face.z - HUM.pos.z), e = wrapA(fa - HUM.yaw); wC = Math.abs(e) > 0.12 ? clamp(e * 3, -2, 2) : 0; } }
     else {
       m.done = false; const dir = to.divideScalar(dist); const av = V3();
-      const obs = OBST.filter(o => o.kind !== 'you').concat(dist2(m.target, dog.pos) > 1.2 ? [{ x: dog.pos.x, z: dog.pos.z, r: 0.35 }] : []);
+      // his obstacles: everything but his own circle, and the dog unless the dog is his goal
+      const obs = OBST.filter(o => o.kind !== 'you').concat(dist2(m.target, dog.pos) > 1.2 ? dogCircles() : []), near = new Set();
       for (const o of obs) {
         const dx = HUM.pos.x - o.x, dz = HUM.pos.z - o.z, dd = Math.hypot(dx, dz) - o.r - 0.3;
-        if (dd < 1.5 && Math.hypot(m.target.x - o.x, m.target.z - o.z) > o.r + 0.4) { const w = (1 / Math.max(dd, 0.05) - 1 / 1.5) * 0.35; av.x += dx / (dd + o.r + 0.3) * w; av.z += dz / (dd + o.r + 0.3) * w; const sd = Math.sign(dir.x * dz - dir.z * dx) || 1; av.x += -dir.z * sd * w * 0.6; av.z += dir.x * sd * w * 0.6; }
+        if (dd < 1.5 && Math.hypot(tgt.x - o.x, tgt.z - o.z) > o.r + 0.4) {
+          const w = (1 / Math.max(dd, 0.05) - 1 / 1.5) * 0.35; av.x += dx / (dd + o.r + 0.3) * w; av.z += dz / (dd + o.r + 0.3) * w;
+          // passing the dog: the side comes from where the dog will be in half a second, and is held for at least 1 s
+          let sd = Math.sign(dir.x * dz - dir.z * dx) || 1;
+          if (o.kind === 'dog') { const lead = dog.v * 0.5, px = dx - Math.sin(dog.yaw) * lead, pz = dz - Math.cos(dog.yaw) * lead; sd = passSide(PASS.hum, o.key, Math.sign(dir.x * pz - dir.z * px) || 1, now); near.add(o.key); }
+          av.x += -dir.z * sd * w * 0.6; av.z += dir.x * sd * w * 0.6;
+        }
       }
+      for (const k of PASS.hum.keys()) if (!near.has(k)) PASS.hum.delete(k);
       dir.add(av).normalize();
       const e = wrapA(Math.atan2(dir.x, dir.z) - HUM.yaw);
       wC = clamp(e * 3, -2.4, 2.4);

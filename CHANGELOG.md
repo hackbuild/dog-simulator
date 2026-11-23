@@ -18,3 +18,6 @@ Versions follow semver per package. Nothing is published to npm yet.
   cortex interval); goldens re-recorded.
 - runner: motion metrics per scenario (jerk, sliding, state toggles,
   rAF frame sampler with the per system profiler).
+- app: passing rule, dog yield, stall waypoint and two circle dog for
+  the human (handoff issue 3); task change releases a held kneel; fetch
+  ends while the human is away. golden/cpg now recorded on the app.
