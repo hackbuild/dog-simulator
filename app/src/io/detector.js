@@ -84,10 +84,17 @@ async function showPhoto(file) {
   const sc = Math.min(320 / bmp.width, 240 / bmp.height); c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
   ctx.drawImage(bmp, 0, 0, c.width, c.height); $('photoView').style.display = 'block';
   document.querySelector('[data-p=pSense]').click();
-  if (!net.sess) { await loadNet(); }
-  if (!net.sess) { toast('detector not available'); return; }
-  let dets = null; for (let i = 0; i < 20 && !dets; i++) { dets = await detect(bmp, bmp.width, bmp.height, 0.3); if (!dets) await new Promise(r => setTimeout(r, 120)); }
-  if (dets) { drawBoxes(ctx, dets, sc, sc); reactTo(dets, 'photo'); toast(dets.length ? 'dog sees: ' + dets.slice(0, 3).map(d => d.label).join(', ') : 'dog sees nothing it knows'); }
+  // the detector loads only when you turn it on: a photo never fetches it
+  let dets = null;
+  if (!$('netOn').checked) toast('to label photos, turn on yolov8n under sense (12.8 mb, agpl 3.0 weights).');
+  else {
+    if (!net.sess) await loadNet();
+    if (!net.sess) toast('detector not available');
+  }
+  if (net.sess && $('netOn').checked) {
+    for (let i = 0; i < 20 && !dets; i++) { dets = await detect(bmp, bmp.width, bmp.height, 0.3); if (!dets) await new Promise(r => setTimeout(r, 120)); }
+    if (dets) { drawBoxes(ctx, dets, sc, sc); reactTo(dets, 'photo'); toast(dets.length ? 'dog sees: ' + dets.slice(0, 3).map(d => d.label).join(', ') : 'dog sees nothing it knows'); }
+  }
   if (vlm.state === 'ready' && !thinking) {
     const pc = document.createElement('canvas'); pc.width = c.width; pc.height = c.height; pc.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
     thinking = true; $('cortexSt').textContent = 'looking at photo';
@@ -111,11 +118,11 @@ $('bWebcam').addEventListener('click', async () => {
   if (camState.on) { const v = $('cam'); v.srcObject && v.srcObject.getTracks().forEach(t => t.stop()); v.style.display = 'none'; camState.on = false; $('bWebcam').classList.remove('on'); return; }
   try {
     const st = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-    navigator.mediaDevices.getUserMedia({ audio: true }).then(startMicLevel).catch(() => {});
     const v = $('cam'); v.srcObject = st; v.style.display = 'block'; await v.play(); camState.on = true; $('bWebcam').classList.add('on');
     // yolov8n (agpl 3.0 weights) loads only when you turn it on under sense
     if ($('netOn').checked) loadNet();
     try {
+      if (!camState.gest) toast('fetching the mediapipe gesture and face models, 27.3 mb, apache 2.0.');
       const mp = await import('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/vision_bundle.mjs');
       const fs = await mp.FilesetResolver.forVisionTasks('https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2.3/wasm');
       camState.gest = await mp.GestureRecognizer.createFromOptions(fs, { baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task', delegate: 'GPU' }, runningMode: 'VIDEO', numHands: 1 });
@@ -147,6 +154,12 @@ function gestureCue(name) {
   if (map[name] === 'scold') return brain.reward(-0.6, 'thumbs down');
   brain.cue('gesture:' + name.toLowerCase());
 }
+// clap detection: its own button, the only path that asks for the microphone level
+$('bClap').addEventListener('click', async () => {
+  if (micAn) { micAn = null; $('bClap').classList.remove('on'); $('bClap').textContent = 'clap detection (microphone)'; return; }
+  try { startMicLevel(await navigator.mediaDevices.getUserMedia({ audio: true })); $('bClap').classList.add('on'); $('bClap').textContent = 'clap detection on'; }
+  catch (e) { toast('no microphone access. clap detection stays off.'); }
+});
 let micAn = null;
 function startMicLevel(stream) { try { const a = audio() || new AudioContext(); const src = a.createMediaStreamSource(stream); micAn = a.createAnalyser(); micAn.fftSize = 512; src.connect(micAn); } catch (e) {} }
 const micBuf = new Float32Array(512); let micCool = 0;

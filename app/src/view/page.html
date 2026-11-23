@@ -206,8 +206,8 @@ details.tdet[open]>summary span:last-child:after{content:" open"}
     </div></div>
     <div class="blk"><div class="bh"><span>percepts</span><span>fov 240</span></div><div class="bb"><div class="lst" id="perList"></div></div></div>
     <div class="blk"><div class="bh"><span>show it</span><span>photo or webcam</span></div><div class="bb">
-      <div class="btns"><label class="btn" for="photoIn">pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="btn" id="bWebcam">webcam</button></div>
-      <div class="note" style="margin-top:6px">the dog runs the same detector on whatever you show it: cats get barked at, food gets begged for, balls get a play bow. webcam and microphone ask for permission; chrome or edge work best. with the cortex model loaded, the dog also tells you what it thinks of the photo.</div>
+      <div class="btns"><label class="btn" for="photoIn">pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="btn" id="bWebcam">webcam</button><button class="btn" id="bClap">clap detection (microphone)</button></div>
+      <div class="note" style="margin-top:6px">the dog runs the same detector on whatever you show it: cats get barked at, food gets begged for, balls get a play bow. a photo is labelled only with yolov8n turned on (12.8 mb, agpl 3.0 weights). the webcam asks for the camera only and fetches the mediapipe gesture and face models on first use: 27.3 mb (two models 12.1 mb, runtime 15.2 mb, vendor sizes), apache 2.0. clap detection asks for the microphone on its own button. chrome or edge work best. with the cortex model loaded, the dog also tells you what it thinks of the photo.</div>
       <div id="photoView"><canvas id="photo" width="320" height="240"></canvas></div>
       <video id="cam" playsinline muted></video>
     </div></div>
