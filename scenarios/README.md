@@ -27,11 +27,28 @@ Lockstep scenarios on a built file. `list.mjs` holds the scenarios,
   the human model, so they never leave the machine. The suite does not
   claim visual passes.
 
-Traces need the owner asset pack in `assets-local/` (the dog model and the
-human model); with the placeholder human the human moves differently and
-the goldens do not apply.
+Two golden sets:
 
-Motion metrics (`tools/runner/metrics.mjs`, HACKLE lesson 9) ride along
+- owner set (`golden/cpg/`, `golden/neural/`): needs the owner asset pack
+  in `assets-local/` (the dog model and the human model); with the
+  placeholder human the human moves differently and these goldens do
+  not apply. Local runs only.
+- public set (`golden/public-cpg/`, `--set public`): the build made by
+  `node tools/build-html.mjs public`, which reads nothing from
+  `assets-local/` (box dog from `tools/stub-dog.mjs`, placeholder human).
+  CI builds it and compares this set on every push.
+
+    node tools/build-html.mjs public
+    node scenarios/run.mjs compare --set public
+
+Goldens are renderer specific. The dog's saliency reads the pixels of
+its eye render, so a trace depends on the rasteriser as well as the
+code: every golden here was recorded headless on SwiftShader WebGPU
+(Chrome 150, macOS 12, arm64). A different Chrome, GPU path or
+platform can move every trace with no code change; that is a reason to
+re-record on that machine, after checking that nothing else moved.
+
+Motion metrics (`tools/runner/metrics.mjs`) ride along
 on every run unless `--no-metrics` is given; they go into the report
 under `metrics` and print per scenario. `node scenarios/metrics.mjs
 <report.json>` prints them as a table. All computed in lockstep at
@@ -63,6 +80,36 @@ Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 4 decimals, plus an FNV hash over full precision state at every step.
 
 ## Trace changes
+
+### 2026-11-23, audit fix pass
+
+- hackbuild-agents packages re-vendored at 510158c (was d369aa54):
+  29 of 29 cpg and 12 of 12 neural owner goldens identical (measured).
+- The audit called the dog's held passing side dead code. Removing it
+  moved 8 of 46 cpg owner runs (measured), so it ran; it was restored.
+- The app changes of this pass (pinned model loads, wall clock gait
+  health, seeded real time) leave the owner
+  goldens identical: 29 of 29 cpg and 12 of 12 neural replayed on the
+  final build (measured).
+- Setups named in the labels: stroll-follow holds the squirrel off,
+  phone-nudge sets the social drive to 0.8. The drive rises 0.0032 per
+  s apart from him at tempo 1 (0.32 per 100 s, computed from brain.js)
+  and falls 0.01 per s within 1.8 m of him; the goldens show 0.2 to 0.3
+  per 100 s (measured). An earlier note here said 0.1 per 100 s. Open
+  issue: a dog that stays near him drains the drive the nudge needs.
+- New natural variants, owner set, recorded on the final build:
+  stroll-squirrel (no squirrel hold, seed 9) passes; the audit rerun of
+  the same walk passed on seeds 9 and 3 and failed on 2 and 21 (shares
+  0.833, 0.623, 0.805, 0.757 on seeds 9, 2, 3, 21, measured).
+  phone-nudge-late (no drive setting, the call at 80 s, seed 11) fails:
+  no nudge in the 45 s call. Both are open issues.
+- Public set, 13 scenarios recorded on the public build and replayed
+  13 of 13 identical on the same machine (measured); 10 of 13 meet
+  their expectations: scent-trail, stroll-squirrel and phone-nudge-late
+  fail, as on the owner build or worse (the box dog and placeholder
+  human walk differently).
+- Owner set replayed on the final build: 31 of 31 cpg (29 plus the two
+  variants) and 12 of 12 neural goldens identical (measured).
 
 ### 2026-11-23, hackbuild-agents packages, one at a time
 
@@ -198,22 +245,23 @@ came at 57 of 60 s).
 
 ### 2026-11-23, avoidance stall (handoff issue 3), app build only
 
-`app/src/sim/passing.js` and its hooks (HACKLE lesson 7, hackle-plan
-5.4 item 3): the human passes the dog on a side picked from where the
+`app/src/sim/passing.js` and its hooks (a rule from earlier
+builds): the human passes the dog on a side picked from where the
 dog will be in 0.5 s and held at least 1 s; the dog is two circles
 along its body for him; the dog steps aside when it stands in his path
 (within 0.6 m of his line, his goal away from the dog), timed out at
 2.5 s; a stall detector gives him a side waypoint after 2 s under
 0.2 m with a goal and no turn; the dog holds its side of him for 1 s
-too. Two more causes turned up in the stalled runs:
+too (the human is the 'you' entry of the obstacle list, scene.js, moved
+by human.js every step). Two more causes turned up in the stalled runs:
 
 - corridor-pass seed 21: the human stood 4 s because the kneel layer
   of the pet task before kept playing through its hold window after the
-  task changed (lesson 4). A task change now sends a held kneel straight
+  task changed. A task change now sends a held kneel straight
   to its stand up (1.3 s), unless the new task kneels too.
 - reunion-errand, after the change above: the dog kept fetching to a
   human who had left through the gate for 100 s and never waited at the
-  door. Fetch now scores zero while he is away (plan 5.4 item 4).
+  door. Fetch now scores zero while he is away.
 
 Human stall seconds (computed) on the issue 3 sweep, before and after:
 parked-in-path seeds 3, 4, 21: 0, 0, 4.25 to 0, 0, 0.5; seed 2 (new) 0;
@@ -229,7 +277,7 @@ crouch-greeting (9.5 s), repeat-cue (14.25 s), scent-trail (32 s),
 bench-sit (37 s). fetch-roundtrip and phone-nudge are identical.
 Expectation outcomes elsewhere did not move.
 
-### 2026-11-22, the owner's five fixes (hackle-plan lesson set)
+### 2026-11-22, the owner's five fixes (lessons from earlier builds)
 
 Ported to `app/src` and `legacy/det/src` together; both builds give the
 same hash on all 20 cpg runs (measured). Goldens re-recorded on

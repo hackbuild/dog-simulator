@@ -1,4 +1,4 @@
-// Scenario list (hackle-plan 5.5). Each scenario runs in lockstep from a seed.
+// Scenario list. Each scenario runs in lockstep from a seed.
 // Actions are page code with h = window.__hackle; `when` actions fire once,
 // at the first 0.25 s probe where the condition holds. Expectations read the
 // trace rows (column names in COLS) and the probe values.
@@ -13,7 +13,7 @@ const place = (who, x, z, yaw) =>
 // a side view framing the dog and the human
 export const sideShot = `h.setCam(1); const D = h.dog.pos, H = h.HUM.pos; const mx = (D.x + H.x) / 2, mz = (D.z + H.z) / 2, s = Math.max(4, Math.hypot(D.x - H.x, D.z - H.z) * 1.2 + 2.5); h.controls.target.set(mx, 0.6, mz); h.camera.position.set(mx + s * 0.8, 2.4, mz + s * 0.6); h.controls.update();`;
 
-/** seconds where an agent with a goal moved under 0.2 m over the previous 2 s (hackle-plan 5.4 item 3) */
+/** seconds where an agent with a goal moved under 0.2 m over the previous 2 s */
 export function stallSeconds(rows, who, hasGoal) {
   const R = rows.map(row);
   let s = 0;
@@ -118,7 +118,15 @@ export const SCENARIOS = [
     name: "stroll-follow", seed: 9, seconds: 110,
     actions: [{ at: 0, js: "h.squirrel.next = 70;" }, { at: 0.5, js: "h.startTask('stroll', {}, 'scenario: stroll');" }],
     shots: [{ at: 40, path: "stroll-follow.png", js: sideShot }],
-    expect: [{ label: "the dog stays within 3 m for 80 percent of the walk", check: (R) => { const w = R.filter((r) => r.task === "stroll"); return w.length > 0 && w.filter((r) => dist(r.dogX, r.dogZ, r.humX, r.humZ) < 3).length / w.length >= 0.8; } }],
+    expect: [{ label: "with the squirrel held off: the dog stays within 3 m for 80 percent of the walk", check: (R) => { const w = R.filter((r) => r.task === "stroll"); return w.length > 0 && w.filter((r) => dist(r.dogX, r.dogZ, r.humX, r.humZ) < 3).length / w.length >= 0.8; } }],
+  },
+  {
+    // the same walk with the squirrel left alone: the dog chases it on every seed; the share holds
+    // on seed 9 and fails on seeds 2 and 21 (audit rerun, measured) until the dog answers a recall
+    // mid chase (scenarios/README.md, findings)
+    name: "stroll-squirrel", seed: 9, seconds: 110,
+    actions: [{ at: 0.5, js: "h.startTask('stroll', {}, 'scenario: stroll');" }],
+    expect: [{ label: "with the squirrel free: the dog stays within 3 m for 80 percent of the walk", check: (R) => { const w = R.filter((r) => r.task === "stroll"); return w.length > 0 && w.filter((r) => dist(r.dogX, r.dogZ, r.humX, r.humZ) < 3).length / w.length >= 0.8; } }],
   },
   {
     name: "repeat-cue", seed: 10, seconds: 25,
@@ -128,11 +136,18 @@ export const SCENARIOS = [
   },
   {
     // the nudge needs a dog that wants company (social drive over 0.55, brain.js); the drive starts
-    // at 0.40 and rises about 0.1 per 100 s, so the scenario sets it: without this no seed can pass
+    // at 0.40, rises 0.0032 per s apart from him at tempo 1 (0.32 per 100 s, computed) and falls
+    // 0.01 per s within 1.8 m of him, so a dog kept beside him never gets there: the scenario sets it
     name: "phone-nudge", seed: 11, seconds: 50,
     actions: [{ at: 0, js: place("human", 0, -1.5, 0) + place("dog", 0, 1.5, Math.PI) + " h.brain.d.social = 0.8;" }, { at: 0.5, js: "h.startTask('phone', { dur: 45 }, 'scenario: phone');" }],
     shots: [{ at: 30, path: "phone-nudge.png", js: sideShot }],
-    expect: [{ label: "the dog nudges while he is on the phone", check: (R) => R.some((r) => r.cur === "nudge") }],
+    expect: [{ label: "with social drive set to 0.8: the dog nudges while he is on the phone", check: (R) => R.some((r) => r.cur === "nudge") }],
+  },
+  {
+    // the natural case: no drive setting, the call starts after 80 s of the dog's own day
+    name: "phone-nudge-late", seed: 11, seconds: 130,
+    actions: [{ at: 80, js: "h.startTask('phone', { dur: 45 }, 'scenario: phone');" }],
+    expect: [{ label: "with no setting, a call after 80 s: the dog nudges while he is on the phone", check: (R) => R.some((r) => r.cur === "nudge") }],
   },
   {
     name: "bench-sit", seed: 12, seconds: 40,
