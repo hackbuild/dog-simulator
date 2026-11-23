@@ -49,8 +49,8 @@ function copy(repo, name) {
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });
   cpSync(join(pkgDir, "dist"), join(out, "dist"), { recursive: true });
-  // the IIFE copies are for script tag use; the app bundles the ESM build
-  for (const f of walk(join(out, "dist"))) if (f.endsWith(".iife.js")) rmSync(f);
+  // the IIFE copies are for script tag use, the app bundles the ESM build; build info is local state
+  for (const f of walk(join(out, "dist"))) if (f.endsWith(".iife.js") || f.endsWith(".tsbuildinfo")) rmSync(f);
   cpSync(join(pkgDir, "README.md"), join(out, "README.md"));
   cpSync(join(src, "LICENSE"), join(out, "LICENSE"));
   writeFileSync(join(out, "package.json"), JSON.stringify(pj, null, 2) + "\n");

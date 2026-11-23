@@ -10,7 +10,6 @@
       "files": {
         "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
         "README.md": "c443d671bbb123f7e5e8e6a0efe518782b05eafb03cbbe754c10b50699a4094b",
-        "dist/.tsbuildinfo": "41cded08aa8b3d3bc3316fb81661ede13fd86faecd04d75ff18de13e7321cc37",
         "dist/index.d.ts": "6d67f9e139e8c25640fdf0f95e40386b51cfde084ed197a9dbff69ae7e1ffcff",
         "dist/index.js": "14348aa0ab11ea302561454decea45c53a5374326d111135e80e8a84d60d8a28",
         "dist/load.d.ts": "75df3072461817daa2d649f4fc0a84c8a7347f0b6fb412b9ac3fae65059041e5",
@@ -36,7 +35,6 @@
       "files": {
         "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
         "README.md": "f62bb7e37fa0b6da5ca4e2271ffd83ae9c906ba4fd37009229824f55bc73cca6",
-        "dist/.tsbuildinfo": "c1dbc6e1364b88a04c55025526c895fc2c1adeb602aa1f5549edb7db87bef6a7",
         "dist/cpu.d.ts": "63627e2fef3deab72f7d23ceb22adc159868f258cdd92c8773d33bcc2ea61d43",
         "dist/cpu.js": "742e568fe66491bedbadbf279d092191df7afb407472efa61efbfa9a2cfa9bd3",
         "dist/fetch.d.ts": "ab3b62e06c85cb3b845f092689eab76057aef36a2c45397f58f978225ae78e58",
