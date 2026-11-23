@@ -45,17 +45,29 @@ in RULES.md and CONTRIBUTING.md.
   and completes one fetch round trip in real time mode.
 - Two lockstep runs of the deterministic legacy build with one seed give
   identical traces over 600 sim s, neural gait on.
-- The app build reproduces all 18 CPG golden traces exactly (11 scenarios
-  plus 7 issue seeds), opens with the network disabled, and completes a
-  fetch round trip.
 - The app build contains no code from the CC-BY-NC gait host (test).
+
+### Verified, 2026-11-23, same machine
+
+- The app build reproduces its 29 CPG golden traces exactly (11
+  scenarios, 9 more issue seeds, 9 sweep seeds) and opens with the network
+  disabled. legacy/det matched the goldens up to commit bc2cf6c (the
+  owner's five fixes); the later behaviour fixes are in the app only.
+- 28 of 29 CPG traces meet their expectations; scent-trail fails, diagnosed
+  in scenarios/README.md. Handoff issue 3: human stall at most 1.5 s
+  across the sweep (4.75 s before).
+- Motion metrics (jerk, sliding, state toggles, frame time) are reported
+  per scenario; see scenarios/README.md.
+- UI copy is lowercase; the page was looked at as a still.
 
 ### Not verified
 
-- Motion quality: not judged. Screenshots were looked at as stills.
+- Motion quality: judged by metrics and stills only. Nobody has watched
+  the fixes in a browser at real frame rate.
 - simSpeed 4 against simSpeed 1 step for step: not run.
 - The neural gait in the app build: absent until the MIT host lands.
-- Size: dist/dog-simulator.html is 14,620,125 bytes with the owner pack
+- Size: dist/dog-simulator.html is 14,624,739 bytes with the owner pack
+  (2026-11-23) and was 14,620,125 bytes with the owner pack
   and 13,141,035 bytes without (measured), over the 9.3 MB budget. Rapier
   is 4.3 MB of the 5.45 MB script, the dog model 7.3 MB of base64.
 - CI does not run the Chrome checks; they need `assets-local/`.

@@ -24,3 +24,6 @@ Versions follow semver per package. Nothing is published to npm yet.
 - app: the ball no longer stands the seated human up; the dog keeps up
   on a stroll. scenarios: phone-nudge sets the social drive it needs,
   stroll-follow holds the squirrel off, bench-sit checks he stays seated.
+- app: ui copy lowercase (page, tune panel, toasts, status chips).
+- runner: check:boot no longer overwrites the build with its screenshot
+  when --shot is not given.

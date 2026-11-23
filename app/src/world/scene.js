@@ -155,7 +155,7 @@ async function initPhysics() {
   // dog kinematic body
   bodies.dog = world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(0, 0.4, 2));
   world.createCollider(RAPIER.ColliderDesc.capsule(0.22, 0.13).setRotation({ x: Math.SQRT1_2, y: 0, z: 0, w: Math.SQRT1_2 }), bodies.dog);
-  $('chipPhys').textContent = 'RAPIER ' + (RAPIER.version ? RAPIER.version() : 'ok'); $('chipPhys').classList.add('on');
+  $('chipPhys').textContent = 'rapier ' + (RAPIER.version ? RAPIER.version() : 'ok'); $('chipPhys').classList.add('on');
 }
 function makeDynamic(name, mesh, colDesc, pos, opts = {}) {
   const rb = world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(pos.x, pos.y, pos.z).setCcdEnabled(true).setLinearDamping(opts.lin ?? 0.15).setAngularDamping(opts.ang ?? 0.6));

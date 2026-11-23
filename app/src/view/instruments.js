@@ -23,7 +23,7 @@ function drawInstruments() {
   // text bits
   $('gaitName').textContent = NG.active ? 'neural ' + NG.guidance.toLowerCase() : dog.standing ? 'stand' : GAITS[dog.gaitW.indexOf(Math.max(...dog.gaitW))].name;
   $('kFr').textContent = (dog.v * dog.v / (9.81 * (dog.legLen || 0.45))).toFixed(2); $('kSrc').textContent = NG.active ? 'neural mocap' : 'pattern generator';
-  $('kGuide').textContent = NG.active ? NG.guidance : '-'; $('kNnMs').textContent = NG.ms ? NG.ms.toFixed(0) + ' ms, ' + (1000 / Math.max(NG.ms, 100)).toFixed(0) + ' Hz' : '-';
+  $('kGuide').textContent = NG.active ? NG.guidance.toLowerCase() : '-'; $('kNnMs').textContent = NG.ms ? NG.ms.toFixed(0) + ' ms, ' + (1000 / Math.max(NG.ms, 100)).toFixed(0) + ' Hz' : '-';
   $('kCont').textContent = NG.active ? NG.cont.map(x => x > 0.55 ? 'X' : '.').join(' ') : '-';
   // sleep, clock, bond
   const hh = Math.floor(CLOCK.h), mm = Math.floor((CLOCK.h - hh) * 60), ck = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');

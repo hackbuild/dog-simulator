@@ -1,5 +1,5 @@
 // ---------- cortex: local vision language model on WebGPU, in a worker ----------
-const VLM = { gemma: { id: 'onnx-community/gemma-4-E2B-it-ONNX', name: 'Gemma 4 E2B' }, lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', name: 'LFM2-VL 450M' } };
+const VLM = { gemma: { id: 'onnx-community/gemma-4-E2B-it-ONNX', name: 'gemma 4 e2b' }, lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', name: 'lfm2-vl 450m' } };
 const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'gemma'), nid: 0, wait: new Map(), ms: 0 };
 $('vlmPick').value = vlm.kind;
 $('vlmPick').onchange = e => { vlm.kind = e.target.value; store.set('vlm', vlm.kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; setVlm('off'); } };

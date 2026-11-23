@@ -44,4 +44,7 @@ const store = {
   set(k, v) { try { localStorage.setItem('hackle.' + k, JSON.stringify(v)); } catch (e) {} }
 };
 let toastT = 0;
-function toast(msg) { const t = $('toast'); t.textContent = msg; t.classList.add('on'); toastT = 2.2; }
+// ui copy is lowercase (RULES.md); unit symbols keep their case
+const uiText = s => String(s).toLowerCase().replace(/\bhz\b/g, 'Hz');
+const uiHtml = h => h.replace(/>([^<>]*)</g, (m, t) => '>' + uiText(t) + '<').replace(/\btitle="([^"]*)"/g, (m, v) => 'title="' + uiText(v) + '"');
+function toast(msg) { const t = $('toast'); t.textContent = uiText(msg); t.classList.add('on'); toastT = 2.2; }

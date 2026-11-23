@@ -186,7 +186,7 @@ tdef('human', 'Hu.breath', 'breaths per min', 14, 8, 30, 0.5);
 tdef('human', 'Hu.sway', 'postural sway mm', 5, 0, 20, 0.5);
 tdef('human', 'Hu.throw', 'throw effort', 0.55, 0.2, 1, 0.05);
 tdef('human', 'Hu.side', 'approach the dog from the side', 1, 0, 1, 1);
-const TUNE_LABEL = { layers: 'LAYERS', personality: 'PERSONALITY', body: 'BODY', brain: 'CHOICE', learn: 'LEARNING', world: 'DAY AND SLEEP', senses: 'SENSES', human: 'HUMAN' };
+const TUNE_LABEL = { layers: 'layers', personality: 'personality', body: 'body', brain: 'choice', learn: 'learning', world: 'day and sleep', senses: 'senses', human: 'human' };
 // personality presets, z scores
 const PRESETS = {
   balanced: { label: 'Balanced', P: {} },
@@ -236,11 +236,11 @@ const tuneUI = {
       } else if (g === 'layers') {
         h += `<div class="blk"><div class="bh"><span>LAYERS</span><span>A/B the research</span></div><div class="bb">` + keys.map(k => `<label class="tog"><input type="checkbox" data-tk="${k}"${TUNE.v[k] ? ' checked' : ''}>${TUNE.defs[k].label}</label>`).join('') + `</div></div>`;
       } else {
-        h += `<details class="blk tdet"><summary class="bh"><span>${TUNE_LABEL[g] || g.toUpperCase()}</span><span>${keys.length}</span></summary><div class="bb">` + keys.map(k => this.row(k)).join('') + `</div></details>`;
+        h += `<details class="blk tdet"><summary class="bh"><span>${TUNE_LABEL[g] || g}</span><span>${keys.length}</span></summary><div class="bb">` + keys.map(k => this.row(k)).join('') + `</div></details>`;
       }
     }
     h += `<div class="blk"><div class="bh"><span>SAVE</span><span>json</span></div><div class="bb"><div class="btns"><button class="btn" id="bTuneExp">Export</button><label class="btn" for="tuneImp">Import</label><input type="file" id="tuneImp" accept=".json,application/json" hidden><button class="btn" id="bTuneReset">Reset all</button></div></div></div>`;
-    el.innerHTML = h;
+    el.innerHTML = uiHtml(h);
     el.querySelectorAll('input[data-tk]').forEach(inp => {
       const k = inp.dataset.tk;
       inp.addEventListener(inp.type === 'checkbox' ? 'change' : 'input', () => {

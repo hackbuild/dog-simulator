@@ -10,7 +10,7 @@ $('showSal').onchange = e => { attention.show = e.target.checked; };
 (async () => {
   try {
     await renderer.init();
-    const gpu = renderer.backend.isWebGPUBackend; $('chipGpu').textContent = gpu ? 'WEBGPU' : 'WEBGL2'; $('chipGpu').classList.add('on');
+    const gpu = renderer.backend.isWebGPUBackend; $('chipGpu').textContent = gpu ? 'webgpu' : 'webgl2'; $('chipGpu').classList.add('on');
     resize();
     $('loadNote').textContent = 'starting physics';
     await initPhysics(); initProps();
@@ -19,7 +19,7 @@ $('showSal').onchange = e => { attention.show = e.target.checked; };
     const gltf = await new GLTFLoader().parseAsync(glbBuf, '');
     setupDog(gltf, 'dog.glb');
     try {
-      $('loadNote').textContent = 'waking Moheeb';
+      $('loadNote').textContent = 'waking moheeb';
       const h64 = document.getElementById('humanGLB').textContent.trim();
       const hg = h64 ? await new GLTFLoader().parseAsync(await (await fetch('data:model/gltf-binary;base64,' + h64)).arrayBuffer(), '') : { scene: placeholderHuman() };
       setupHuman(hg, JSON.parse(document.getElementById('humanAnims').textContent));

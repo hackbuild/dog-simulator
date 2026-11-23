@@ -9,7 +9,8 @@ import { ROOT, open, waitFor } from "./chrome.mjs";
 const argv = process.argv.slice(2);
 const file = argv.find((a) => !a.startsWith("--") && !a.endsWith(".png")) ?? join(ROOT, "dist/hackle-legacy.html");
 const offline = argv.includes("--offline");
-const shot = argv[argv.indexOf("--shot") + 1];
+// without --shot, indexOf gives -1 and argv[0] (the build itself) was overwritten by the screenshot
+const shot = argv.includes("--shot") ? argv[argv.indexOf("--shot") + 1] : null;
 const t0 = Date.now();
 const say = (s) => console.log(`[${((Date.now() - t0) / 1000).toFixed(0)}s] ${s}`);
 

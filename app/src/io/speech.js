@@ -25,9 +25,9 @@ $('bMic').addEventListener('click', () => {
   try {
     rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
     rec.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) handleSpeech(r[0].transcript); else $('heard').textContent = '... ' + r[0].transcript; } };
-    rec.onend = () => { micOn = false; $('bMic').classList.remove('on'); $('micLab').textContent = 'Talk'; };
+    rec.onend = () => { micOn = false; $('bMic').classList.remove('on'); $('micLab').textContent = 'talk'; };
     rec.onerror = e => { toast('speech: ' + e.error); };
-    rec.start(); micOn = true; $('bMic').classList.add('on'); $('micLab').textContent = 'Listening';
+    rec.start(); micOn = true; $('bMic').classList.add('on'); $('micLab').textContent = 'listening';
   } catch (e) { toast('speech blocked here; type a cue instead'); }
 });
 

@@ -216,7 +216,7 @@ function humCue(word, withName = RNG() < 0.5) {
   const n = $('dogName').value.trim();
   humSay((withName && n ? n + ', ' : '') + word + '.', 2.5, true);
   if (withName && n) brain.named(1);
-  SIMQ.after(0.35, () => { $('heard').textContent = 'Moheeb: "' + word + '"'; brain.cue(word); });
+  SIMQ.after(0.35, () => { $('heard').textContent = 'moheeb: "' + word + '"'; brain.cue(word); });
 }
 function humanHold(on) {
   if (!ball) return;
