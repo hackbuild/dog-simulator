@@ -10,9 +10,9 @@ let eyeWait = null;
 const PROF = window.__prof = {}; let pT = 0;
 function pm(label) { const t = performance.now(), d = t - pT; pT = t; const e = PROF[label] || (PROF[label] = { tot: 0, max: 0, n: 0 }); e.tot += d; e.n++; if (d > e.max) e.max = d; }
 function frame() {
-  const tnow = performance.now(); const dt = Math.min((tnow - last) / 1000, 1 / 20) * (window.__simSpeed || 1); last = tnow;
+  const tnow = performance.now(); ngFrame((tnow - last) / 1000); const dt = Math.min((tnow - last) / 1000, 1 / 20) * (window.__simSpeed || 1); last = tnow;
   acc += dt; let n = 0; const cap = 3 * Math.max(1, Math.round(window.__simSpeed || 1));
-  while (acc >= STEP - 1e-9 && n < cap) { simStep(STEP); acc -= STEP; n++; }
+  while (acc >= STEP - 1e-9 && n < cap) { simStep(STEP); if (SEEDED) rtRow(); acc -= STEP; n++; }
   if (n >= cap) acc = Math.min(acc, STEP);
   view(dt);
 }
@@ -78,8 +78,17 @@ function view(dt) {
   if (camMode === 4 && HUM.map && !HUM.away) { updateHumCam(dt); povCam.aspect = camera.aspect; povCam.updateProjectionMatrix(); humHeadHide(true); renderer.render(scene, povCam); humHeadHide(false); povCam.aspect = 2; povCam.updateProjectionMatrix(); }
   else if (camMode === 2 && dog.ready) { updateEyeCam(); eyeCam.aspect = camera.aspect; eyeCam.updateProjectionMatrix(); dog.mesh.visible = false; renderer.render(scene, eyeCam); dog.mesh.visible = true; eyeCam.aspect = 2; eyeCam.updateProjectionMatrix(); }
   else { pT = performance.now(); renderer.render(scene, camera); pm('render'); }
-  pT = performance.now(); instT += dt; if (instT > 0.1) { instT = 0; if (dog.ready) drawInstruments(); } pm('instruments');
+  pT = performance.now(); instT += dt; if (instT > 0.1) { instT = 0; if (dog.ready) drawInstruments(); if (!TEST) { const st = NG.status(); if (st && $('nnSt').textContent !== st) $('nnSt').textContent = st; } } pm('instruments');
 }
+
+// ---------- seeded real time trace (#seed=N) ----------
+// the lockstep row columns every 15 steps, without the hash; window.__rt reads them
+let rtSteps = 0; const rtRows = [];
+function rtRow() {
+  rtSteps++;
+  if (rtSteps % 15 === 0) rtRows.push([rtSteps, ...simState().map(x => Math.round(x * 1e4) / 1e4), brain.cur, brain.sub || '', HUM.task ? HUM.task.name : '', ball && ball.held ? 1 : 0, NG.active ? NG.guidance : 'cpg']);
+}
+if (SEEDED) window.__rt = { seed: SEEDED.seed, speed: () => window.__simSpeed || 1, steps: () => rtSteps, t: () => now, rows: i => rtRows.slice(i || 0) };
 
 // ---------- lockstep hook ----------
 // trace rows every 0.25 sim s; a running FNV hash covers full precision state at every step

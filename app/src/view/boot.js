@@ -3,7 +3,14 @@ tuneLoad(); CLOCK.h = TV('W.hour');
 tuneUI.build($('pTune'));
 if (!store.get('tune', null)) seedPersonality(store.get('name', 'Pixel'));
 TUNE.onChange = k => { if (k === 'L.neural' && TV(k) && !NG.ready) nnLoadUI(); if (k === 'W.hour') CLOCK.h = TV('W.hour'); };
-function nnLoadUI() { $('bNnLoad').disabled = true; NG.load(st => { $('nnSt').textContent = st; }).then(() => { $('bNnLoad').disabled = NG.ready; if (NG.ready) toast('neural gait online'); else $('bNnLoad').disabled = false; }); }
+function nnLoadUI() {
+  $('bNnLoad').disabled = true;
+  NG.load(st => { $('nnSt').textContent = st; }).then(() => {
+    if (!NG.ready) { $('bNnLoad').disabled = false; return; }
+    $('bNnLoad').textContent = 'neural gait loaded';
+    if (!ON('L.neural')) toast('neural gait loaded. turn it on under tune, layers.');
+  });
+}
 $('bNnLoad').onclick = nnLoadUI;
 $('showSal').onchange = e => { attention.show = e.target.checked; };
 (async () => {
@@ -34,6 +41,15 @@ $('showSal').onchange = e => { attention.show = e.target.checked; };
       if (ON('L.neural')) await NG.load(st => { $('nnSt').textContent = st; });
       installSim();
     } else {
+      if (SEEDED) {
+        // the speed check: no detector (wall clock cadence), layers as asked, simSpeed from the hash
+        $('netOn').checked = false;
+        for (const k of SEEDED.on) TUNE.v[k] = 1;
+        for (const k of SEEDED.off) TUNE.v[k] = 0;
+        window.__simSpeed = SEEDED.speed;
+        if (ON('L.neural')) await NG.load(st => { $('nnSt').textContent = st; });
+      }
+      last = performance.now();
       renderer.setAnimationLoop(frame);
       setTimeout(() => { if ($('netOn').checked) loadNet(); }, 1500);
       setTimeout(() => { if (ON('L.neural')) nnLoadUI(); }, 2600);

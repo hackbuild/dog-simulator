@@ -184,7 +184,8 @@ function blendOffsets() {
 // neural or procedural body this frame: the switch is inertialized, so neither side pops
 function nnWanted() { return ON('L.neural') && NG.ready && dog.ready && dog.org && now >= NG.holdUntil && !(dog.postureT.bow > 0.5 || dog.posture.bow > 0.15 || dog.pawLift > 0.02 || (brain && brain.cur === 'shake')); }
 function locomotion(dt) {
-  const want = nnWanted() && (!NG.active || NG.healthy());
+  // a run still in flight from before (dropped by enter) keeps the body procedural until it lands
+  const want = nnWanted() && (NG.active ? NG.healthy() : !NGW.busy);
   if (want && !NG.active) {
     if (!NR.ok) nnRig();
     NG.enter(Math.max(dog.v, 0) / TV('B.nnSpeed'));

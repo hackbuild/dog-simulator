@@ -2,8 +2,12 @@
 // #test&seed=N opens in lockstep: no animation loop, window.__sim.step(n) advances n fixed steps.
 // &off=L.neural,L.day turns layers off before the first step, &on=L.neural turns them on.
 const TEST = (() => { const h = new URLSearchParams(location.hash.slice(1)); if (!h.has('test')) return null; return { seed: (+h.get('seed') || 1) >>> 0, off: (h.get('off') || '').split(',').filter(Boolean), on: (h.get('on') || '').split(',').filter(Boolean), nnacc: ['f32', 'f64'].includes(h.get('nnacc')) ? h.get('nnacc') : null }; })();
+// #seed=N without test: real time mode (animation loop, wall clock frames) with a seeded rng and
+// a trace of the same rows as lockstep, read through window.__rt; &speed=S sets simSpeed and
+// &on= and &off= set layers as in test mode. tools/runner/speed.mjs compares speeds with it.
+const SEEDED = (() => { const h = new URLSearchParams(location.hash.slice(1)); if (h.has('test') || !h.has('seed')) return null; return { seed: (+h.get('seed') || 1) >>> 0, speed: Math.max(0.25, Math.min(8, +h.get('speed') || 1)), off: (h.get('off') || '').split(',').filter(Boolean), on: (h.get('on') || '').split(',').filter(Boolean) }; })();
 // mulberry32, one stream for the whole sim; the seed is random outside test mode
-const RNG = (seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; })(TEST ? TEST.seed : crypto.getRandomValues(new Uint32Array(1))[0]);
+const RNG = (seed => () => { seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; })(TEST ? TEST.seed : SEEDED ? SEEDED.seed : crypto.getRandomValues(new Uint32Array(1))[0]);
 // timed sim events run in sim time, in the order they were scheduled
 const SIMQ = { t: 0, n: 0, q: [],
   after(s, fn) { this.q.push({ at: this.t + s, n: this.n++, fn }); this.q.sort((a, b) => a.at - b.at || a.n - b.n); },
