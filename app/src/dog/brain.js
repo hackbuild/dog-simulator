@@ -75,8 +75,8 @@ const brain = {
       let p = pos.clone();
       if (ON('L.noise')) {
         const to = p.clone().sub(dog.root.position), az = Math.atan2(to.x, to.z), r = Math.hypot(to.x, to.z);
-        const facing = Math.abs(wrapA(az - dog.yaw - dog.head.yaw)) < 0.4, sd = TV('Se.az') * Math.PI / 180 * (facing ? 0.35 : 1);
-        let a2 = az + ORG.gauss() * sd; if (!facing && RNG() < 0.06) a2 = 2 * (dog.yaw) - a2 + Math.PI; p.set(dog.root.position.x + Math.sin(a2) * r, pos.y, dog.root.position.z + Math.cos(a2) * r);
+        const facing = Math.abs(wrapA(az - dog.yaw - dog.head.yaw)) < 0.4;
+        const a2 = HSENSE.localizeSound(az, dog.yaw, TV('Se.az'), facing, RNG); p.set(dog.root.position.x + Math.sin(a2) * r, pos.y, dog.root.position.z + Math.cos(a2) * r);
       }
       this.soundLook = { p, until: now + 1.0 }; dog.earPerk = Math.max(dog.earPerk, 0.7);
     }

@@ -84,6 +84,33 @@
         "dist/single.js": "50aa9c5e54a1bda20f662d34849f9ea960cfb0927cab840c4e0a5a179415ccf9",
         "package.json": "cf2526b76c5ff24b36407127f3322811a97b835373ae198ba2eeb155e62ec894"
       }
+    },
+    "senses": {
+      "repo": "hackbuild/hackbuild-agents",
+      "path": "packages/senses",
+      "commit": "d369aa542cc443e4d8173ac99b22374ef89f9035",
+      "version": "0.1.0",
+      "files": {
+        "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
+        "README.md": "1ace86c12805b4f2d26842fda0c2ade580652c597d5a72d2cedc4f334900848a",
+        "dist/index.d.ts": "07f7a261a1e4adf9eef9b4d7cb3f742593ad6cc47c7da2d696b94bdf9bb5acda",
+        "dist/index.js": "03f0ae338f04551d84ffd16fa6fd928069854cdc297864635d5694cb57058977",
+        "dist/load.d.ts": "75df3072461817daa2d649f4fc0a84c8a7347f0b6fb412b9ac3fae65059041e5",
+        "dist/load.js": "262cf59fa31ad24df53d1059ef360058d8e2438fddc310cacdd68ea839d2fed9",
+        "dist/scalar.d.ts": "fef42c4b25eb8189900c9caad96fe2fccffcd0334fd8f50f9d8368006455585e",
+        "dist/scalar.js": "f15c665e62222625f97969ba6218e3da494a9544c614295d6f8e089161fd3cad",
+        "dist/single.d.ts": "eeb911457110c9b6ce9a32eb69eb9d840cdd17948362ea2b7ce4baa1c5ef6102",
+        "dist/single.js": "f8c8ee47c41b8837c3936711236187f312c36b510e658d68dde5948000aa75f7",
+        "dist/three.d.ts": "ee1160da8cf1945b9250660d90027a840b190daf6a609348d46633b066ae6391",
+        "dist/three.js": "eb0d9469dbeff811171564ed8e0119b1b818b866b6aca5aca05064b0fde1008c",
+        "dist/wasm/inline.d.ts": "58a1cdd455eda64e0f51fe27ed1cbff25dd193d4d033fb9364725cb03248e87f",
+        "dist/wasm/inline.js": "683deb979f5edfcc8f06eb84fe2b3a70d452f9ddd5324cb37849eee1ec419a73",
+        "dist/wasm/senses.d.ts": "9748d79023d096c23410dcc3e6cfebeebf6d5352aba82d6aa120bf04de59f947",
+        "dist/wasm/senses.js": "28395a6201065555bf6d2ff7c3e6dc62644da4b2ef65291768e4e715cb4707fb",
+        "dist/wasm/senses_bg.wasm": "4a87c4868daa8a27b0b23b9b3da46023232bf773cfb68a79be51f55b49b80f4e",
+        "dist/wasm/senses_bg.wasm.d.ts": "d7e83988d6a140dac2d2b905363cb9a1eb8a5d3b3d9641c4b147167c145a6bb8",
+        "package.json": "b32665e79eefc48f259306f6ac8204908ebdccbfe3e00d5c5c3269749bf44e04"
+      }
     }
   }
 }

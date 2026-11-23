@@ -74,6 +74,12 @@ commit in `vendor/lock.json`).
   `@hackbuild/tunables` registry (master layer `L.organic`, saves as
   `{ ver: 2, d }` under the old storage key, a first format save keeps
   its personality through `migrate[0]`). The app keeps its own panel.
+- senses: the looming check takes `angularSize` and `timeToContact`, the
+  heard azimuth `localizeSound` (same Box Muller draw order, same front
+  back mirror). The wasm parts (Saliency, OdourField, Sniffer, Tracker,
+  PerceptMemory, OccupancyGrid) are not adopted: each would replace a
+  JavaScript sense with a different algorithm or draw order, so the
+  traces could not hold. The bundle grew 256 bytes (tree shaken).
 
 ### 2026-11-23, one motor state, f64 sums kept
 

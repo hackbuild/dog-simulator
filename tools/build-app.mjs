@@ -40,6 +40,7 @@ export function scopeSource() {
     "import * as HMN from '@hackbuild/motion-net';",
     "import * as HGAIT from '@hackbuild/gait';",
     "import * as HTUNE from '@hackbuild/tunables';",
+    "import * as HSENSE from '@hackbuild/senses';",
     "{",
     ...parts,
     "}",

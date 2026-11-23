@@ -70,11 +70,11 @@ function loomCheck(dt) {
     if (!p.vis || !p.pos) continue;
     // a familiar person walking up is not a threat; only fast objects, or a looming stranger like approach, count
     if (p.kind === 'you' && HUM.threat < 0.5) continue; if (p.kind !== 'you' && (p.speed || 0) < 1.5) continue;
-    const d = p.pos.distanceTo(eye), size = p.kind === 'you' ? 0.5 : p.kind === 'ball' ? 0.09 : 0.3, th = 2 * Math.atan(size / 2 / Math.max(d, 0.05));
+    const d = p.pos.distanceTo(eye), size = p.kind === 'you' ? 0.5 : p.kind === 'ball' ? 0.09 : 0.3, th = HSENSE.angularSize(size, d);
     const q = loomPrev[p.id]; loomPrev[p.id] = { th, t: now };
     if (!q || now - q.t > 0.3 || now - q.t < 1e-3) continue;
-    const rate = (th - q.th) / (now - q.t); if (rate <= 0) continue;
-    const tau = th / rate, thr = TV('Se.loom') * (1 + 0.2 * PT('reactivity') + 0.15 * PT('fearfulness'));
+    const tau = HSENSE.timeToContact(q.th, th, now - q.t); if (tau === Infinity) continue;
+    const thr = TV('Se.loom') * (1 + 0.2 * PT('reactivity') + 0.15 * PT('fearfulness'));
     if (tau < thr && th > 0.04 && (!p.loomT || now - p.loomT > 2.5)) {
       p.loomT = now; brain.startle = 0.5; dog.hop = 0.035; dog.earPerk = PT('fearfulness') > 0.5 ? -1 : 1; lookAt(p.pos);
       brain.a = clamp(brain.a + 0.3, 0, 1); brain.remember((p.id === 'you' ? 'my human' : p.id.replace(/\d+$/, '')) + ' came at me fast', 2);
