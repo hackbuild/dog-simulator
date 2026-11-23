@@ -44,7 +44,8 @@ function copy(repo, name) {
   delete pj.scripts;
   delete pj.devDependencies;
   pj.files = ["dist", "README.md", "LICENSE"];
-  if (pj.exports) delete pj.exports["./iife"];
+  // the IIFE files are not copied, so no export may point at one
+  if (pj.exports) for (const [k, v] of Object.entries(pj.exports)) if (JSON.stringify(v).includes(".iife.js")) delete pj.exports[k];
   const out = join(VENDOR, name);
   rmSync(out, { recursive: true, force: true });
   mkdirSync(out, { recursive: true });

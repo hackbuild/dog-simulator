@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 import { pathToFileURL } from "node:url";
 import puppeteer from "puppeteer-core";
 import { createHash } from "node:crypto";
@@ -53,12 +53,23 @@ function npmCdn(nodeModules) {
 		if (u.hostname === "cdn.jsdelivr.net" && u.pathname.startsWith("/npm/")) rest = u.pathname.slice(5);
 		else if (u.hostname === "unpkg.com") rest = u.pathname.slice(1);
 		if (!rest) return null;
-		const m = /^((?:@[^/]+\/)?[^@/]+)@([^/]+)\/(.*)$/.exec(decodeURIComponent(rest));
+		if (/%(2f|5c|2e)/i.test(rest)) return null;
+		let decoded;
+		try {
+			decoded = decodeURIComponent(rest);
+		} catch {
+			return null;
+		}
+		const m = /^((?:@[^/]+\/)?[^@/]+)@([^/]+)\/(.*)$/.exec(decoded);
 		if (!m) return null;
 		const [, name, ver, path] = m;
-		const pj = join(nodeModules, name, "package.json");
+		const root = resolve(nodeModules);
+		const pkg = resolve(root, name);
+		if (relative(root, pkg).startsWith("..") || !pkg.startsWith(root + sep)) return null;
+		const pj = join(pkg, "package.json");
 		if (!existsSync(pj) || JSON.parse(readFileSync(pj, "utf8")).version !== ver) return null;
-		const f = join(nodeModules, name, path);
+		const f = resolve(pkg, path);
+		if (!f.startsWith(pkg + sep)) return null;
 		return existsSync(f) ? { file: f } : null;
 	};
 }
@@ -127,6 +138,14 @@ async function open(o) {
 			height: o.height ?? 280
 		}
 	});
+	try {
+		return await prepare(browser, o);
+	} catch (e) {
+		await browser.close().catch(() => void 0);
+		throw e;
+	}
+}
+async function prepare(browser, o) {
 	const page = await browser.newPage();
 	const log = {
 		errors: [],
@@ -231,7 +250,7 @@ async function runLockstep(page, sc, o = {}) {
 	};
 	let done = 0;
 	let lastLog = Date.now();
-	while (done < total) {
+	const due = async () => {
 		while (events.length && events[0].step <= done) {
 			const e = events.shift();
 			if (e.js) await page.evaluate(bound(handle, e.js));
@@ -241,6 +260,9 @@ async function runLockstep(page, sc, o = {}) {
 				await page.screenshot({ path: e.path });
 			}
 		}
+	};
+	while (done < total) {
+		await due();
 		let n = Math.min(o.chunk ?? 30, total - done);
 		if (events.length) n = Math.min(n, Math.max(1, events[0].step - done));
 		for (const p of probes) n = Math.min(n, p.n - done % p.n);
@@ -261,6 +283,7 @@ async function runLockstep(page, sc, o = {}) {
 			o.onProgress(done / sps, (Date.now() - t0) / 1e3);
 		}
 	}
+	await due();
 	const tr = await page.evaluate(`${api}.trace()`);
 	out.rows = tr.rows;
 	if (tr.cols) out.cols = tr.cols;
@@ -268,10 +291,12 @@ async function runLockstep(page, sc, o = {}) {
 	out.wallSeconds = (Date.now() - t0) / 1e3;
 	return out;
 }
-/** First differing row between two traces, or null when identical. */
+/** JSON with NaN and the infinities kept apart from null. */
+const exact = (v) => JSON.stringify(v, (_k, x) => typeof x === "number" && !Number.isFinite(x) ? `${x}` : x);
+/** First differing row between two traces, or null when identical. NaN, Infinity and null all differ. */
 function diffTraces(a, b) {
 	const n = Math.max(a.rows.length, b.rows.length);
-	for (let i = 0; i < n; i++) if (JSON.stringify(a.rows[i]) !== JSON.stringify(b.rows[i])) return {
+	for (let i = 0; i < n; i++) if (exact(a.rows[i]) !== exact(b.rows[i])) return {
 		row: i,
 		a: a.rows[i] ?? null,
 		b: b.rows[i] ?? null
@@ -285,6 +310,7 @@ function diffTraces(a, b) {
 }
 /** Runs a scenario list, records or compares goldens, returns a report. */
 async function runSuite(o) {
+	if ((o.mode === "compare" || o.mode === "record") && !o.goldenDir) throw new Error(`${o.mode} needs goldenDir: without it nothing is ${o.mode === "compare" ? "compared" : "recorded"}`);
 	const api = o.api ?? "window.__sim";
 	const results = [];
 	const traces = {};
@@ -300,16 +326,21 @@ async function runSuite(o) {
 			height: o.height ?? 280
 		};
 		if (o.chrome) oo.chrome = o.chrome;
-		const { page, log, close } = await open(oo);
-		chrome = log.version;
 		const res = {
 			name: sc.name,
 			seed: sc.seed,
 			checks: [],
-			errors: log.errors,
-			blocked: log.blocked
+			errors: [],
+			blocked: []
 		};
+		let close = null;
 		try {
+			const opened = await open(oo);
+			close = opened.close;
+			const { page, log } = opened;
+			chrome = log.version;
+			res.errors = log.errors;
+			res.blocked = log.blocked;
 			if (!await waitFor(page, `!!(${api})`, o.readyMs ?? 24e4)) throw new Error(`no ${api} after ${(o.readyMs ?? 24e4) / 1e3} s`);
 			const tr = await runLockstep(page, sc, o);
 			traces[sc.name] = tr;
@@ -340,7 +371,7 @@ async function runSuite(o) {
 		} catch (e) {
 			res.errors.push(`runner: ${e.message}`);
 		} finally {
-			await close();
+			if (close) await close();
 		}
 		results.push(res);
 	};
@@ -440,7 +471,7 @@ function togglesPerSecond(states, dt) {
 }
 /**
 * Seconds where an agent with a goal moved under `dist` m over the
-* previous `window` s (the hackle-plan stall detector, 0.2 m in 2 s).
+* previous `window` s (the stall detector of earlier builds, 0.2 m in 2 s).
 */
 function stallSeconds(points, hasGoal, dt, window = 2, dist = .2) {
 	const k = Math.max(1, Math.round(window / dt));
@@ -565,8 +596,15 @@ function formatReport(r) {
 	}
 	return lines.join("\n");
 }
-/** True when nothing failed, no page error, no blocked request, and every golden matched. */
+/**
+* True when nothing failed, every check that is not `optional` ran, no
+* page error, no blocked request, and every golden matched. A check that
+* did not run is never a pass.
+*/
 function reportPasses(r) {
-	return r.results.every((s) => s.errors.length === 0 && s.blocked.length === 0 && (s.golden === void 0 || s.golden === "identical" || s.golden === "recorded") && s.checks.every((c) => verdict(c) !== "fail"));
+	return r.results.every((s) => s.errors.length === 0 && s.blocked.length === 0 && (s.golden === void 0 || s.golden === "identical" || s.golden === "recorded") && s.checks.every((c) => {
+		const v = verdict(c);
+		return v === "pass" || v === "not run" && c.optional === true;
+	}));
 }
 export { CHROME_MAC, DEFAULT_ARGS, SWIFTSHADER_ARGS, checkMessage, contentTypeOf, createProfiler, diffTraces, findChrome, fixedBody, formatReport, frameStats, installRafSampler, jerk, npmCdn, open, percentile, pinned, readRaf, reportPasses, runLockstep, runSuite, serve, sha256File, sliding, stallSeconds, stats, togglesPerSecond, verdict, waitFor };

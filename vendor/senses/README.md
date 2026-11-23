@@ -3,9 +3,12 @@
 Perception for simulated animals. The core is the Rust crate
 `crates/senses` compiled to wasm32 with SIMD128; this package loads it,
 wraps it in option objects that take an injected `Rng`, and adds a
-three.js eye under `/three`. Written for this library from the HACKLE
-senses (`attention`, `loomCheck`, `sense`, `memPos`, the nose) and the
-ARBOR perception pass and grid.
+three.js eye under `/three`. Written for this library from the senses
+of the earlier dog simulator whose code is public in
+[dog-simulator/legacy](https://github.com/hackbuild/dog-simulator/tree/main/legacy) (`attention`,
+`loomCheck`, `sense`, `memPos`, the nose; called the legacy senses below)
+and from the perception pass and grid of an earlier unpublished
+prototype by the same author, who releases this code under MIT.
 
 What is in it:
 
@@ -64,7 +67,11 @@ field.step(dt, [{ id: 0, x: bowl.x, z: bowl.z, strength: 1 }]);
 
 `dist/senses.iife.js` is the single file build: a classic script that
 defines `HackbuildSenses` with the wasm inlined, for pages opened from
-file://. It reads `THREE` from the page.
+file://. It needs nothing on the page. The eye and `cameraFromThree` are
+a second classic script, `dist/senses-three.iife.js`
+(`@hackbuild/senses/three-iife`), that defines `HackbuildSensesThree`
+and reads `THREE` from the page; three 0.186 ships no classic script, so
+that page has to set `window.THREE` from a module first.
 
 ## Develop
 
@@ -75,23 +82,28 @@ file://. It reads `THREE` from the page.
     cargo test -p hackbuild-senses
     HB_REGEN_GOLDEN=1 cargo test -p hackbuild-senses   # after a deliberate numeric change
 
-## Parity with HACKLE
+## Parity with the legacy dog simulator
 
-The legacy code was read, never run. The tests carry hand transcriptions
-of the HACKLE arithmetic (`test/legacy-ref.ts` for the attention update,
-an inline one for `plumeTick`) and compare the wasm build to them on the
-same inputs. The inputs are 240 synthetic seeded eye frames at 320 by 160
-(sky, ground, noise, up to three moving coloured patches, a top down blob
-on every third frame); no eye frames were recorded from a HACKLE run.
+The senses follow the attention, nose and hearing of the earlier dog
+simulator whose code is public in
+[dog-simulator/legacy](https://github.com/hackbuild/dog-simulator/tree/main/legacy)
+(MIT parts only). Two kinds of test compare the wasm build with it:
 
-| check | tolerance | measured 2026-11-22 |
+- fixtures from the running legacy code: `test/fixtures/legacy-*.json`
+  hold the numbers the legacy JavaScript itself produced (legacy/det at
+  commit bc2cf6c, run in a Node vm with stubs for the page globals) on
+  the seeded inputs in `test/parity-inputs.ts`. Only the numbers are
+  committed;
+- hand transcriptions (`test/legacy-ref.ts`, an inline plume) on 240
+  synthetic eye frames, kept as a second check.
+
+| check | tolerance | measured 2026-11-23 |
 |---|---|---|
-| saliency winner cell, frame by frame | at least 99 percent agree | 240 of 240 |
-| saliency map, max difference over max value | under 1e-6 | 0 (bit identical f32 maps) |
-| plume puff positions after 10 s, same seeded stream | under 1e-9 m | 8.9e-16 m, 50 of 50 puffs |
-
-Inhibition of return is checked for behaviour (it follows the world
-direction across a head turn), not against the original projection.
+| saliency map and winner, 300 frames at 320x160, 640x320, 200x100, 321x163 and 97x61, flat frames included (fixture) | bit identical | 300 of 300 maps and winners |
+| three fixation sequences, 360 frames: top down bias from percepts, inhibition of return across head turns, shifts, dwell and snapping (fixture) | winner equal, map sums within 1e-6, fixation within 1e-9 m | 360 of 360 winners, 36 of 36 shifts at the same frames, map sums equal, fixation points within 1.2e-14 m |
+| plume, three runs of 2,400 to 3,000 steps, 1 to 12 sources, mixed 1/60 and 1/30 s steps, one at the 600 puff cap (fixture) | puff count equal every step, values within 1e-9 | counts equal, 3.6e-15 |
+| saliency on 240 frames with top down blobs (transcription) | winner 99 percent, map 1e-6 of max | 240 of 240, 0 |
+| plume after 10 s, one source (transcription) | under 1e-9 m | 8.9e-16 m |
 
 ## What is verified, and what is not
 
@@ -107,34 +119,46 @@ direction across a head turn), not against the original projection.
 - 2026-11-22: the eye in headless Chrome 150 with swiftshader
   (`test/browser.test.ts`): the tracked box is seen at 276 pixels and
   1.90 m (computed 1.9 m), four wall cells are marked from depth, the
-  async pass returns the same sighting, and materials are restored. CI
-  has no Chrome at that path and skips it.
+  async pass returns the same sighting, and materials are restored.
+- 2026-11-23: the same test with an instanced box and a skinned box posed
+  by its bone: 131 pixels at 2.93 m and 48 pixels at 3.54 m (measured;
+  computed about 2.9 m and 3.5 m). Before the depth pass applied
+  instancing and skinning, the instanced box read 4.12 m (measured), the
+  depth behind it.
+- 2026-11-23: `test/fixtures/iife.html` from file:// in headless Chrome
+  with no `THREE` on the page: the tunables, senses (wasm inlined),
+  drives (wasm inlined), mover and cameras IIFEs all load and run.
+  Before the eye moved to its own IIFE, `senses.iife.js` threw
+  `ReferenceError: THREE is not defined` there.
 
 ### Not verified by anything
 
 - Nobody has looked at the eye, the plume or the saliency map in a real
   browser at real frame rate.
-- Behavioural parity of the tracker and sniffer with a running HACKLE:
+- Behavioural parity of the tracker and sniffer with the running legacy simulator:
   they follow the same draw order and formulas, but no recorded run was
   compared.
 - The saliency in Chrome fixated the ground at the left edge of the test
   scene, not the box; fixation quality on real scenes is unknown.
 - The WebGPU saliency path in the plan (pyramid from mip levels, no
   readback) is not written.
-- The IIFE bundle on a page opened from file:// outside the test fixture
-  (the fixture loads it from file:// with `--allow-file-access-from-files`).
+- The IIFE bundles on a page opened from file:// by double click: the
+  fixtures load them from file:// with `--allow-file-access-from-files`.
 
 ## Size budget
 
 | file | raw | gzip |
 |---|---|---|
-| `senses_bg.wasm` | 105,359 bytes | 45,699 bytes |
-| `senses.iife.js` (wasm inlined as base64) | 188,900 bytes | 73,245 bytes |
+| `senses_bg.wasm` | 106,982 bytes | 46,483 bytes |
+| `senses.iife.js` (wasm inlined as base64) | 182,855 bytes | 71,763 bytes |
+| `senses-three.iife.js` | 10,144 bytes | 3,543 bytes |
 
-Measured 2026-11-22 from the build log, wasm-opt from wasm-pack 0.13.1.
+Measured 2026-11-23 by tools/check-sizes.mjs (gzip level 9), wasm-opt from wasm-pack 0.13.1.
 Budget: wasm under 128 KB raw; a change that crosses it says why.
 
 ## Licence
 
-Code MIT (`LICENSE` at the repository root). This README is CC-BY-4.0, its
-code samples also MIT.
+Code MIT (`LICENSE`, a copy of the repository root one). This README is CC-BY-4.0, its
+code samples also MIT. The wasm contains compiled libm (MIT) and
+wasm-bindgen (MIT or Apache-2.0) code; `THIRD-PARTY-NOTICES.txt` carries
+their notices.

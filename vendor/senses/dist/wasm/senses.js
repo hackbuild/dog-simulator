@@ -475,7 +475,10 @@ export class Saliency {
         const ptr0 = passArrayF64ToWasm0(opts, wasm.__wbindgen_malloc);
         const len0 = WASM_VECTOR_LEN;
         const ret = wasm.saliency_new(ptr0, len0, seed);
-        this.__wbg_ptr = ret;
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        this.__wbg_ptr = ret[0];
         SaliencyFinalization.register(this, this.__wbg_ptr, this);
         return this;
     }

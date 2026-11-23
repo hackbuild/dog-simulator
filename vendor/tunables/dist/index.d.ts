@@ -34,7 +34,7 @@ export interface RegistryOptions {
     /**
      * Explicit migrations by the saved version. A save of another version with
      * no migration keeps nothing: its values go back to the current defaults.
-     * Version 0 is a bare values object with no `ver` (the HACKLE export).
+     * Version 0 is a bare values object with no `ver` (the legacy export).
      */
     migrate?: Record<number, (values: Record<string, number>) => Record<string, number>>;
     /**
@@ -62,6 +62,7 @@ export interface Registry {
     def(key: string): ParamDef;
     get(key: string): number;
     /** clamps into the defined range; unknown keys throw */
+    /** clamps into the defined range; unknown keys throw; NaN and the infinities are ignored */
     set(key: string, value: number): void;
     /** master switch and layer switch both on */
     layer(key: string): boolean;

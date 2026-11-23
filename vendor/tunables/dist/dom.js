@@ -20,6 +20,7 @@ export function bindPanel(host, reg, opts = {}) {
     const layerSet = new Set(reg.layers());
     const root = el("div", "panel");
     const loc = opts.location ?? globalThis.location;
+    const hist = opts.history ?? (opts.location ? undefined : globalThis.history);
     for (const { group, keys } of reg.groups()) {
         const det = el("details", "group");
         det.dataset.group = group;
@@ -141,7 +142,10 @@ export function bindPanel(host, reg, opts = {}) {
             const t = reg.toUrlHash();
             if (t)
                 h.push(t);
-            loc.hash = h.join("&");
+            if (hist)
+                hist.replaceState(hist.state, "", `#${h.join("&")}`);
+            else
+                loc.hash = h.join("&");
         }
     });
     host.append(root);

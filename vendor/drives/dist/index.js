@@ -5,6 +5,7 @@
 // an injected Rng and seeds its wasm stream from it.
 import { assertReady, loadWasm, loadWasmSync } from "./load.js";
 import * as w from "./wasm/drives.js";
+export * from "./clock.js";
 export * from "./schedule.js";
 export * from "./task.js";
 /** Mulberry32, the same stream as the Rust `Mulberry32`. */
@@ -67,6 +68,10 @@ export class Drives {
     }
     setShape(n, m, gain) {
         this.inner.setShape(n, m, gain);
+    }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
     }
 }
 const REASONS = ["hold", "top", "sampled", "reactive", "forced", "argmax", "fired"];
@@ -141,6 +146,10 @@ export class Chooser {
     }
     setTemperature(t, commitment) {
         this.inner.setTemperature(t, commitment);
+    }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
     }
 }
 /** Cue learning with associability, eligibility traces and decaying inhibition. */
@@ -229,6 +238,10 @@ export class CueLearner {
         }
         this.actions.forEach((a, i) => this.inner.setOffer(i, s.offer[a] ?? 0.15));
     }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
+    }
 }
 const STAGES = ["awake", "onset", "nrem", "rem", "wake"];
 /** Sleep pressure, body clock and the stage machine of one sleep. */
@@ -275,6 +288,10 @@ export class Sleep {
     wakeThreshold() {
         return this.inner.wakeThreshold();
     }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
+    }
 }
 /** Memories ranked by recency, importance and relevance (Park et al. 2023). */
 export class MemoryStream {
@@ -299,6 +316,10 @@ export class MemoryStream {
     }
     get length() {
         return this.inner.length;
+    }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
     }
 }
 /**

@@ -1,10 +1,12 @@
 // three.js adapter: cameras as the 16 number layout the wasm takes, and an
 // agent eye that renders an object ID buffer and a depth buffer from the
 // agent's head, so perception reads only what the eye can see. Written for
-// this library from the ARBOR perception pass and the HACKLE eye render.
+// this library from an earlier unpublished perception prototype by the
+// same author and the eye render of the earlier dog simulator
+// (https://github.com/hackbuild/dog-simulator/tree/main/legacy).
 // Readback is synchronous by default; `passAsync` uses
 // readRenderTargetPixelsAsync and refuses a second pass while one is in
-// flight (the HACKLE lesson: a busy flag, never a queue).
+// flight (learned in earlier builds: a busy flag, never a queue).
 import * as THREE from "three";
 /** The camera layout the wasm takes, from a three PerspectiveCamera. */
 export function cameraFromThree(cam, out = new Float64Array(16)) {
@@ -16,7 +18,25 @@ export function cameraFromThree(cam, out = new Float64Array(16)) {
     out.set([e[12], e[13], e[14], right.x, right.y, right.z, up.x, up.y, up.z, back.x, back.y, back.z, cam.fov, cam.aspect, cam.near, cam.far]);
     return out;
 }
-const DEPTH_VERT = "varying vec3 vP; void main() { vec4 mv = modelViewMatrix * vec4(position, 1.0); vP = mv.xyz; gl_Position = projectionMatrix * mv; }";
+// Built from three's own chunks so instanced, batched, skinned and morphed
+// meshes land where the ID pass draws them.
+const DEPTH_VERT = [
+    "#include <common>",
+    "#include <batching_pars_vertex>",
+    "#include <morphtarget_pars_vertex>",
+    "#include <skinning_pars_vertex>",
+    "varying vec3 vP;",
+    "void main() {",
+    "#include <batching_vertex>",
+    "#include <skinbase_vertex>",
+    "#include <morphinstance_vertex>",
+    "#include <begin_vertex>",
+    "#include <morphtarget_vertex>",
+    "#include <skinning_vertex>",
+    "#include <project_vertex>",
+    "vP = mvPosition.xyz;",
+    "}",
+].join("\n");
 const DEPTH_FRAG = "uniform float far; varying vec3 vP; void main() { float v = clamp(length(vP) / far, 0.0, 0.9999) * 255.0; gl_FragColor = vec4(floor(v) / 255.0, fract(v), 0.0, 1.0); }";
 /** Decodes the RG packed depth of a bottom up readback into metres, row 0 at the top. */
 export function decodeDepth(px, w, h, far, out = new Float32Array(w * h)) {
@@ -56,6 +76,8 @@ export class Eye {
     black = new THREE.MeshBasicMaterial({ color: 0x000000 });
     idMats = [];
     depthMat;
+    colorTarget = null;
+    colorTmp = new Uint8Array(0);
     busy = false;
     constructor(renderer, scene, opts = {}) {
         this.renderer = renderer;
@@ -118,17 +140,8 @@ export class Eye {
         const prevTarget = r.getRenderTarget();
         const prevClear = r.getClearColor(new THREE.Color());
         const prevAlpha = r.getClearAlpha();
-        r.setRenderTarget(this.idTarget);
-        r.setClearColor(0x000000, 1);
-        r.clear();
-        r.render(scene, this.camera);
-        scene.overrideMaterial = this.depthMat;
-        r.setRenderTarget(this.depthTarget);
-        r.setClearColor(0xffffff, 1);
-        r.clear();
-        r.render(scene, this.camera);
-        scene.overrideMaterial = null;
-        return () => {
+        const restore = () => {
+            scene.overrideMaterial = null;
             r.setRenderTarget(prevTarget);
             r.setClearColor(prevClear, prevAlpha);
             for (const [o, mat, vis] of saved) {
@@ -141,6 +154,24 @@ export class Eye {
             scene.background = bg;
             scene.fog = fog;
         };
+        // a throw mid render must not leave the scene in ID materials
+        try {
+            r.setRenderTarget(this.idTarget);
+            r.setClearColor(0x000000, 1);
+            r.clear();
+            r.render(scene, this.camera);
+            scene.overrideMaterial = this.depthMat;
+            r.setRenderTarget(this.depthTarget);
+            r.setClearColor(0xffffff, 1);
+            r.clear();
+            r.render(scene, this.camera);
+            scene.overrideMaterial = null;
+        }
+        catch (e) {
+            restore();
+            throw e;
+        }
+        return restore;
     }
     finish(tracked) {
         const o = this.opts;
@@ -185,17 +216,33 @@ export class Eye {
             this.busy = false;
         }
     }
-    /** A colour frame for saliency (RGBA, row 0 at the top) of `w` by `h`. */
+    /**
+     * A colour frame for saliency (RGBA, row 0 at the top) of `w` by `h`.
+     * Without `target` the eye keeps one render target and one readback
+     * buffer for the size and reuses them; `dispose` frees them.
+     */
     colorFrame(w, h, target, out = new Uint8Array(w * h * 4)) {
-        const rt = target ?? new THREE.WebGLRenderTarget(w, h);
+        let rt = target;
+        if (!rt) {
+            const c = this.colorTarget;
+            if (!c || c.width !== w || c.height !== h) {
+                c?.dispose();
+                this.colorTarget = new THREE.WebGLRenderTarget(w, h);
+            }
+            rt = this.colorTarget;
+        }
+        if (this.colorTmp.length !== w * h * 4)
+            this.colorTmp = new Uint8Array(w * h * 4);
+        const tmp = this.colorTmp;
         const prev = this.renderer.getRenderTarget();
-        this.renderer.setRenderTarget(rt);
-        this.renderer.render(this.scene, this.camera);
-        const tmp = new Uint8Array(w * h * 4);
-        this.renderer.readRenderTargetPixels(rt, 0, 0, w, h, tmp);
-        this.renderer.setRenderTarget(prev);
-        if (!target)
-            rt.dispose();
+        try {
+            this.renderer.setRenderTarget(rt);
+            this.renderer.render(this.scene, this.camera);
+            this.renderer.readRenderTargetPixels(rt, 0, 0, w, h, tmp);
+        }
+        finally {
+            this.renderer.setRenderTarget(prev);
+        }
         for (let y = 0; y < h; y++)
             out.set(tmp.subarray((h - 1 - y) * w * 4, (h - y) * w * 4), y * w * 4);
         return out;
@@ -203,6 +250,8 @@ export class Eye {
     dispose() {
         this.idTarget.dispose();
         this.depthTarget.dispose();
+        this.colorTarget?.dispose();
+        this.colorTarget = null;
         this.depthMat.dispose();
         this.black.dispose();
         for (const m of this.idMats)

@@ -19,6 +19,15 @@ export interface PanelOptions {
     location?: {
         hash: string;
     };
+    /**
+     * history used to write the hash without a new entry per slider step,
+     * default `globalThis.history` when `location` is the page's own; without
+     * one the hash is assigned
+     */
+    history?: {
+        readonly state: unknown;
+        replaceState(data: unknown, unused: string, url?: string): void;
+    };
 }
 export interface Panel {
     root: HTMLElement;

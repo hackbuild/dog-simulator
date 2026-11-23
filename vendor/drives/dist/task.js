@@ -1,4 +1,4 @@
-// Task gating, from the HACKLE lessons: completion flags go stale when a
+// Task gating, from lessons of earlier builds: completion flags go stale when a
 // step reads a flag left over from the previous goal (the human sat
 // backwards because the turn step read motor.done from the walk), and a
 // task started while a blocking layer was held froze the body (seated,
@@ -8,9 +8,14 @@ export class Completion {
     goal = null;
     done = false;
     started = 0;
-    /** A new goal: the flag resets. Returns true when the goal changed. */
+    /**
+     * A new goal: the flag resets. The same goal again while it is in
+     * progress changes nothing; the same goal after it was done starts it
+     * anew (walking to the bench a second time). Returns true when a task
+     * started.
+     */
     begin(goal, now) {
-        if (this.goal === goal)
+        if (this.goal === goal && !this.done)
             return false;
         this.goal = goal;
         this.done = false;

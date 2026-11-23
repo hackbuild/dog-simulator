@@ -17,18 +17,27 @@ export interface CameraLike {
 }
 /** Frame rate independent exponential damping toward `to` at `rate` per second. */
 export declare const damp: (from: number, to: number, rate: number, dt: number) => number;
-/** Shake: seeded value noise on three axes, amplitude decaying at `decay` per second. */
+/**
+ * Shake: seeded value noise on three axes, amplitude decaying at `decay`
+ * per second. It draws from its Rng only while shaking (three numbers per
+ * knot, `frequency` knots a second) and holds two knots. Give it an Rng
+ * stream of its own: how many draws fall before a given sim time depends
+ * on the frame steps, so sharing the sim's stream would tie the sim to the
+ * frame rate.
+ */
 export declare class Shake {
     private rng;
     readonly frequency: number;
     readonly decay: number;
     private amp;
     private t;
-    private knots;
+    private a;
+    private b;
     constructor(rng: Rng, frequency?: number, decay?: number);
     /** Adds trauma; amplitudes add and are capped at `max`. */
     kick(amplitude: number, max?: number): void;
     get amplitude(): number;
+    private knot;
     /** The offset for this frame. */
     step(dt: number): V3;
 }
@@ -125,7 +134,7 @@ export interface Scalable {
 }
 /**
  * A first person eye on an agent's head. `render` hides the head (scaled
- * to 0.001, the HACKLE lesson: visible false would hide the whole subtree)
+ * to 0.001, learned in earlier builds: visible false would hide the whole subtree)
  * for this render only, then restores it.
  */
 export declare class FirstPerson {

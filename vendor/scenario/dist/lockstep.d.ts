@@ -50,7 +50,7 @@ export interface LockstepOptions {
 }
 /** Runs one scenario on an open page whose test API is ready. */
 export declare function runLockstep(page: Page, sc: Scenario, o?: LockstepOptions): Promise<Trace>;
-/** First differing row between two traces, or null when identical. */
+/** First differing row between two traces, or null when identical. NaN, Infinity and null all differ. */
 export declare function diffTraces(a: {
     rows: unknown[][];
     hash?: string;

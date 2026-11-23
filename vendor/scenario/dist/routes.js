@@ -3,7 +3,7 @@
 // hit wins. Pinned files are checked against a SHA-256 once per run.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, relative, resolve, sep } from "node:path";
 const TYPES = {
     js: "text/javascript",
     mjs: "text/javascript",
@@ -54,14 +54,31 @@ export function npmCdn(nodeModules) {
             rest = u.pathname.slice(1);
         if (!rest)
             return null;
-        const m = /^((?:@[^/]+\/)?[^@/]+)@([^/]+)\/(.*)$/.exec(decodeURIComponent(rest));
+        // an encoded slash, backslash or dot would survive the URL parser's
+        // normalization and climb out of the package after decoding
+        if (/%(2f|5c|2e)/i.test(rest))
+            return null;
+        let decoded;
+        try {
+            decoded = decodeURIComponent(rest);
+        }
+        catch {
+            return null;
+        }
+        const m = /^((?:@[^/]+\/)?[^@/]+)@([^/]+)\/(.*)$/.exec(decoded);
         if (!m)
             return null;
         const [, name, ver, path] = m;
-        const pj = join(nodeModules, name, "package.json");
+        const root = resolve(nodeModules);
+        const pkg = resolve(root, name);
+        if (relative(root, pkg).startsWith("..") || !pkg.startsWith(root + sep))
+            return null;
+        const pj = join(pkg, "package.json");
         if (!existsSync(pj) || JSON.parse(readFileSync(pj, "utf8")).version !== ver)
             return null;
-        const f = join(nodeModules, name, path);
+        const f = resolve(pkg, path);
+        if (!f.startsWith(pkg + sep))
+            return null;
         return existsSync(f) ? { file: f } : null;
     };
 }

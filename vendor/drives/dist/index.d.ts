@@ -1,5 +1,6 @@
 import { type WasmSource } from "./load.js";
 import * as w from "./wasm/drives.js";
+export * from "./clock.js";
 export * from "./schedule.js";
 export * from "./task.js";
 export type { WasmSource } from "./load.js";
@@ -31,6 +32,8 @@ export declare class Drives<K extends string> {
     rewardOf(effect: Partial<Record<K, number>>, scale?: number): number;
     grow(dt: number, rates: Partial<Record<K, number>>): void;
     setShape(n: number, m: number, gain: number): void;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 export type Reason = "hold" | "top" | "sampled" | "reactive" | "forced" | "argmax" | "fired";
 export interface Option<B extends string = string> {
@@ -96,6 +99,8 @@ export declare class Chooser<B extends string> {
     update(now: number, utilities: Partial<Record<B, number>>, reactive?: Iterable<B>, forced?: B): Decision<B>;
     get dwellUntil(): number;
     setTemperature(t: number, commitment: number): void;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 export type CueResponse<A extends string> = {
     kind: "ignored";
@@ -161,6 +166,8 @@ export declare class CueLearner<A extends string> {
     setOffer(action: A, v: number): void;
     toJSON(): LearnerState<A>;
     load(s: LearnerState<A>): void;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 export type SleepStage = "awake" | "onset" | "nrem" | "rem" | "wake";
 /** Sleep pressure, body clock and the stage machine of one sleep. */
@@ -189,6 +196,8 @@ export declare class Sleep {
     sample(): void;
     hypnogram(): SleepStage[];
     wakeThreshold(): number;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 /** Memories ranked by recency, importance and relevance (Park et al. 2023). */
 export declare class MemoryStream {
@@ -203,6 +212,8 @@ export declare class MemoryStream {
     /** True once summed importance reaches the budget; resets the sum. */
     shouldReflect(budget: number): boolean;
     get length(): number;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 /**
  * A goal set by a slow deliberation (a language model, a planner): adds a

@@ -29,7 +29,7 @@ export async function runLockstep(page, sc, o = {}) {
     const out = { rows: [], probes: [], fired: [], wallSeconds: 0 };
     let done = 0;
     let lastLog = Date.now();
-    while (done < total) {
+    const due = async () => {
         while (events.length && events[0].step <= done) {
             const e = events.shift();
             if (e.js)
@@ -40,6 +40,9 @@ export async function runLockstep(page, sc, o = {}) {
                 await page.screenshot({ path: e.path });
             }
         }
+    };
+    while (done < total) {
+        await due();
         let n = Math.min(o.chunk ?? 30, total - done);
         if (events.length)
             n = Math.min(n, Math.max(1, events[0].step - done));
@@ -67,6 +70,8 @@ export async function runLockstep(page, sc, o = {}) {
             o.onProgress(done / sps, (Date.now() - t0) / 1000);
         }
     }
+    // events at exactly `seconds` (a closing screenshot) fire after the last step
+    await due();
     const tr = (await page.evaluate(`${api}.trace()`));
     out.rows = tr.rows;
     if (tr.cols)
@@ -76,12 +81,14 @@ export async function runLockstep(page, sc, o = {}) {
     out.wallSeconds = (Date.now() - t0) / 1000;
     return out;
 }
-/** First differing row between two traces, or null when identical. */
+/** JSON with NaN and the infinities kept apart from null. */
+const exact = (v) => JSON.stringify(v, (_k, x) => (typeof x === "number" && !Number.isFinite(x) ? `${x}` : x));
+/** First differing row between two traces, or null when identical. NaN, Infinity and null all differ. */
 export function diffTraces(a, b) {
     const n = Math.max(a.rows.length, b.rows.length);
     for (let i = 0; i < n; i++) {
-        const x = JSON.stringify(a.rows[i]);
-        const y = JSON.stringify(b.rows[i]);
+        const x = exact(a.rows[i]);
+        const y = exact(b.rows[i]);
         if (x !== y)
             return { row: i, a: a.rows[i] ?? null, b: b.rows[i] ?? null };
     }
@@ -91,6 +98,8 @@ export function diffTraces(a, b) {
 }
 /** Runs a scenario list, records or compares goldens, returns a report. */
 export async function runSuite(o) {
+    if ((o.mode === "compare" || o.mode === "record") && !o.goldenDir)
+        throw new Error(`${o.mode} needs goldenDir: without it nothing is ${o.mode === "compare" ? "compared" : "recorded"}`);
     const api = o.api ?? "window.__sim";
     const results = [];
     const traces = {};
@@ -100,10 +109,15 @@ export async function runSuite(o) {
         const oo = { url: o.file, hash: `#test&seed=${sc.seed}${sc.hash ? `&${sc.hash}` : ""}`, routes: o.routes ?? [], offline: o.offline ?? false, width: o.width ?? 420, height: o.height ?? 280 };
         if (o.chrome)
             oo.chrome = o.chrome;
-        const { page, log, close } = await open(oo);
-        chrome = log.version;
-        const res = { name: sc.name, seed: sc.seed, checks: [], errors: log.errors, blocked: log.blocked };
+        const res = { name: sc.name, seed: sc.seed, checks: [], errors: [], blocked: [] };
+        let close = null;
         try {
+            const opened = await open(oo);
+            close = opened.close;
+            const { page, log } = opened;
+            chrome = log.version;
+            res.errors = log.errors;
+            res.blocked = log.blocked;
             const ok = await waitFor(page, `!!(${api})`, o.readyMs ?? 240000);
             if (!ok)
                 throw new Error(`no ${api} after ${(o.readyMs ?? 240000) / 1000} s`);
@@ -131,7 +145,8 @@ export async function runSuite(o) {
             res.errors.push(`runner: ${e.message}`);
         }
         finally {
-            await close();
+            if (close)
+                await close();
         }
         results.push(res);
     };

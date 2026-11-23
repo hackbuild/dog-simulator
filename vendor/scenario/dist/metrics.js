@@ -1,4 +1,4 @@
-// Motion metrics from the HACKLE lessons: judge motion by numbers, not by
+// Motion metrics from lessons of earlier builds: judge motion by numbers, not by
 // eye in a slow headless browser. All pure functions over sampled series.
 /** Percentile by nearest rank on a sorted copy. */
 export function percentile(xs, p) {
@@ -78,7 +78,7 @@ export function togglesPerSecond(states, dt) {
 }
 /**
  * Seconds where an agent with a goal moved under `dist` m over the
- * previous `window` s (the hackle-plan stall detector, 0.2 m in 2 s).
+ * previous `window` s (the stall detector of earlier builds, 0.2 m in 2 s).
  */
 export function stallSeconds(points, hasGoal, dt, window = 2, dist = 0.2) {
     const k = Math.max(1, Math.round(window / dt));

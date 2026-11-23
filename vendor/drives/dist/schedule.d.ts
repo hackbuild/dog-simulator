@@ -1,5 +1,5 @@
 export interface ScheduleOptions {
-    /** seconds between the starts of two calls (HACKLE cortex: 25) */
+    /** seconds between the starts of two calls (legacy cortex: 25) */
     minInterval: number;
     /** only start while the caller says the agent is idle */
     idleOnly?: boolean;

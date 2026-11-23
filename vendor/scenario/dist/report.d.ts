@@ -14,6 +14,8 @@ export interface Check {
     fix?: string;
     /** where the number comes from (RULES: measured, computed, inferred) */
     kind?: "measured" | "computed" | "inferred";
+    /** a check that may not run without failing the report (it still prints as not run) */
+    optional?: boolean;
 }
 export type Verdict = "pass" | "fail" | "not run";
 export declare function verdict(c: Check): Verdict;
@@ -35,5 +37,9 @@ export interface Report {
 }
 /** Text report: a line per scenario, then a check message per check. Fails first. */
 export declare function formatReport(r: Report): string;
-/** True when nothing failed, no page error, no blocked request, and every golden matched. */
+/**
+ * True when nothing failed, every check that is not `optional` ran, no
+ * page error, no blocked request, and every golden matched. A check that
+ * did not run is never a pass.
+ */
 export declare function reportPasses(r: Report): boolean;

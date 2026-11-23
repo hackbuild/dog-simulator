@@ -207,7 +207,7 @@ export interface InitOutput {
     readonly saliency_map: (a: number) => [number, number];
     readonly saliency_mapHeight: (a: number) => number;
     readonly saliency_mapWidth: (a: number) => number;
-    readonly saliency_new: (a: number, b: number, c: number) => number;
+    readonly saliency_new: (a: number, b: number, c: number) => [number, number, number];
     readonly saliency_ready: (a: number, b: number) => number;
     readonly saliency_shift: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number, number, number];
     readonly saliency_update: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => [number, number, number, number];

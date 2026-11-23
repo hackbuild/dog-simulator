@@ -1,20 +1,29 @@
 // @hackbuild/cameras: gameplay cameras that share damping, shake and
 // occlusion handling. They drive any camera with `position.set`, `lookAt`,
 // `fov` and `aspect` (a three PerspectiveCamera fits) and import nothing at
-// runtime. Group framing is written for this library from the crownfall
-// camera (MIT, same author); the first person eye follows the HACKLE
-// lesson of hiding the agent's own head for that render.
+// runtime. Group framing is written for this library from the shared
+// camera of crownfall (https://github.com/virgilvox/crownfall, MIT, same
+// author); the first person eye follows a lesson of earlier builds: hide
+// the agent's own head for that render only.
 /** Frame rate independent exponential damping toward `to` at `rate` per second. */
 export const damp = (from, to, rate, dt) => to + (from - to) * Math.exp(-rate * dt);
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
-/** Shake: seeded value noise on three axes, amplitude decaying at `decay` per second. */
+/**
+ * Shake: seeded value noise on three axes, amplitude decaying at `decay`
+ * per second. It draws from its Rng only while shaking (three numbers per
+ * knot, `frequency` knots a second) and holds two knots. Give it an Rng
+ * stream of its own: how many draws fall before a given sim time depends
+ * on the frame steps, so sharing the sim's stream would tie the sim to the
+ * frame rate.
+ */
 export class Shake {
     rng;
     frequency;
     decay;
     amp = 0;
     t = 0;
-    knots = [];
+    a = null;
+    b = [0, 0, 0];
     constructor(rng, frequency = 18, decay = 6) {
         this.rng = rng;
         this.frequency = frequency;
@@ -27,21 +36,35 @@ export class Shake {
     get amplitude() {
         return this.amp;
     }
+    knot() {
+        return [this.rng() * 2 - 1, this.rng() * 2 - 1, this.rng() * 2 - 1];
+    }
     /** The offset for this frame. */
     step(dt) {
+        if (this.amp === 0)
+            return { x: 0, y: 0, z: 0 };
+        if (!this.a) {
+            this.a = this.knot();
+            this.b = this.knot();
+            this.t = 0;
+        }
         this.t += dt * this.frequency;
-        while (this.knots.length < Math.floor(this.t) + 2)
-            this.knots.push([this.rng() * 2 - 1, this.rng() * 2 - 1, this.rng() * 2 - 1]);
-        const i = Math.floor(this.t);
-        const f = this.t - i;
+        while (this.t >= 1) {
+            this.a = this.b;
+            this.b = this.knot();
+            this.t -= 1;
+        }
+        const a = this.a;
+        const b = this.b;
+        const f = this.t;
         const s = f * f * (3 - 2 * f);
-        const a = this.knots[i];
-        const b = this.knots[i + 1];
         const v = (k) => (a[k] + (b[k] - a[k]) * s) * this.amp;
         const out = { x: v(0), y: v(1), z: v(2) };
         this.amp *= Math.exp(-this.decay * dt);
-        if (this.amp < 1e-4)
+        if (this.amp < 1e-4) {
             this.amp = 0;
+            this.a = null;
+        }
         return out;
     }
 }
@@ -121,17 +144,41 @@ export class Group {
             maxZ = Math.max(maxZ, p.z);
         }
         const { pad, pitch, band, centerPull: k, center } = this.o;
-        const ex = maxX - minX + pad * 2;
-        const ez = maxZ - minZ + pad * 2;
-        const ey = maxY - minY + 2;
-        const th = Math.tan((this.camera.fov * Math.PI) / 360);
-        const tw = th * this.camera.aspect;
-        const needW = ex / (2 * tw);
-        const needH = (ez * Math.sin(pitch) + ey * Math.cos(pitch)) / (2 * th * band);
-        const dist = clamp(Math.max(needW, needH), this.o.minDistance, this.o.maxDistance);
+        // the centre pull comes first, so the distance below frames the pulled centre
         const cx = (minX + maxX) / 2;
         const cz = (minZ + maxZ) / 2;
-        return { target: { x: cx + (center.x - cx) * k, y: (minY + maxY) / 2, z: cz + (center.z - cz) * k }, dist };
+        const target = { x: cx + (center.x - cx) * k, y: (minY + maxY) / 2, z: cz + (center.z - cz) * k };
+        // camera basis for the orbit at this yaw and pitch: b from the target to
+        // the camera, f the view direction, r and u the screen axes
+        const yaw = this.o.yaw + Math.PI;
+        const cp = Math.cos(pitch);
+        const fx = Math.sin(yaw) * cp;
+        const fy = -Math.sin(pitch);
+        const fz = Math.cos(yaw) * cp;
+        const rl = Math.hypot(fz, fx) || 1;
+        const rx = -fz / rl;
+        const rz = fx / rl;
+        const ux = -rz * fy;
+        const uy = rz * fx - rx * fz;
+        const uz = rx * fy;
+        const th = Math.tan((this.camera.fov * Math.PI) / 360) * band;
+        const tw = Math.tan((this.camera.fov * Math.PI) / 360) * this.camera.aspect;
+        // every corner of the padded box (pad in x and z, 1 m above and below)
+        // must project inside the screen; depth grows one to one with the
+        // distance while the screen offsets stay fixed, so each corner gives a
+        // least distance in closed form
+        let need = 0;
+        for (const x of [minX - pad, maxX + pad])
+            for (const y of [minY - 1, maxY + 1])
+                for (const z of [minZ - pad, maxZ + pad]) {
+                    const qx = x - target.x;
+                    const qy = y - target.y;
+                    const qz = z - target.z;
+                    const sx = Math.abs(qx * rx + qz * rz);
+                    const sy = Math.abs(qx * ux + qy * uy + qz * uz);
+                    need = Math.max(need, Math.max(sx / tw, sy / th) - (qx * fx + qy * fy + qz * fz));
+                }
+        return { target, dist: clamp(need, this.o.minDistance, this.o.maxDistance) };
     }
     update(points, dt, snap = false, shake) {
         const s = this.solve(points);
@@ -187,7 +234,7 @@ export class Orbit {
 }
 /**
  * A first person eye on an agent's head. `render` hides the head (scaled
- * to 0.001, the HACKLE lesson: visible false would hide the whole subtree)
+ * to 0.001, learned in earlier builds: visible false would hide the whole subtree)
  * for this render only, then restores it.
  */
 export class FirstPerson {

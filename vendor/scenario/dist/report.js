@@ -53,7 +53,17 @@ export function formatReport(r) {
     }
     return lines.join("\n");
 }
-/** True when nothing failed, no page error, no blocked request, and every golden matched. */
+/**
+ * True when nothing failed, every check that is not `optional` ran, no
+ * page error, no blocked request, and every golden matched. A check that
+ * did not run is never a pass.
+ */
 export function reportPasses(r) {
-    return r.results.every((s) => s.errors.length === 0 && s.blocked.length === 0 && (s.golden === undefined || s.golden === "identical" || s.golden === "recorded") && s.checks.every((c) => verdict(c) !== "fail"));
+    return r.results.every((s) => s.errors.length === 0 &&
+        s.blocked.length === 0 &&
+        (s.golden === undefined || s.golden === "identical" || s.golden === "recorded") &&
+        s.checks.every((c) => {
+            const v = verdict(c);
+            return v === "pass" || (v === "not run" && c.optional === true);
+        }));
 }

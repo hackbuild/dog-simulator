@@ -3,7 +3,12 @@ export declare class Completion<G = string> {
     private goal;
     private done;
     private started;
-    /** A new goal: the flag resets. Returns true when the goal changed. */
+    /**
+     * A new goal: the flag resets. The same goal again while it is in
+     * progress changes nothing; the same goal after it was done starts it
+     * anew (walking to the bench a second time). Returns true when a task
+     * started.
+     */
     begin(goal: G, now: number): boolean;
     /** Marks done only for the goal that is current; a late report for an old goal is dropped. */
     report(goal: G): boolean;
@@ -20,7 +25,7 @@ export interface SettleCheck {
     elapsed: number;
     /** give up after this many seconds (default 3) */
     timeout?: number;
-    /** defaults from the lesson: 0.12 rad and 0.4 rad/s */
+    /** defaults from earlier builds: 0.12 rad and 0.4 rad/s */
     maxError?: number;
     maxRate?: number;
 }

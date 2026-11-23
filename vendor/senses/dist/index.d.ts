@@ -89,6 +89,8 @@ export declare class Looming {
     constructor(o?: LoomOptions);
     observe(id: number, size: number, dist: number, now: number): number | null;
     forget(id: number): void;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 export interface OdourOptions {
     rng: Rng;
@@ -168,6 +170,8 @@ export declare class Sniffer {
         mean: number;
         whiffT: number;
     };
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 export type TrackMode = "decide" | "trail" | "surge" | "cast";
 export interface TrackStep {
@@ -193,6 +197,8 @@ export declare class Tracker {
     }, heading: number, arrived: boolean): TrackStep;
     /** Replaces the waypoint, for a caller that keeps it out of obstacles. */
     setWaypoint(x: number, z: number): void;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 export interface VisionOptions {
     rng: Rng;
@@ -232,6 +238,8 @@ export declare class PerceptMemory {
         pos: Vec3;
         confidence: number;
     } | null;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }
 export declare const UNKNOWN = 0;
 export declare const FREE = 1;
@@ -291,4 +299,6 @@ export declare class OccupancyGrid {
     };
     cells(): Uint8Array;
     get revision(): number;
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free(): void;
 }

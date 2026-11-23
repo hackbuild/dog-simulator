@@ -95,6 +95,10 @@ export class Looming {
     forget(id) {
         this.inner.forget(id);
     }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
+    }
 }
 /** Puff plume in a meandering wind plus a ground trail grid. */
 export class OdourField {
@@ -176,6 +180,10 @@ export class Sniffer {
         const g = (i) => s[i];
         return { left: g(0), right: g(1), conc: g(2), mean: g(3), whiffT: g(4) };
     }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
+    }
 }
 const MODES = ["decide", "trail", "surge", "cast"];
 /** Scent tracking: decide over a ground trail, follow it, surge upwind on whiffs, cast crosswind on a loss. */
@@ -193,6 +201,10 @@ export class Tracker {
     /** Replaces the waypoint, for a caller that keeps it out of obstacles. */
     setWaypoint(x, z) {
         this.inner.setWaypoint(x, z);
+    }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
     }
 }
 /** Geometric vision with percept memory that drifts with sqrt(age) (Fiset 2003). */
@@ -218,6 +230,10 @@ export class PerceptMemory {
             return null;
         const g = (i) => r[i];
         return { pos: { x: g(0), y: g(1), z: g(2) }, confidence: g(3) };
+    }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
     }
 }
 export const UNKNOWN = 0;
@@ -278,5 +294,9 @@ export class OccupancyGrid {
     }
     get revision() {
         return this.inner.revision;
+    }
+    /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
+    free() {
+        this.inner.free();
     }
 }

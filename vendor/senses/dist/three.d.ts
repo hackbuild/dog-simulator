@@ -3,22 +3,22 @@ import type { CameraArray } from "./index.js";
 /** The camera layout the wasm takes, from a three PerspectiveCamera. */
 export declare function cameraFromThree(cam: THREE.PerspectiveCamera, out?: CameraArray): CameraArray;
 export interface EyeOptions {
-    /** vertical field of view in degrees (ARBOR 74) */
+    /** vertical field of view in degrees (prototype 74) */
     fov?: number;
-    /** ID buffer size (ARBOR 192 by 108) */
+    /** ID buffer size (prototype 192 by 108) */
     width?: number;
     height?: number;
-    /** depth buffer size (ARBOR 96 by 54) */
+    /** depth buffer size (prototype 96 by 54) */
     depthWidth?: number;
     depthHeight?: number;
-    /** depth range in metres (ARBOR 12) */
+    /** depth range in metres (prototype 12) */
     far?: number;
     near?: number;
 }
 export interface Tracked {
     object: THREE.Object3D;
     label: string;
-    /** pixels needed to count as seen (ARBOR: 2 for props, 60 for furniture) */
+    /** pixels needed to count as seen (prototype: 2 for props, 60 for furniture) */
     minPixels?: number;
 }
 export interface Seen {
@@ -59,6 +59,8 @@ export declare class Eye {
     private black;
     private idMats;
     private depthMat;
+    private colorTarget;
+    private colorTmp;
     private busy;
     constructor(renderer: THREE.WebGLRenderer, scene: THREE.Scene, opts?: EyeOptions);
     /** Puts the eye at a point looking along yaw (0 is +Z) and pitch. */
@@ -71,7 +73,11 @@ export declare class Eye {
     pass(tracked: Tracked[], hide?: THREE.Object3D[]): EyePass;
     /** The same pass with async readback; null while a previous pass is in flight. */
     passAsync(tracked: Tracked[], hide?: THREE.Object3D[]): Promise<EyePass | null>;
-    /** A colour frame for saliency (RGBA, row 0 at the top) of `w` by `h`. */
+    /**
+     * A colour frame for saliency (RGBA, row 0 at the top) of `w` by `h`.
+     * Without `target` the eye keeps one render target and one readback
+     * buffer for the size and reuses them; `dispose` frees them.
+     */
     colorFrame(w: number, h: number, target?: THREE.WebGLRenderTarget, out?: Uint8Array<ArrayBuffer>): Uint8Array;
     dispose(): void;
 }

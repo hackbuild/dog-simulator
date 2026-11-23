@@ -22,7 +22,7 @@ What is in it:
 - Page contract: `window.__sim` with `step(n)`, `trace()` returning
   `{ rows, cols?, hash? }`, and optional `render()`. The page opened with
   `#test&seed=N` must not run its own loop.
-- Motion metrics from the HACKLE lessons: `jerk` (third difference of
+- Motion metrics from lessons of earlier builds: `jerk` (third difference of
   positions), `sliding` (heading against direction of motion over 0.6
   rad), `togglesPerSecond`, `stallSeconds` (under 0.2 m in 2 s with a
   goal), `frameStats` (p50, p95, max).
@@ -33,7 +33,9 @@ What is in it:
 - `checkMessage`, `formatReport`, `reportPasses`: "stall 4.75 s
   (measured), legal at most 1 s, set by the stall detector, 0.2 m in 2 s.
   fix: insert a side waypoint". A check with no measurement is reported as
-  not run.
+  not run, and `reportPasses` (so the `hb-scenario` exit code) fails on
+  it unless the check sets `optional: true`. `runSuite` refuses `compare`
+  and `record` without a `goldenDir`.
 - `hb-scenario record|compare|check --file F --list L`: the same from the
   command line; the list module exports `scenarios`, `routes` and
   `options`.
@@ -108,11 +110,11 @@ puppeteer-core and node builtins external.
 
 | file | raw | gzip |
 |---|---|---|
-| `scenario.bundle.mjs` | 18,868 bytes | 7,162 bytes |
+| `scenario.bundle.mjs` | 20,062 bytes | 7,583 bytes |
 
-Measured 2026-11-22 from the build log.
+Measured 2026-11-23 by tools/check-sizes.mjs (gzip level 9).
 
 ## Licence
 
-Code MIT (`LICENSE` at the repository root). This README is CC-BY-4.0, its
+Code MIT (`LICENSE`, a copy of the repository root one). This README is CC-BY-4.0, its
 code samples also MIT.

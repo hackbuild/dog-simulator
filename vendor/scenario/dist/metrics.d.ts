@@ -33,6 +33,6 @@ export declare function sliding(points: readonly Point[], yaw: readonly number[]
 export declare function togglesPerSecond(states: readonly unknown[], dt: number): number;
 /**
  * Seconds where an agent with a goal moved under `dist` m over the
- * previous `window` s (the hackle-plan stall detector, 0.2 m in 2 s).
+ * previous `window` s (the stall detector of earlier builds, 0.2 m in 2 s).
  */
 export declare function stallSeconds(points: readonly Point[], hasGoal: readonly boolean[], dt: number, window?: number, dist?: number): number;

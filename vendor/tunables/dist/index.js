@@ -45,6 +45,10 @@ export function createRegistry(opts = {}) {
     };
     const write = (key, v, save) => {
         const d = need(key);
+        // NaN and the infinities are ignored: they would save as null and
+        // write "NaN" into the URL hash
+        if (!Number.isFinite(v))
+            return;
         const nv = clamp(d, v);
         if (values.get(key) === nv)
             return;

@@ -4,14 +4,15 @@ Drives, choice, learning, sleep and memory for simulated animals. The core
 is the Rust crate `crates/drives` compiled to wasm32 with SIMD128; this
 package loads it and wraps it with named options and an injected `Rng`.
 Task gating and inference scheduling are plain TypeScript. Written for
-this library from the HACKLE brain (`driveD`, `gain`, `choose`, `set`,
+this library from the brain of the earlier dog simulator whose code is
+public in [dog-simulator/legacy](https://github.com/hackbuild/dog-simulator/tree/main/legacy), called the legacy brain below (`driveD`, `gain`, `choose`, `set`,
 `cue`, `learnTrace`, `bodyClock`, `sleepRun`, `remember` and the retrieval
 in `think`).
 
 What is in it:
 
 - `Drives`: drive reduction reward over named deficits (Keramati and
-  Gutkin 2011), with the scale on reductions HACKLE uses for nearness and
+  Gutkin 2011), with the scale on reductions the legacy simulator uses for nearness and
   the secure base.
 - `Chooser`: reactive switches after an ex-Gaussian latency for options
   that cannot wait, otherwise softmax sampling with a commitment bonus only
@@ -29,14 +30,15 @@ What is in it:
 - `MemoryStream`: recency, importance and relevance scoring (Park et al.
   2023) with an importance budget for reflection; `GoalBoost` for a goal
   from a slow deliberation with an expiry.
-- From the HACKLE lessons: `Completion` binds a done flag to the goal it
-  was raised for, `settled` checks the real condition (heading error under
+- From lessons of earlier builds: `Completion` binds a done flag to the
+  goal it was raised for (the same goal begun again after it was done
+  starts anew), `settled` checks the real condition (heading error under
   0.12 rad, angular speed under 0.4 rad/s) with a timeout, `LayerGate`
   releases blocking layers a new task does not declare, and
   `InferenceScheduler` starts a model call only after a minimum interval,
   while idle, inside a frame budget, one at a time, with a state to show.
 
-Not in it: HACKLE's 22 executors, its `EFFECT` values, dialogue and
+Not in it: the legacy simulator's 22 executors, its `EFFECT` values, dialogue and
 prompts stay in the app. The top 3 planner from the human agent is not
 written.
 
@@ -80,27 +82,47 @@ file://.
     cargo test -p hackbuild-drives
     HB_REGEN_GOLDEN=1 cargo test -p hackbuild-drives   # after a deliberate numeric change
 
-## Parity with HACKLE
+## Parity with the legacy dog simulator
 
-The legacy code was read, never run. The test carries a hand
-transcription of `driveD`, `gain` and `choose` and feeds both it and the
-wasm build the same inputs. The inputs are 339 drive states (hunger,
-fatigue, play, social) recorded in the dog-simulator golden traces of the
-seeded HACKLE build, every 3 sim s of 18 scenarios (`test/fixtures`), with
-curiosity 0.5 and prey 0, scored for a yard with food out, a ball in view
-and the human near. Each state is decided from idle with the act done,
-30 seeds per state.
+The drives and chooser follow the brain of the earlier dog simulator
+whose code is public in
+[dog-simulator/legacy](https://github.com/hackbuild/dog-simulator/tree/main/legacy)
+(MIT parts only). Two kinds of test compare the wasm build with it:
 
-| check | tolerance | measured 2026-11-22 |
+- fixtures from the running legacy code: `test/fixtures/legacy-brain.json`
+  holds the numbers the legacy JavaScript itself produced (legacy/det at
+  commit bc2cf6c, `brain.gain`, `brain.choose` and `brain.bodyClock` run
+  in a Node vm with stubs for the page globals) on the seeded inputs in
+  `test/parity-inputs.ts`. Only the numbers are committed;
+- a hand transcription of `driveD`, `gain` and `choose`, fed 339 drive
+  states recorded in the dog-simulator golden traces
+  (`test/fixtures/recorded-drive-states.json`, curiosity 0.5, prey 0),
+  each decided from idle with the act done, 30 seeds per state.
+
+| check | tolerance | measured 2026-11-23 |
 |---|---|---|
-| reward per act, max difference | under 1e-12 | passes |
-| same act from the same seeded stream | at least 99.5 percent | 10,170 of 10,170 |
-| choice distribution, total variation | under 0.01 | 0.0000 |
+| reward for all 13 legacy effects at scales 1, 0.35 and 1.25, 150 random states (fixture) | under 1e-13 | 4.4e-15, including the 15 digit rounding of the fixture |
+| act and reaction latency on every choice path: done or not, dwell out or not, any current act, 6,000 decisions (fixture) | same act; latency within 1e-11 s | 6,000 of 6,000, latency within 5.0e-13 s |
+| body clock, 1,000 hours and every hour of 2,000,000 scanned where it differs (fixture) | under 2.3e-16 absolute | 126 of 2,000,000 hours differ, each by one ulp, at most 2.22e-16 |
+| reward per act on the recorded states (transcription) | under 1e-12 | 5.6e-16 |
+| same act from the same seeded stream (transcription) | at least 99.5 percent | 10,170 of 10,170 |
+| choice distribution, total variation (transcription) | under 0.01 | 0.0000 |
 
-The learner drops one random draw HACKLE made in its ignore test (an
-always true condition, defect 17 of the plan), so cue responses do not
-replay HACKLE's stream; the learner was checked against conditioning
-results instead.
+The body clock goes through libm `exp` so native and wasm agree; V8's
+`Math.exp` differs from it by one ulp for some arguments, so against a
+JavaScript engine the wasm `bodyClock` is within 2.3e-16 absolute
+(measured), not bit identical. An app that hashes JavaScript state can
+use `bodyClockJs`, plain TypeScript with `Math.exp` that needs no
+`load()`: on the same engine and platform it is bit identical to the
+legacy JavaScript (all 1,126 fixture hours on V8, macOS arm64,
+measured). `Math.exp` itself differs across platforms: on V8 under Linux
+x64 (CI) the 126 hours gave the libm values instead (measured), so a
+JavaScript hash holds only on one platform.
+
+The learner drops one random draw the legacy brain made in its ignore
+test (an always true condition), so cue responses do not replay the
+legacy stream; the learner was checked against conditioning results
+instead.
 
 ## What is verified, and what is not
 
@@ -120,24 +142,29 @@ results instead.
 
 ### Not verified by anything
 
-- Behaviour in a running sim: no scenario drives an animal with this
-  package yet.
+- Behaviour in a running sim beyond the example page: the drives example
+  drives an animal (docs/browser-checks.md row 9), but no lockstep
+  scenario does.
 - Blocking, which the plan lists among the conditioning results, is not
   modelled: each cue learns alone.
-- Choice parity covers decisions from a finished act; dwell timing and the
-  pending latency path are checked by unit tests, not against HACKLE.
+- Choice parity covers single decisions on every path (fixture); a
+  multi step replay against the legacy stream diverges after the first
+  switch, since the legacy `brain.set` draws one more number for a speech
+  line.
 
 ## Size budget
 
 | file | raw | gzip |
 |---|---|---|
-| `drives_bg.wasm` | 112,142 bytes | 48,779 bytes |
-| `drives.iife.js` (wasm inlined as base64) | 190,224 bytes | 75,209 bytes |
+| `drives_bg.wasm` | 111,903 bytes | 48,773 bytes |
+| `drives.iife.js` (wasm inlined as base64) | 191,407 bytes | 76,176 bytes |
 
-Measured 2026-11-22 from the build log. Budget: wasm under 128 KB raw.
+Measured 2026-11-23 by tools/check-sizes.mjs (gzip level 9). Budget: wasm under 128 KB raw.
 Most of the size is string formatting for the why sentences (inferred).
 
 ## Licence
 
-Code MIT (`LICENSE` at the repository root). This README is CC-BY-4.0, its
-code samples also MIT.
+Code MIT (`LICENSE`, a copy of the repository root one). This README is CC-BY-4.0, its
+code samples also MIT. The wasm contains compiled libm (MIT) and
+wasm-bindgen (MIT or Apache-2.0) code; `THIRD-PARTY-NOTICES.txt` carries
+their notices.
