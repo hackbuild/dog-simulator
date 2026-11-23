@@ -47,6 +47,7 @@
     "@hackbuild/motion-net": "0.1.0",
     "@hackbuild/tunables": "0.1.0",
     "@hackbuild/senses": "0.1.0",
-    "@hackbuild/drives": "0.1.0"
+    "@hackbuild/drives": "0.1.0",
+    "@hackbuild/cameras": "0.1.0"
   }
 }

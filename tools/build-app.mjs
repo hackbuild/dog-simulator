@@ -42,6 +42,7 @@ export function scopeSource() {
     "import * as HTUNE from '@hackbuild/tunables';",
     "import * as HSENSE from '@hackbuild/senses';",
     "import * as HDRIVE from '@hackbuild/drives';",
+    "import * as HCAM from '@hackbuild/cameras';",
     "{",
     ...parts,
     "}",

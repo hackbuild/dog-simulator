@@ -65,8 +65,10 @@ function view(dt) {
     if (camMode === 1) flyCam(dt);
     if (camMode === 0) { const tg = tmpV[0].copy(dog.root.position).add(V3(0, 0.35, 0)); controls.target.lerp(tg, 1 - Math.exp(-dt * 2.5)); }
     if (camMode === 0) { const off = tmpV[3].copy(camera.position).sub(controls.target); const hz = Math.hypot(off.x, off.z); const want = clamp(hz, 3.2, 14); if (hz < 0.01) off.set(0, off.y, 1); if (Math.abs(want - hz) > 0.01) { off.x *= want / Math.max(hz, 0.01); off.z *= want / Math.max(hz, 0.01); } off.y = clamp(off.y, 0.9, 6); camera.position.lerp(tmpV[4].copy(controls.target).add(off), 1 - Math.exp(-dt * 3)); }
-    if (camMode === 3) { const c = Math.cos(dog.yaw), s = Math.sin(dog.yaw); const want = tmpV[0].set(dog.pos.x + c * 2.4 + s * 0.3, dog.root.position.y + 0.55, dog.pos.z - s * 2.4 + c * 0.3); camera.position.lerp(want, 1 - Math.exp(-dt * 6)); controls.target.lerp(tmpV[1].copy(dog.root.position).add(V3(0, 0.3, 0)), 1 - Math.exp(-dt * 8)); }
-    controls.update();
+    // side view: @hackbuild/cameras Follow, set behind a heading that puts the camera 2.4 m off
+    // the dog's left side and 0.3 m ahead, 0.25 m above a look point 0.3 m over the root
+    if (camMode === 3) { const c = Math.cos(dog.yaw), s = Math.sin(dog.yaw); sideCam.update(dog.root.position, Math.atan2(-(c * 2.4 + s * 0.3), s * 2.4 - c * 0.3), dt); controls.target.copy(dog.root.position).add(tmpV[1].set(0, 0.3, 0)); }
+    else controls.update();
     // bubble
     const hp = headWorld(V3(0, 0.35, 0), tmpV[1]).project(camera);
     const r = stage.getBoundingClientRect();

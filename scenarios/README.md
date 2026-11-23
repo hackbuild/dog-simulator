@@ -98,6 +98,16 @@ commit in `vendor/lock.json`).
   lockstep loop, metrics and scenario list stay in the app: the
   package's runner reports in its own shape, and the app's metrics run
   in the page.
+- mover: not adopted. `Steerer` is a different passing algorithm from
+  `app/src/sim/passing.js` (a potential field with yields and its own
+  stall rule against the app's side rule, dog circles and step aside),
+  and the capsule `World` would replace Rapier. Either moves every trace
+  where the human and the dog meet; the app keeps its own.
+- cameras: the side view is a `Follow` camera placed 2.4 m off the dog's
+  left and 0.3 m ahead, as before. Render only; lockstep never moves the
+  main camera. Looked at as a still: on entering the side view the
+  camera now snaps to its place where it used to glide (the first
+  `Follow.update` snaps).
 
 ### 2026-11-23, one motor state, f64 sums kept
 

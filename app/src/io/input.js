@@ -34,6 +34,7 @@ $('bNo').onclick = () => { audio(); if (HUM.ready) { humSay(pick(H_LINES.no), 2)
 $('bFill').onclick = () => { foodAmt = 1; toast('bowl filled'); emitSound(V3(BOWL.x, 0.2, BOWL.z), 0.45, 'kibble'); scentSrc.push({ x: BOWL.x, z: BOWL.z, s: 1.2, t: now }); };
 $('bSquirrel').onclick = () => { if (squirrel.state === 'gone') spawnSquirrel(); };
 let camMode = 0; const CAMS = ['Follow', 'Free', 'Dog eye', 'Side', 'His eyes'];
+const sideCam = new HCAM.Follow(camera, { distance: Math.hypot(2.4, 0.3, 0.25), pitch: Math.asin(0.25 / Math.hypot(2.4, 0.3, 0.25)), lookHeight: 0.3, smoothing: 8, yawSmoothing: 6 });
 function setCamMode(m) { camMode = m; $('camLab').textContent = CAMS[camMode]; controls.maxDistance = m === 1 ? 45 : 26; }
 $('bCam').onclick = () => setCamMode((camMode + 1) % CAMS.length);
 // free camera: right drag pans, two fingers pan, WASD or arrows fly, Q and E lower and raise, F goes back to following the dog

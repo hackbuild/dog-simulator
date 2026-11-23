@@ -168,6 +168,21 @@
         "dist/single.js": "9cdb788b0cdf384777220d106fa30c37d5400506de7eba853811473f9a7b54bd",
         "package.json": "d1f80437ebb61762a9c148383d4a2bb710b8ecec76bbc9e3726b6dc07038e330"
       }
+    },
+    "cameras": {
+      "repo": "hackbuild/hackbuild-agents",
+      "path": "packages/cameras",
+      "commit": "d369aa542cc443e4d8173ac99b22374ef89f9035",
+      "version": "0.1.0",
+      "files": {
+        "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
+        "README.md": "cd3e12536f247a57c5a5c95d125fc9b2ac7650c642d3a4e629ba237074bccea6",
+        "dist/index.d.ts": "f92806d055a51f05ead8d21b6f7a167e86437e9c2b5a6ca293d138a7c967ef14",
+        "dist/index.js": "89c4dbd9294ccc4e6d6e05a2cd8bec87c21f91c12972170fa281af1361e55c98",
+        "dist/single.d.ts": "97e1818573679b5d3d697406abd3e5f1e9cd00da1f2783ab236912180462f5be",
+        "dist/single.js": "78a84adeaf68c964266c1c23eb0d4d343a7014470efe54be66485016d68ed732",
+        "package.json": "4b73e96e5f7e525ca2617bb59e189b0563efc4ed03cbaf752dbdb55487699381"
+      }
     }
   }
 }

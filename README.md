@@ -5,6 +5,8 @@ A dog and its person living in a browser tab. The dog walks, sniffs, plays fetch
 Status: 2026-11-22, the HACKLE handoff build moved here and made
 deterministic. `app/src` holds the app; `legacy/` holds the pack as
 received and its deterministic copy; `scenarios/` holds golden traces.
+2026-11-23: the app is MIT throughout; its neural gait runs on
+`@hackbuild/motion-net`, and the CC-BY-NC network host stays in `legacy/`.
 
 ## Build
 
@@ -95,6 +97,12 @@ in RULES.md and CONTRIBUTING.md.
   retarget) and meets 12 of 12 neural issue expectations; it holds the 29
   cpg goldens with the network off.
 
+- hackbuild-agents packages, one commit each, every one holding the 29
+  cpg and 12 neural goldens: tunables (the tune registry), senses
+  (looming and sound azimuth helpers), drives (model call scheduling),
+  scenario (the runner's Chrome launch), cameras (the side view). Mover
+  is not adopted; scenarios/README.md says why for each part left out.
+
 ### Not verified
 
 - Motion quality: judged by metrics and stills only. Nobody has watched
@@ -105,10 +113,13 @@ in RULES.md and CONTRIBUTING.md.
   and handed the body back to the pattern generator, since frames ran
   slower than 1/15 s (the host's health rule). The WebGPU and worker
   paths of motion-net have not run in this app.
-- Size: dist/dog-simulator.html is 14,624,739 bytes with the owner pack
-  (2026-11-23) and was 14,620,125 bytes with the owner pack
+- Size: dist/dog-simulator.html is 15,039,837 bytes with the owner pack
+  after the motion-net gait and the agents packages (2026-11-23, 415,098
+  bytes more than the 14,624,739 before them; motion-net carries its wasm
+  twice, once for the page and once inside the worker source), and was
+  14,620,125 bytes with the owner pack
   and 13,141,035 bytes without (measured), over the 9.3 MB budget. Rapier
-  is 4.3 MB of the 5.45 MB script, the dog model 7.3 MB of base64.
+  is 4.3 MB of the 5.87 MB script (measured 2026-11-23), the dog model 7.3 MB of base64.
 - CI does not run the Chrome checks; they need `assets-local/`.
 
 ## Licence
