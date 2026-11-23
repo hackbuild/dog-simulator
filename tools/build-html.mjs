@@ -3,6 +3,8 @@
 //   node tools/build-html.mjs legacy [--src DIR] [--assets DIR] [--out FILE]
 //     the port of legacy/pack/build.py. With the pack's own inputs it writes
 //     the pack's hackle.html byte for byte (tools/test/build-parity.test.mjs).
+//   node tools/build-html.mjs legacy --mods legacy/det/src --out dist/hackle-det.html
+//     the same build over the deterministic sources (seeded rng, fixed step, lockstep hook).
 //   node tools/build-html.mjs app [--out FILE]
 //     the TypeScript app (app/src) bundled with esbuild; see buildApp below.
 //
@@ -86,25 +88,27 @@ const replaceOnce = (s, k, v) => {
 const replaceAll = (s, k, v) => s.split(k).join(v);
 
 // U+2012 to U+2015 and U+2212 are dashes by RULES.md; build.py checked two of them.
-export const LEGACY_DASHES = ["–", "—"];
+export const LEGACY_DASHES = [0x2013, 0x2014].map((c) => String.fromCharCode(c));
 
 /** The build.py port. Paths default to legacy/pack plus assets-local. */
 export function buildLegacy(opts = {}) {
   const src = resolve(opts.src ?? join(ROOT, "legacy/pack"));
   const assets = resolve(opts.assets ?? join(ROOT, "assets-local"));
-  const S = (f) => join(src, f);
+  // mods: the folder holding hackle_src.html and the modules (legacy/det/src for the lockstep build)
+  const mods = resolve(opts.mods ?? join(src, "src"));
+  const S = (f) => join(f.startsWith("src/") ? mods : src, f.startsWith("src/") ? f.slice(4) : f);
   let s = readText(S("src/hackle_src.html"));
   const core = readText(S("src/avatar_core.js"));
   const ci = core.indexOf("const PREFIX"), cj = core.indexOf("const VRM_NAMES");
   const human = replaceAll(readText(S("src/human.js")), "/*@@CLASSIFY@@*/", core.slice(ci, cj));
   const infer = replaceAll(readText(S("src/nn_infer.js")), "if (typeof module !== 'undefined') module.exports = { nnInferHost };", "");
   const gait = replaceAll(readText(S("src/nn_gait.js")), "/*@@NNBIND@@*/[]", pyJsonCompact(readText(S("nn/bind.json"))));
-  const mods = {
+  const parts = {
     "/*@@ORGANIC@@*/": readText(S("src/organic.js")), "/*@@BODY@@*/": readText(S("src/body.js")), "/*@@NNINFER@@*/": infer,
     "/*@@NNGAIT@@*/": gait, "/*@@SENSES@@*/": readText(S("src/senses.js")), "/*@@BRAIN@@*/": readText(S("src/brain.js")),
     "/*@@VOICE@@*/": readText(S("src/voice.js")), "/*@@HUMAN@@*/": human,
   };
-  for (const [k, v] of Object.entries(mods)) s = replaceOnce(s, k, v);
+  for (const [k, v] of Object.entries(parts)) s = replaceOnce(s, k, v);
   const A = (f) => join(assets, f);
   const voice = existsSync(A("voice.wav")) ? b64(A("voice.wav")) : "";
   const humanGlb = existsSync(A("moheeb.glb")) ? b64(A("moheeb.glb")) : "";
@@ -133,7 +137,7 @@ async function main(argv) {
   const mode = o._[0] ?? "app";
   let html, out;
   if (mode === "legacy") {
-    const r = buildLegacy({ src: o.src, assets: o.assets });
+    const r = buildLegacy({ src: o.src, mods: o.mods, assets: o.assets });
     html = r.html;
     out = resolve(o.out ?? join(ROOT, "dist/hackle-legacy.html"));
     if (!r.likeness.human) console.log("build-html: no assets-local/moheeb.glb, the human slot is empty and the page uses its placeholder");

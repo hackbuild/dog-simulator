@@ -16,3 +16,19 @@ pack's inputs it writes the pack's hackle.html byte for byte
 
 `pack/` is outside the voice lint and is never edited. The pack's Python is
 not run; its scripts carry paths for another machine.
+
+`det/src/` is the deterministic copy of `pack/src`, the step 3 baseline:
+
+- one seeded stream `RNG` (mulberry32) in place of every `Math.random`
+  in sim code; audio noise keeps `Math.random`;
+- a fixed 1/60 s step with an accumulator (`simStep`), rendering split
+  out to `view`; one Rapier step per sim step;
+- `SIMQ`, a sim time event queue, in place of the two `setTimeout` sim
+  events (the speak bark, the human cue delay);
+- `#test&seed=N[&off=L.x,...]` opens in lockstep: no animation loop, no
+  detector, the gait network loaded before step 0 and answered inside
+  the same step, `window.__sim.step(n)` and `window.__sim.trace()`.
+
+`node tools/build-html.mjs legacy --mods legacy/det/src --out dist/hackle-det.html`
+builds it. `det/src/nn_gait.js` and `det/src/nn_infer.js` keep the
+CC-BY-NC-4.0 licence of the files they were copied from.
