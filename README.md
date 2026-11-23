@@ -130,7 +130,9 @@ in RULES.md and CONTRIBUTING.md.
 - After the app changes of the pass: 31 of 31 cpg (two natural variants
   added) and 12 of 12 neural goldens identical (measured).
 - The public build (`build:public`) replays its 13 goldens identical on
-  this machine; CI runs that set and the licence isolation test.
+  this machine and on CI (ubuntu-24.04, system Chrome, SwiftShader; run
+  45259147367), goldens recorded on macOS arm64 (measured). CI also runs
+  the licence isolation test.
 - Neural gait at real frame rate, headful Chrome, machine GPU: webgpu
   session, 60 fps, 7 to 9 ms a prediction, the network kept the body in
   30 of 30 samples over 60 s (measured). On SwiftShader the wall clock
@@ -149,8 +151,6 @@ in RULES.md and CONTRIBUTING.md.
 - The neural gait in the app build at real frame rate: nobody has watched
   it. The worker path of motion-net has not been seen to run here; the
   WebGPU path ran (above).
-- Whether the public goldens, recorded on macOS arm64 SwiftShader, replay
-  on CI's Linux SwiftShader.
 - Size: dist/dog-simulator.html is 15,090,554 bytes with the owner pack
   and dist/dog-simulator-public.html 6,386,942 bytes (measured
   2026-11-23, both over the 9.3 MB budget). Rapier is 4.3 MB of the
