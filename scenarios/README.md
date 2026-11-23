@@ -22,6 +22,34 @@ Traces need the owner asset pack in `assets-local/` (the dog model and the
 human model); with the placeholder human the human moves differently and
 the goldens do not apply.
 
+Motion metrics (`tools/runner/metrics.mjs`, HACKLE lesson 9) ride along
+on every run unless `--no-metrics` is given; they go into the report
+under `metrics` and print per scenario. `node scenarios/metrics.mjs
+<report.json>` prints them as a table. All computed in lockstep at
+1/60 s steps:
+
+- jerk: third difference of world positions, m/s^3, for the dog head,
+  hips and four paws and the human head and hips, while the agent moves;
+  p50, p95 and max.
+- sliding: seconds an agent moves over 0.15 m/s with its heading more
+  than 0.6 rad from its motion direction, out of its moving seconds.
+- toggles per second: body source (cpg or network), gait label and
+  posture target; flicker counts a change undone within 0.5 s.
+- frame time: an rAF sampler in one `page.evaluate` call after the trace,
+  90 frames of one sim step and one render each, p50, p95 and max, plus
+  `window.__prof` per system. Headless SwiftShader at 1360 by 860 unless
+  `--size` says otherwise: these compare builds on one machine and say
+  nothing about a real GPU. The step waits for the eye readback every
+  0.1 sim s as lockstep does. Frame times in a report run with several
+  jobs share the cores between Chromes; compare frame times only from
+  runs made the same way.
+
+The sampler wraps `window.__sim.step` and steps one at a time; traces
+and hashes are unchanged with it on (20 of 20 runs measured).
+
+Motion quality is judged from these metrics and from stills only; nobody
+has looked at these runs in a browser at real frame rate.
+
 Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 4 decimals, plus an FNV hash over full precision state at every step.
 
@@ -61,6 +89,23 @@ reached the decide phase at 57 of 60 s; the new run spends the minute
 on chase, fetch and greet), fetch-walkoff seed 3 now also misses the 20 s
 delivery bound. With the legacy network host (golden/neural), corridor-pass
 seed 3 now stalls the human (1 of 12 neural runs; 0 of 12 before).
+
+## Metrics, 2026-11-22, app build after the five fixes
+
+`reports/compare-cpg.json` and `compare-cpg-issues.json`, computed in
+lockstep (frame times from 8 headless Chromes on 8 cores, not usable
+beyond a rough order).
+
+- The dog slides: heading more than 0.6 rad off its motion for 3.8 of
+  24.7 moving s in fetch-roundtrip, 2.8 of 17.9 s in parked-in-path, 3.7
+  of 48.9 s in fetch-walkoff seed 3; under 0.5 s in most others. The
+  human slides under 1 s everywhere.
+- Posture targets toggle 0.2 to 2.0 times per s, with up to 22 changes
+  undone within 0.5 s (parked-in-path): the busiest signal of the three.
+  Gait labels 0.5 to 1.2 per s. The body source never switches (cpg).
+- Jerk p95: dog head 600 to 2500 m/s^3, hips 370 to 1340, paws 5900 to
+  13400. In fetch-roundtrip the human head is below the dog head at p50
+  (94 against 191) and above it at p95 (3944 against 1619).
 
 ## Findings, 2026-11-22, legacy/det build
 

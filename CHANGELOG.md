@@ -16,3 +16,5 @@ Versions follow semver per package. Nothing is published to npm yet.
 - app, legacy/det: the owner's five fixes to the handoff build (settings
   diffs, network gait phase, profiler, head yaw seam, scratch vector,
   cortex interval); goldens re-recorded.
+- runner: motion metrics per scenario (jerk, sliding, state toggles,
+  rAF frame sampler with the per system profiler).

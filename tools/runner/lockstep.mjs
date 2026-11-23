@@ -4,6 +4,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { open, waitFor } from "./chrome.mjs";
+import { INSTALL as METRICS } from "./metrics.mjs";
 
 export const STEPS_PER_SECOND = 60;
 
@@ -12,6 +13,7 @@ export const STEPS_PER_SECOND = 60;
  * actions: [{ at: simSeconds | when: "page condition", js: "code run in the page with h = window.__hackle" }]
  * shots:   [{ at: simSeconds, path, js? }] screenshot after an optional camera setup
  * probes:  [{ every: simSeconds, js: "expression returning JSON" }] extra trace columns
+ * metrics: false skips the motion metrics; frames: rAF sampler frame count after the trace (0 skips)
  */
 export async function run(o) {
   const hash = `#test&seed=${o.seed}` + (o.off?.length ? `&off=${o.off.join(",")}` : "");
@@ -23,6 +25,7 @@ export async function run(o) {
     if (!ok) throw new Error("no window.__sim after 240 s");
     out.backend = await page.evaluate(() => document.getElementById("chipGpu")?.textContent ?? "unknown");
     out.neural = await page.evaluate(() => !!window.__hackle.NG.ready);
+    if (o.metrics !== false) await page.evaluate(METRICS);
     const total = Math.round(o.seconds * STEPS_PER_SECOND);
     const whens = (o.actions ?? []).filter((a) => a.when);
     const events = [
@@ -63,6 +66,10 @@ export async function run(o) {
     }
     const tr = await page.evaluate(() => window.__sim.trace());
     Object.assign(out, tr);
+    if (o.metrics !== false) {
+      out.metrics = await page.evaluate(() => window.__metrics.summary());
+      if ((o.frames ?? 90) > 0) out.metrics.frames = await page.evaluate((n) => window.__metrics.frames(n), o.frames ?? 90);
+    }
   } finally {
     out.errors = log.errors;
     out.blocked = log.blocked;
