@@ -206,18 +206,22 @@ function locomotion(dt) {
   logFeet(dt);
 }
 
-// phase for the gait ring when a learned model drives the legs: touchdown to touchdown is one cycle,
-// liftoff marks the duty factor; dog.duty and dog.nnFreq average the legs with a recent cycle
-function legClock(t) {
-  for (const l of dog.legs) {
-    if (l.stance && !l.nnSt) { if (l.tdT != null) { const P = t - l.tdT; if (P > 0.18 && P < 2.5) l.per = l.per ? l.per * 0.6 + P * 0.4 : P; } l.tdT = t; }
-    if (!l.stance && l.nnSt && l.tdT != null && l.per) l.duty = clamp((t - l.tdT) / l.per, 0.2, 0.95);
-    l.nnSt = l.stance;
-    if (l.tdT != null && l.per && t - l.tdT < l.per * 2.5) l.ph = frac((t - l.tdT) / l.per);
-  }
-  let s = 0, n = 0, f = 0, m = 0;
-  for (const l of dog.legs) { if (l.duty) { s += l.duty; n++; } if (l.per && t - l.tdT < l.per * 2.5) { f += 1 / l.per; m++; } }
-  dog.duty = n ? s / n : 0; dog.nnFreq = m ? f / m : 0;
+// one motor state for both sources (@hackbuild/gait MotorState): the network's comes from the
+// host's phase estimator (touchdown to touchdown timing of a reference leg), the pattern
+// generator's from its own oscillator; diagnostics read this and show the source label
+const cpgMotor = { source: 'procedural', phase: 0, duty: 0, strideFrequency: 0, contacts: [true, true, true, true] };
+function motorState() {
+  if (NG.active) return NG.gait.motorState();
+  cpgMotor.phase = dog.legs.length ? dog.legs[0].ph : 0; cpgMotor.duty = dog.duty; cpgMotor.strideFrequency = dog.standing ? 0 : dog.freq;
+  dog.legs.forEach((l, i) => { cpgMotor.contacts[i] = l.stance; });
+  return cpgMotor;
+}
+// the gait ring while the network drives: each leg at the motor phase plus its table offset for
+// the guidance gait, measured from the reference leg
+function nnLegPhases() {
+  const m = NG.gait.motorState(), g = GAITS[Math.max(0, dog.gaitW.indexOf(1))], ref = NR.legs.findIndex(x => x.c === 0);
+  dog.legs.forEach((l, i) => { l.ph = frac(m.phase + g.off[i] - g.off[ref]); });
+  dog.duty = m.duty;
 }
 
 // posture parameter sets for the procedural body
@@ -283,7 +287,7 @@ function poseDog(dt, t) {
   const rb = dog.bones['root'];
   if (nn) {
     // the network gives body height, pitch and roll; terrain, breath and the turn bend come from here
-    nnApply(dt); legClock(NG.time);
+    nnApply(dt); nnLegPhases();
     dog.root.position.set(dog.pos.x, ikOn ? rear : H(dog.pos.x, dog.pos.z), dog.pos.z);
     dog.root.rotation.set(0, dog.yaw, 0);
     pitch = tPitch + NR.pitch; drop = NR.drop - breathe;

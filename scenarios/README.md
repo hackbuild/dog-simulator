@@ -63,6 +63,26 @@ Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 
 ## Trace changes
 
+### 2026-11-23, one motor state, f64 sums kept
+
+The gait ring, frequency, duty and source label read one
+`@hackbuild/gait` MotorState: the network's from the host's phase
+estimator, the pattern generator's from its oscillator. The app's own
+touchdown clock (`legClock`) is gone. Trace neutral: 12 of 12 neural and
+29 of 29 cpg goldens identical (measured). motion-net's `NeuralFallback`
+is not used: it wants the procedural gait as a `LocomotionBackend` with a
+root, which this app's pattern generator is not; the app keeps its own
+switch, with the same rule (stale or slow predictions hand the body back
+for 2 s).
+
+f32 sums were tried and not taken. App build, `--nnacc f32` against the
+f64 goldens: 12 of 12 traces differ, 11 of 12 expectations pass
+(fetch-walkoff seed 21 circles past 4 pi with the ball), against 12 of
+12 with f64. In the legacy host the f32 traces part from the f64 ones
+between 0.25 and 3.5 sim s (measured), 11 of 12 pass in both. f64 stays
+the default; f32 ran a full 16 frame decode in 20.0 ms against 56.5 ms in
+Node (motion-net README, measured), the app decodes 9 frames.
+
 ### 2026-11-23, the neural gait moves to motion-net
 
 Kernel parity in place: legacy/det built with its network kernels

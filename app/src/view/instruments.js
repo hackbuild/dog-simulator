@@ -22,9 +22,9 @@ function drawInstruments() {
   const px = 170 + brain.v * 160, py = 110 - brain.a * 100; a.fillStyle = '#FE0386'; a.beginPath(); a.arc(px, py, 8, 0, 7); a.fill(); a.strokeStyle = '#1a1a1a'; a.stroke();
   // text bits
   $('gaitName').textContent = NG.active ? 'neural ' + NG.guidance.toLowerCase() : dog.standing ? 'stand' : GAITS[dog.gaitW.indexOf(Math.max(...dog.gaitW))].name;
-  $('kFr').textContent = (dog.v * dog.v / (9.81 * (dog.legLen || 0.45))).toFixed(2); $('kSrc').textContent = NG.active ? 'neural mocap' : 'pattern generator';
+  $('kFr').textContent = (dog.v * dog.v / (9.81 * (dog.legLen || 0.45))).toFixed(2); const M = motorState(); $('kSrc').textContent = M.source === 'neural' ? 'neural mocap' : 'pattern generator';
   $('kGuide').textContent = NG.active ? NG.guidance.toLowerCase() : '-'; $('kNnMs').textContent = NG.ms ? NG.ms.toFixed(0) + ' ms, ' + (1000 / Math.max(NG.ms, 100)).toFixed(0) + ' Hz' : '-';
-  $('kCont').textContent = NG.active ? NG.cont.map(x => x > 0.55 ? 'X' : '.').join(' ') : '-';
+  $('kCont').textContent = M.source === 'neural' ? NG.cont.map(x => x > 0.55 ? 'X' : '.').join(' ') : '-';
   // sleep, clock, bond
   const hh = Math.floor(CLOCK.h), mm = Math.floor((CLOCK.h - hh) * 60), ck = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
   $('chipClock').textContent = ON('L.day') ? ck : 'day off'; $('kClock').textContent = ck + ' day ' + (CLOCK.day + 1);
@@ -35,7 +35,7 @@ function drawInstruments() {
   $('kFocus').textContent = ON('L.salience') ? attention.label || '-' : 'off';
   $('kWind').textContent = ON('L.plume') ? TV('W.wind').toFixed(1) + ' m/s at ' + Math.round(((wind.a * 180 / Math.PI) % 360 + 360) % 360) + ' deg' : 'off'; $('kPuffs').textContent = puffs.length; $('kLR').textContent = sniff.cL.toFixed(3) + ' / ' + sniff.cR.toFixed(3);
   $('sniffSt').textContent = sniff.inBout > 0 ? 'sniffing ' + TV('Se.sniffHz').toFixed(1) + ' Hz' : brain.sn ? brain.sn.mode : '-';
-  $('kSpeed').textContent = dog.v.toFixed(2) + ' m/s'; $('kFreq').textContent = dog.standing ? '-' : (NG.active ? dog.nnFreq || 0 : dog.freq).toFixed(2) + ' Hz'; $('kDuty').textContent = dog.duty.toFixed(2); $('kTurn').textContent = dog.w.toFixed(2) + ' rad/s';
+  $('kSpeed').textContent = dog.v.toFixed(2) + ' m/s'; $('kFreq').textContent = dog.standing ? '-' : M.strideFrequency.toFixed(2) + ' Hz'; $('kDuty').textContent = M.duty.toFixed(2); $('kTurn').textContent = dog.w.toFixed(2) + ' rad/s';
   const P = dog.posture; const pm = Object.entries(P).sort((x, y) => y[1] - x[1])[0]; $('kPost').textContent = pm[1] > 0.3 ? pm[0] : 'stand';
   rows($('utilRows'), BEH.map(b => [b, Math.min(brain.util[b] || 0, 1), b === brain.cur]));
   rows($('driveRows'), Object.entries(brain.d).map(([k, v]) => [k, v, false, k === 'prey']).concat([['bond', brain.bond, false, true]]));
