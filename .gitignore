@@ -1,5 +1,7 @@
 node_modules/
 dist/
+# built library packages are committed, pinned in vendor/lock.json
+!vendor/*/dist/
 *.tsbuildinfo
 .DS_Store
 # test runners, coverage, local secrets

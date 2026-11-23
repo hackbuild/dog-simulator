@@ -1,0 +1,38 @@
+/* tslint:disable */
+/* eslint-disable */
+export const memory: WebAssembly.Memory;
+export const __wbg_bodydynamics_free: (a: number, b: number) => void;
+export const __wbg_earpair_free: (a: number, b: number) => void;
+export const __wbg_gait_free: (a: number, b: number) => void;
+export const __wbg_phaseestimator_free: (a: number, b: number) => void;
+export const __wbg_wag_free: (a: number, b: number) => void;
+export const bodydynamics_new: (a: number, b: number, c: number) => number;
+export const bodydynamics_update: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number, k: number, l: number, m: number, n: number) => [number, number];
+export const earpair_new: (a: number) => number;
+export const earpair_update: (a: number, b: number, c: number, d: number, e: number, f: number, g: number) => [number, number];
+export const gait_duty: (a: number) => number;
+export const gait_feet: (a: number) => [number, number];
+export const gait_frequency: (a: number) => number;
+export const gait_froude: (a: number) => number;
+export const gait_legPhases: (a: number) => [number, number];
+export const gait_new: (a: number, b: number, c: number, d: number) => number;
+export const gait_nominal: (a: number, b: number, c: number, d: number) => [number, number];
+export const gait_phase: (a: number) => number;
+export const gait_reset: (a: number, b: number, c: number, d: number) => void;
+export const gait_setOffsets: (a: number, b: number, c: number) => void;
+export const gait_setPaceBias: (a: number, b: number) => void;
+export const gait_standing: (a: number) => number;
+export const gait_update: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number) => number;
+export const gait_weights: (a: number) => [number, number];
+export const goldenTrace: (a: number) => [number, number];
+export const phaseestimator_new: (a: number, b: number) => number;
+export const phaseestimator_update: (a: number, b: number, c: number, d: number) => [number, number];
+export const quadrupedTables: () => [number, number];
+export const solveLeg: (a: number, b: number, c: number, d: number, e: number, f: number) => [number, number];
+export const steer: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
+export const wag_new: (a: number, b: number, c: number) => number;
+export const wag_update: (a: number, b: number, c: number, d: number, e: number, f: number, g: number, h: number, i: number, j: number) => [number, number];
+export const __wbindgen_externrefs: WebAssembly.Table;
+export const __wbindgen_malloc: (a: number, b: number) => number;
+export const __wbindgen_free: (a: number, b: number, c: number) => void;
+export const __wbindgen_start: () => void;
