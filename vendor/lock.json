@@ -111,6 +111,33 @@
         "dist/wasm/senses_bg.wasm.d.ts": "d7e83988d6a140dac2d2b905363cb9a1eb8a5d3b3d9641c4b147167c145a6bb8",
         "package.json": "b32665e79eefc48f259306f6ac8204908ebdccbfe3e00d5c5c3269749bf44e04"
       }
+    },
+    "drives": {
+      "repo": "hackbuild/hackbuild-agents",
+      "path": "packages/drives",
+      "commit": "d369aa542cc443e4d8173ac99b22374ef89f9035",
+      "version": "0.1.0",
+      "files": {
+        "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
+        "README.md": "12c586a5079126420ef2bd09eb0b65d3ba5522fe00db977cc2dfc0527b946fea",
+        "dist/index.d.ts": "0579b97478bc333fc795ecf8ee09c16407acd410a8e6dc835db98a144f5a98b7",
+        "dist/index.js": "67cd01687a6baa81d64b34be00637c30bab4c9d9dcbf7698b953dd6541684a17",
+        "dist/load.d.ts": "75df3072461817daa2d649f4fc0a84c8a7347f0b6fb412b9ac3fae65059041e5",
+        "dist/load.js": "9f767e4572f299dff16e6753927f7166da67c397cbbd73f5bd3cbd59deba1ac5",
+        "dist/schedule.d.ts": "7c5c9688ac106d25cd38137605607e28c3287aebaaab8cb61c4673fa7d658c44",
+        "dist/schedule.js": "8d5c527e4ac5d83ab7154f333a8dfd6cc2293e6408b84f31328f672cd4ce5c9a",
+        "dist/single.d.ts": "97e1818573679b5d3d697406abd3e5f1e9cd00da1f2783ab236912180462f5be",
+        "dist/single.js": "1ad2e7d44ee7da3bea6f6c3ee9fa89ff3b21eb1a1176011628ff4b443062d0a2",
+        "dist/task.d.ts": "40b76748dfda39e2d4d0dc9bfea090db22c02311bc9abac03e138d4fb76e4690",
+        "dist/task.js": "db070ca59e6ed54bb78beee234078904d8029fdc4e13db1e5b36a6d9fae5d502",
+        "dist/wasm/drives.d.ts": "9ecf0f45236b811b8e19592ac924228a82a0539cfc86edd2593681cf1a904a48",
+        "dist/wasm/drives.js": "7c360500784c2e8d8e29ac73f5a9ea94afa7e357b513ea0a346d539e3ef80bea",
+        "dist/wasm/drives_bg.wasm": "caafcc3734b6b46708bd504bd878681d87ef4cb1298f72e87d724a2e69b5a5c9",
+        "dist/wasm/drives_bg.wasm.d.ts": "52daa61a00a92ae85c7c86a1b28c31060c2a4ece11313b6ecd81bb0d1d0b4c1c",
+        "dist/wasm/inline.d.ts": "58a1cdd455eda64e0f51fe27ed1cbff25dd193d4d033fb9364725cb03248e87f",
+        "dist/wasm/inline.js": "46b6018f9a301e20a749e59d82f775f327d2555176cafc322a3107b5cdc079f5",
+        "package.json": "04d4363919fabb77b7c504f77ca0d8ffbd7c968c44b7a16c3e5a000a6d7aab00"
+      }
     }
   }
 }

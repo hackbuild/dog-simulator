@@ -45,7 +45,10 @@ function vlmAsk1(canvas, prompt, max) {
   });
 }
 const pct = v => Math.round(v * 100) + '%';
-let thinking = false, lastAuto = 0;
+let thinking = false;
+// automatic cortex calls go through @hackbuild/drives InferenceScheduler: one at a time, at least
+// Br.cortexMin s apart while something important happened, otherwise 60 s apart
+const cortexOpts = { minInterval: 60 }, cortexSched = new HDRIVE.InferenceScheduler(cortexOpts);
 async function think() {
   if (vlm.state !== 'ready' || thinking) return; thinking = true; $('cortexSt').textContent = 'thinking';
   const d = brain.d, vis = Object.values(percepts).filter(p => p.vis).map(p => p.id.replace(/\d+$/, ''));

@@ -114,6 +114,8 @@ function haTick(dt, speed, speaking, turn = 0) {
   return P.p;
 }
 const hq = [new THREE.Quaternion(), new THREE.Quaternion(), new THREE.Quaternion()], hv = [V3(), V3(), V3(), V3(), V3(), V3(), V3(), V3()];
+// his model calls go through @hackbuild/drives InferenceScheduler, at least 25 s apart, one at a time
+const humMindSched = new HDRIVE.InferenceScheduler({ minInterval: 25 });
 const HUM = {
   root: new THREE.Group(), ready: false, av: null, map: null, pos: PORCH.clone(), yaw: Math.PI, v: 0, w: 0, legs: [], phase: 0, standing: true,
   crouch: 0, crouchT: 0, bend: 0, holding: false, throwT: -1, throwTo: null, released: false, reach: null, look: null, task: null, lines: [],
@@ -715,7 +717,7 @@ function humTick(dt, t) {
   if (brain.barkT > now - dt * 1.5 && !HUM.away && !Voice.speaking && RNG() < 0.25 && (!HUM.task || ['watch', 'sit', 'wander', 'phone'].includes(HUM.task.name))) humLater(ORG.exg(0.2, 0.05, 0.25), () => humSay(pick(['What?', 'Yeah yeah.', 'I hear you.', 'What is it buddy?']), 1.6, true));
   if (ball) { const moving = ball.held || ball.humanHeld || bodyVel(ball).length() > 0.3; HUM.ballIdle = moving ? 0 : HUM.ballIdle + dt; }
   if ($('humAI').checked) {
-    if (!HUM.task) { if ($('humMindOn').checked && vlm.state === 'ready' && now - HUM.lastMind > 25 && !HUM.thinking) { HUM.lastMind = now; humThink().then(ok => { if (!ok && !HUM.task) humPlan(); }); } else if (!HUM.thinking) humPlan(); }
+    if (!HUM.task) { if ($('humMindOn').checked && vlm.state === 'ready' && !HUM.thinking && humMindSched.state(now) === 'ready') { HUM.lastMind = now; humMindSched.run(now, true, humThink).then(ok => { if (!ok && !HUM.task) humPlan(); }); } else if (!HUM.thinking) humPlan(); }
   } else if (!HUM.task || ['wander', 'chat', 'pet', 'feed', 'train', 'get_ball', 'call', 'phone', 'stroll', 'sit', 'errand'].includes(HUM.task.name) && !HUM.task.args.user) { if (HUM.task && HUM.task.name !== 'throw') { HUM.task = null; HUM.phoneOn = false; if (HUM.away) { HUM.away = false; HUM.root.visible = true; } if (HA.sit) haSit(false); } HUM.motor.mode = 'face'; HUM.motor.face = V3(dog.pos.x, 0, dog.pos.z); HUM.look = dog.root.position.clone().add(V3(0, 0.4, 0)); $('humTask').textContent = 'manual'; $('humWhy').textContent = 'you are driving: buttons and cues act through him'; }
   humTask(dt);
   humSteer(dt);

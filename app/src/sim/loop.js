@@ -45,7 +45,7 @@ function simStep(dt) {
     if (!TEST && !eyeDetect.t || now - eyeDetect.t > Math.max(0.45, net.ms * 0.004)) { eyeDetect.t = now; eyeDetect(); } pm('yoloKick');
     camTick(now); micTick(dt); pm('camMic');
     // the cortex thinks on events: when summed importance passes a budget, never more often than a floor (Generative Agents style)
-    if ($('autoThink').checked && vlm.state === 'ready' && !thinking && ((brain.imp > TV('Br.reflect') && now - lastAuto > TV('Br.cortexMin')) || now - lastAuto > 60)) { lastAuto = now; brain.imp = 0; think(); }
+    if ($('autoThink').checked && vlm.state === 'ready' && !thinking) { cortexOpts.minInterval = brain.imp > TV('Br.reflect') ? TV('Br.cortexMin') : 60; if (cortexSched.state(now) === 'ready') { brain.imp = 0; cortexSched.run(now, true, think); } }
   }
   // marker fade and food bowl level are seen by the dog eye, so they advance with the sim
   marker.material.opacity = Math.max(0, marker.material.opacity - dt * 0.35);

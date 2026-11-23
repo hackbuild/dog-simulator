@@ -80,6 +80,15 @@ commit in `vendor/lock.json`).
   PerceptMemory, OccupancyGrid) are not adopted: each would replace a
   JavaScript sense with a different algorithm or draw order, so the
   traces could not hold. The bundle grew 256 bytes (tree shaken).
+- drives: the cortex and the human's model calls go through
+  `InferenceScheduler` (one call at a time, a minimum interval; neither
+  runs in lockstep). The first automatic cortex call no longer waits 60 s
+  after load. `bodyClock` is not adopted: the wasm one differs from the
+  app's by one ulp in 123 of 2,000,000 sampled hours (libm exp against
+  V8, computed in Node), which would move the hash, since fatigue is part
+  of the traced state. Drives, Chooser, CueLearner, Sleep and
+  MemoryStream are not adopted: different algorithms and draw orders
+  from the app brain.
 
 ### 2026-11-23, one motor state, f64 sums kept
 
