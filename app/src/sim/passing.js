@@ -1,11 +1,11 @@
-// ---------- passing between the dog and the human (HACKLE lesson 7, handoff issue 3) ----------
+// ---------- passing between the dog and the human (a rule from earlier builds, handoff issue 3) ----------
 // The two agents used to steer around each other with independent potential fields. Head on, the
 // side term flips sign as the bearing crosses zero, and both stop (2 of 7 cpg runs stalled 4 s or
 // more). Shared rules:
 // - passing each other, a side is picked from the other's position a half second ahead and held
 //   for at least 1 s; it is dropped when the agents are apart again. Static obstacles keep the old
 //   per step side, so walks that meet no agent keep their traces
-// - a task change releases a held kneel into its stand up (human.js startTask, lesson 4)
+// - a task change releases a held kneel into its stand up (human.js startTask)
 // - the dog yields: standing in his path (within 0.6 m of his line, ahead of him, his goal away
 //   from the dog), it steps aside; the yield times out after 2.5 s and waits 3 s before another
 // - a stall detector inserts a side waypoint when he has a goal, is not turning, and moved under
@@ -19,7 +19,7 @@ function passSide(map, key, sd, t) {
   map.set(key, { s: sd, t });
   return sd;
 }
-const PASS = { hum: new Map(), dog: new Map() };
+const PASS = { hum: new Map() };
 
 /** the dog as two circles along its body, 0.22 m ahead of and behind its centre */
 function dogCircles(out = []) {

@@ -61,7 +61,7 @@ function steer(dt) {
         const dx = dog.pos.x - o.x, dz = dog.pos.z - o.z, dd = Math.hypot(dx, dz) - o.r - 0.3;
         if (dd < 1.6 && Math.hypot(motor.target.x - o.x, motor.target.z - o.z) > o.r + 0.35) {
           const w = (1 / Math.max(dd, 0.05) - 1 / 1.6) * 0.35; avoid.x += dx / (dd + o.r + 0.3) * w; avoid.z += dz / (dd + o.r + 0.3) * w;
-          let side = Math.sign(dir.x * dz - dir.z * dx) || 1; if (o.kind === 'you') side = passSide(PASS.dog, o, side, now); avoid.x += -dir.z * side * w * 0.6; avoid.z += dir.x * side * w * 0.6;
+          let side = Math.sign(dir.x * dz - dir.z * dx) || 1; avoid.x += -dir.z * side * w * 0.6; avoid.z += dir.x * side * w * 0.6;
         }
       }
       const r = Math.hypot(dog.pos.x, dog.pos.z); if (r > FENCE_R - 1.6) { avoid.x -= dog.pos.x / r * (r - FENCE_R + 1.6) * 1.2; avoid.z -= dog.pos.z / r * (r - FENCE_R + 1.6) * 1.2; }
