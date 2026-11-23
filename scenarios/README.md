@@ -160,6 +160,23 @@ on chase, fetch and greet), fetch-walkoff seed 3 now also misses the 20 s
 delivery bound. With the legacy network host (golden/neural), corridor-pass
 seed 3 now stalls the human (1 of 12 neural runs; 0 of 12 before).
 
+## Metrics, 2026-11-23, app build after all fixes
+
+`reports/compare-cpg.json`, `-issues.json`, `-sweep.json` (29 goldens,
+all identical, 28 pass; frame times again from parallel headless runs).
+Computed, against the table below:
+
+- Dog sliding falls where the human and dog used to meet: fetch-roundtrip
+  3.8 to 0.4 of about 21 to 25 moving s, parked-in-path 2.8 to 1.1,
+  fetch-walkoff seed 3 3.7 to 0.3. Highest left: scent-trail and
+  bench-sit seed 3, 2.9 s each. Human sliding at most 2 s of 82 (stroll).
+- Posture target toggles in parked-in-path 2.0 to 1.6 per s; up to 2.0
+  per s in stroll-follow seed 21. Gait label toggles 0.1 to 1.2 per s.
+- Frame time, fetch-roundtrip alone at 420 by 280 (`compare-cpg-frames-
+  before.json`, `-after.json`): p50/p95/max 100/382/384 ms before, 100/
+  267/367 ms after. Headless SwiftShader with the eye readback awaited;
+  no claim about a GPU.
+
 ## Metrics, 2026-11-22, app build after the five fixes
 
 `reports/compare-cpg.json` and `compare-cpg-issues.json`, computed in
