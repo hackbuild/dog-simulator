@@ -12,8 +12,13 @@ Lockstep scenarios on a built file. `list.mjs` holds the scenarios,
   builds matched them; from the avoidance fix on (handoff issue 3) the app
   changes behaviour and legacy/det stays as the handoff behaved, so only
   the app build is held to them.
-- `golden/neural/`: the scenarios for handoff issues 1 and 3 with the legacy
-  network host on. Legacy builds only.
+- `golden/neural/`: the scenarios for handoff issues 1 and 3 with the
+  neural gait on, app build: `@hackbuild/motion-net` (MIT) runs the
+  network and its gait host, `app/src/dog/neural.js` retargets it. Needs
+  `assets-local/quadruped.bin` (CC-BY-NC-4.0), served by the runner in
+  place of the pinned upstream URL. `--nnacc f32|f64` picks the sums.
+- `golden/neural-legacy/`: the same runs with the legacy network host
+  (CC-BY-NC-4.0), legacy/det builds only (`--variant neural-legacy`).
 - `reports/`: the results of each record and compare run, expectations
   included. A failing expectation on an issue scenario is the issue
   reproduced.
@@ -57,6 +62,39 @@ Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 4 decimals, plus an FNV hash over full precision state at every step.
 
 ## Trace changes
+
+### 2026-11-23, the neural gait moves to motion-net
+
+Kernel parity in place: legacy/det built with its network kernels
+replaced by motion-net's CPU model (`node tools/build-html.mjs legacy
+--mods legacy/det/src --infer motion-net-f64`), host unchanged, replays
+12 of 12 `golden/neural-legacy` traces identical (measured), 11 of 12
+expectations as before (corridor-pass seed 3 stalls the human). Wall time
+for fetch-walkoff 192 s against 517 s with the legacy kernels (measured,
+loaded machine, same job count).
+
+The app build now runs the network: motion-net's `CodebookGait` host and
+an MIT retarget written for this app. The host carries four fixes over
+the legacy host (speed controller integrates its error, a playhead per
+sequence so a timescale change never jumps, the request stamped after the
+pose update, the standing root hold only without predicted travel), plus
+`follow()` now moves the sequences in play (hackbuild-motion 98e32a3:
+before it, a root pushed out of the human read 20 to 27 m/s of speed and
+snapped back each step). The bind pose is computed from the network
+(Idle guidance fed back six times), not read from the legacy bind.json.
+So every neural trace differs from `golden/neural-legacy` from the first
+row; `golden/neural` is recorded fresh on the app build with f64 sums.
+`golden/neural-legacy` also predates the app's avoidance, stroll and
+bench fixes, so the two sets differ in behaviour as well as in the gait.
+
+Expectations, 12 neural issue runs: legacy host 11 of 12, app 12 of 12.
+corridor-pass seed 3 no longer stalls the human: 4 s of stall (computed
+from the trace, walk tasks) to 0 s. Human stall elsewhere moved within
+0 to 1.5 s (fetch-walkoff seed 21 2 to 1 s, corridor-pass seed 2 0 to
+1.5 s, parked-in-path seed 4 0 to 0.75 s).
+
+The 29 cpg goldens replay identical on the new app build (the network is
+never loaded with `L.neural` off); 28 of 29 pass, as before.
 
 ### 2026-11-23, stroll follow, phone nudge, bench sit
 

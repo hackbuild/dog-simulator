@@ -17,6 +17,32 @@ The builds read the dog model from `assets-local/` (outside git, listed in
 when `assets-local/` holds them; otherwise the app builds a placeholder
 human. Licences of every asset and dependency: LICENCES.md.
 
+## Libraries from the sibling repos
+
+The hackbuild libraries are not on npm. Their built packages are copied into
+`vendor/<name>/` from a clone of the sibling repo at a pushed commit, and
+`vendor/lock.json` records the repo, the commit and the sha256 of every
+copied file. The root `package.json` lists `vendor/*` as workspaces, so
+`import ... from '@hackbuild/motion-net'` resolves without a registry, and
+esbuild bundles them into the single file with their wasm inlined as base64.
+
+    # in ../hackbuild-motion: build at a pushed, clean commit
+    npm run build -w @hackbuild/gait -w @hackbuild/motion-net
+    # here
+    node tools/vendor-libs.mjs                     # refresh every package in vendor/lock.json
+    node tools/vendor-libs.mjs --add hackbuild-agents tunables
+    node tools/vendor-libs.mjs --check             # CI runs this
+
+## Neural gait
+
+The dog can walk on the quadruped codebook network (AI4AnimationPy by Paul
+Starke and Sebastian Starke, Meta; web export by sweriko). Weights and
+manifest are CC-BY-NC-4.0, non commercial use only, and are fetched at
+runtime from the pinned upstream commit; the page states the licence when
+they load. The code that runs them is MIT: `@hackbuild/motion-net` (kernels
+and the gait host) and `app/src/dog/neural.js` (bind pose computed from the
+network, retarget onto this dog). The layer `L.neural` turns it off.
+
 ## Checks in Chrome
 
     npm run check:boot -- dist/dog-simulator.html --offline
@@ -60,12 +86,24 @@ in RULES.md and CONTRIBUTING.md.
   per scenario; see scenarios/README.md.
 - UI copy is lowercase; the page was looked at as a still.
 
+### Verified, 2026-11-23, neural gait on motion-net
+
+- legacy/det with motion-net's f64 kernels in place of its own replays
+  the 12 legacy neural goldens identical (measured).
+- The app build runs the network in lockstep (motion-net host, app
+  retarget) and meets 12 of 12 neural issue expectations; it holds the 29
+  cpg goldens with the network off.
+
 ### Not verified
 
 - Motion quality: judged by metrics and stills only. Nobody has watched
   the fixes in a browser at real frame rate.
 - simSpeed 4 against simSpeed 1 step for step: not run.
-- The neural gait in the app build: absent until the MIT host lands.
+- The neural gait in the app build at real frame rate: nobody has watched
+  it. In a headless real time boot (2026-11-23, loaded machine) it loaded
+  and handed the body back to the pattern generator, since frames ran
+  slower than 1/15 s (the host's health rule). The WebGPU and worker
+  paths of motion-net have not run in this app.
 - Size: dist/dog-simulator.html is 14,624,739 bytes with the owner pack
   (2026-11-23) and was 14,620,125 bytes with the owner pack
   and 13,141,035 bytes without (measured), over the 9.3 MB budget. Rapier

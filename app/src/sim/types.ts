@@ -46,11 +46,13 @@ export interface HackleHandle {
 export interface TestParams {
   seed: number;
   off: string[];
+  /** &nnacc=f32 or f64: the network's accumulation in place of the build default */
+  nnacc: "f32" | "f64" | null;
 }
 
 /** Parse the test hash the same way sim/prelude.js does. */
 export function parseTestHash(hash: string): TestParams | null {
   const h = new URLSearchParams(hash.replace(/^#/, ""));
   if (!h.has("test")) return null;
-  return { seed: (Number(h.get("seed")) || 1) >>> 0, off: (h.get("off") ?? "").split(",").filter(Boolean) };
+  return { seed: (Number(h.get("seed")) || 1) >>> 0, off: (h.get("off") ?? "").split(",").filter(Boolean), nnacc: h.get("nnacc") === "f32" || h.get("nnacc") === "f64" ? (h.get("nnacc") as "f32" | "f64") : null };
 }

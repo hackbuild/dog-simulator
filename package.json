@@ -5,17 +5,18 @@
   "license": "MIT",
   "author": "Moheeb Zara <hackbuildvideo@gmail.com>",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "vendor/*"
   ],
   "engines": {
     "node": "^22.18.0 || >=24.11.0"
   },
   "scripts": {
     "prepare": "git config core.hooksPath .githooks || true",
-    "build": "if ls packages/*/package.json >/dev/null 2>&1; then npm run build --workspaces --if-present; else echo 'build: no workspace packages yet'; fi",
+    "build": "if ls packages/*/package.json >/dev/null 2>&1; then npm run build -w ./packages/* --if-present; else echo \"build: no app packages yet\"; fi",
     "test": "vitest run --passWithNoTests && node --test tools/test/*.test.mjs",
     "typecheck": "tsc -b",
-    "lint:voice": "git ls-files | grep -Ev '\\.(png|jpe?g|glb|bin|wasm|wav)$|^(LICENSES/|RULES.md|CLAUDE.md|tools/|legacy/)|package-lock.json|Cargo.lock' | xargs node tools/lint-voice.mjs",
+    "lint:voice": "git ls-files | grep -Ev '\\.(png|jpe?g|glb|bin|wasm|wav)$|^(vendor/|LICENSES/|RULES.md|CLAUDE.md|tools/|legacy/)|package-lock.json|Cargo.lock' | xargs node tools/lint-voice.mjs",
     "build:legacy": "node tools/build-html.mjs legacy",
     "lock": "node tools/lock-assets.mjs",
     "lock:check": "node tools/lock-assets.mjs --check",
@@ -23,7 +24,8 @@
     "build:app": "node tools/build-html.mjs app",
     "check:boot": "node tools/runner/boot.mjs",
     "check:determinism": "node tools/runner/determinism.mjs dist/hackle-det.html --seconds 600",
-    "scenarios": "node scenarios/run.mjs"
+    "scenarios": "node scenarios/run.mjs",
+    "vendor:check": "node tools/vendor-libs.mjs --check"
   },
   "devDependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",
@@ -38,5 +40,9 @@
     "three": "0.187.0",
     "typescript": "7.0.2",
     "vitest": "5.0.3"
+  },
+  "dependencies": {
+    "@hackbuild/gait": "0.1.0",
+    "@hackbuild/motion-net": "0.1.0"
   }
 }

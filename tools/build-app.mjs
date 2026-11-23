@@ -37,6 +37,8 @@ export function scopeSource() {
     "import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';",
     "import { OrbitControls } from 'three/addons/controls/OrbitControls.js';",
     "import * as RAPIER_MODULE from '@dimforge/rapier3d-compat';",
+    "import * as HMN from '@hackbuild/motion-net';",
+    "import * as HGAIT from '@hackbuild/gait';",
     "{",
     ...parts,
     "}",

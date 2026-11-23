@@ -6,7 +6,7 @@
   "io/audio.js",
   "dog/setup.js",
   "dog/body.js",
-  "dog/neural-absent.js",
+  "dog/neural.js",
   "dog/head.js",
   "dog/sight.js",
   "dog/senses.js",

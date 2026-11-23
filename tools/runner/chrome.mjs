@@ -80,12 +80,18 @@ export function route(url) {
  * (the self contained build check).
  */
 export async function open(opts) {
-  const browser = await puppeteer.launch({
+  // a loaded machine can take longer than the 30 s default to start Chrome; try three times
+  const launch = () => puppeteer.launch({
     executablePath: CHROME,
     headless: opts.headless ?? true,
+    timeout: 90000,
     args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-unsafe-webgpu", "--autoplay-policy=no-user-gesture-required", "--mute-audio"],
     defaultViewport: { width: opts.width ?? 1360, height: opts.height ?? 860 },
   });
+  let browser;
+  for (let k = 1; ; k++) {
+    try { browser = await launch(); break; } catch (e) { if (k >= 3) throw e; await new Promise((r) => setTimeout(r, 5000 * k)); }
+  }
   const page = await browser.newPage();
   const log = { errors: [], warnings: [], blocked: [], served: [], version: await browser.version() };
   page.on("pageerror", (e) => log.errors.push(`pageerror: ${String(e.message ?? e).slice(0, 400)}`));

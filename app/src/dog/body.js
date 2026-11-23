@@ -50,7 +50,7 @@ function steer(dt) {
     wCmd = clamp(err * 3.2, -3.2, 3.2); vCmd = Math.abs(err) > 1.4 ? 0.3 : 1.1 * clamp(Math.cos(err) * 1.2, 0, 1);
   } else if (motor.mode === 'goto') {
     const to = tmpV[0].copy(motor.target).sub(dog.pos); to.y = 0;
-    const dist = to.length(), stopD = NG.active ? Math.max(motor.stopDist, 0.5) : motor.stopDist; // the network cannot stop on a coin
+    const dist = to.length(), stopD = NG.active ? Math.max(motor.stopDist, NG.gait.capabilities.minStopDistance) : motor.stopDist; // the network cannot stop on a coin
     if (dist < stopD) { motor.done = true; vCmd = 0; if (motor.face) { const fa = Math.atan2(motor.face.x - dog.pos.x, motor.face.z - dog.pos.z); wCmd = clamp(wrapA(fa - dog.yaw) * 4, -2.5, 2.5); if (Math.abs(wrapA(fa - dog.yaw)) < 0.12) wCmd = 0; } }
     else {
       motor.done = false;
@@ -182,30 +182,25 @@ function blendOffsets() {
   return out;
 }
 // neural or procedural body this frame: the switch is inertialized, so neither side pops
-function nnWanted() { return ON('L.neural') && NG.ready && dog.ready && dog.org && !(dog.postureT.bow > 0.5 || dog.posture.bow > 0.15 || dog.pawLift > 0.02 || (brain && brain.cur === 'shake')); }
+function nnWanted() { return ON('L.neural') && NG.ready && dog.ready && dog.org && now >= NG.holdUntil && !(dog.postureT.bow > 0.5 || dog.posture.bow > 0.15 || dog.pawLift > 0.02 || (brain && brain.cur === 'shake')); }
 function locomotion(dt) {
-  const want = nnWanted();
+  const want = nnWanted() && (!NG.active || NG.healthy());
   if (want && !NG.active) {
     if (!NR.ok) nnRig();
-    NG.reset([dog.pos.x / NR.s, 0, dog.pos.z / NR.s], [Math.sin(dog.yaw), 0, Math.cos(dog.yaw)]);
-    NG.active = true; dog.org.inert.capture(); dog.org.src = 'nn'; NR.legs.forEach(g => { g.lock = null; g.relOff = null; });
+    NG.enter(Math.max(dog.v, 0) / TV('B.nnSpeed'));
+    NG.active = true; dog.org.inert.capture(); dog.org.src = 'nn'; nnSeedFeet();
   } else if (!want && NG.active) {
     NG.active = false; dog.org.inert.capture(); dog.org.src = 'cpg'; dog.standing = true; dog.legs.forEach(l => { l.stance = true; l.step = null; });
   }
   if (!NG.active) { integrate(dt); gaitUpdate(dt); return; }
-  // goal for the network: heading and speed from the same motor, turned into a trajectory it can follow
+  // goal for the network: the speed and a facing a little ahead of the turn, from the same motor
   let v = Math.max(dog.v, 0), h = dog.yaw + clamp(dog.w * 0.45, -1.3, 1.3);
-  if (motor.mode === 'turn' && Math.abs(dog.w) > 0.2) { v = Math.max(v, 0.55); h = dog.yaw + Math.sign(dog.w) * 1.1; }
-  else if (v < 0.2 && Math.abs(dog.w) > 0.35) { v = 0.4; h = dog.yaw + clamp(dog.w * 0.6, -1.1, 1.1); }
-  const P = dog.postureT, act = P.down > 0.5 ? 'lie' : P.sit > 0.5 ? 'sit' : (brain && brain.cmd && brain.cmd.action === 'stay') ? 'stand' : null;
-  const k = 1 / (NR.s * TV('B.nnSpeed'));
-  NG.setGoal([Math.sin(h) * v * k, 0, Math.cos(h) * v * k], [Math.sin(h), 0, Math.cos(h)], act);
-  if (NG.tick(dt)) {
-    const p = NM.pos(NG.A.root), f = NM.ax(NG.A.root, 2);
-    const nx = p[0] * NR.s, nz = p[2] * NR.s, q = V3(nx, 0, nz); pushOut(q, 0.24);
-    if (q.x !== nx || q.z !== nz) { const dx = (q.x - nx) / NR.s, dz = (q.z - nz) / NR.s; NG.A.root[12] += dx; NG.A.root[14] += dz; for (const m of NG.A.T) { m[12] += dx; m[14] += dz; } NG.A.raw.forEach(r => { r[0] += dx; r[2] += dz; }); }
-    dog.pos.x = q.x; dog.pos.z = q.z; dog.yaw = Math.atan2(f[0], f[2]);
-  }
+  if (motor.mode === 'turn' && Math.abs(dog.w) > 0.2) h = dog.yaw + Math.sign(dog.w) * 1.1;
+  const P = dog.postureT;
+  const r = NG.update(dt, v / TV('B.nnSpeed') / NR.s, h, { sit: P.sit, down: P.down });
+  const nx = r.x * NR.s, nz = r.z * NR.s, q = V3(nx, 0, nz); pushOut(q, 0.24);
+  if (q.x !== nx || q.z !== nz) NG.follow(q.x, q.z, r.yaw);
+  dog.pos.x = q.x; dog.pos.z = q.z; dog.yaw = r.yaw;
   dog.standing = NG.speed < 0.1; dog.freq = 0;
   const g = NG.guidance; dog.gaitW = [g === 'Walk' ? 1 : 0, g === 'Pace' ? 1 : 0, g === 'Trot' ? 1 : 0, g === 'Canter' ? 1 : 0, 0];
   logFeet(dt);
@@ -244,7 +239,7 @@ function wagPick() {
     Math.max(neg - 0.3, 0) * a * 4 + (c === 'appease' ? 2.5 : 0), (c === 'explore' || c === 'sniff' || c === 'investigate' ? 1 : 0.1)];
   let tot = w.reduce((x, y) => x + y, 0), r = RNG() * tot; for (let i = 0; i < w.length; i++) { if ((r -= w[i]) <= 0) return i; } return 1;
 }
-const tiltQ = new THREE.Quaternion(), terrQ = new THREE.Quaternion();
+const tiltQ = new THREE.Quaternion();
 let skel = null; const ikMarks = [];
 function orgSetup() {
   const S = ORG.S;
@@ -287,13 +282,18 @@ function poseDog(dt, t) {
   let pitch = 0, drop = 0, dz = 0, bob = 0;
   const rb = dog.bones['root'];
   if (nn) {
-    dog.root.position.set(dog.pos.x, ikOn ? (fl + fr + rl + rr) / 4 : H(dog.pos.x, dog.pos.z), dog.pos.z);
+    // the network gives body height, pitch and roll; terrain, breath and the turn bend come from here
+    nnApply(dt); legClock(NG.time);
+    dog.root.position.set(dog.pos.x, ikOn ? rear : H(dog.pos.x, dog.pos.z), dog.pos.z);
     dog.root.rotation.set(0, dog.yaw, 0);
-    dog.root.updateMatrixWorld(true);
-    terrQ.setFromEuler(dqE.set(tPitch * 0.8, 0, tRoll, 'YXZ')); // terrain tilt in the root frame
-    nnApply(dt, terrQ); legClock(NG.time ?? now);
-    dog.bones['spine_03'].quaternion.premultiply(dq(breathe * 2, 0, 0));
-    pitch = 0; dog.bodyPitch = 0;
+    pitch = tPitch + NR.pitch; drop = NR.drop - breathe;
+    dog.bodyPitch = 0;
+    rb.position.add(tmpV[4].set(0, -drop, 0).applyQuaternion(QC).divideScalar(dog.S));
+    rb.quaternion.premultiply(dq(pitch, 0, tRoll + NR.roll));
+    const bend = clamp(dog.w * 0.09, -0.22, 0.22);
+    dog.bones['spine2'].quaternion.premultiply(dq(0, bend * 0.6, 0));
+    dog.bones['spine_03'].quaternion.premultiply(dq(breathe * 2, bend, 0));
+    dog.bones['chest'].quaternion.premultiply(dq(0, bend * 0.6, 0));
   } else {
     dog.root.position.set(dog.pos.x, ikOn ? rear : H(dog.pos.x, dog.pos.z), dog.pos.z);
     dog.root.rotation.set(0, dog.yaw, 0);

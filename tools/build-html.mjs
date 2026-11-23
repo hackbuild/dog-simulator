@@ -5,6 +5,9 @@
 //     the pack's hackle.html byte for byte (tools/test/build-parity.test.mjs).
 //   node tools/build-html.mjs legacy --mods legacy/det/src --out dist/hackle-det.html
 //     the same build over the deterministic sources (seeded rng, fixed step, lockstep hook).
+//   ... legacy --mods legacy/det/src --infer motion-net-f64|motion-net-f32 --out FILE
+//     the legacy host with its network kernels replaced by @hackbuild/motion-net (MIT), for
+//     the in place parity check; see inferShim below.
 //   node tools/build-html.mjs app [--out FILE]
 //     the TypeScript app (app/src) bundled with esbuild; see buildApp below.
 //
@@ -101,7 +104,7 @@ export function buildLegacy(opts = {}) {
   const core = readText(S("src/avatar_core.js"));
   const ci = core.indexOf("const PREFIX"), cj = core.indexOf("const VRM_NAMES");
   const human = replaceAll(readText(S("src/human.js")), "/*@@CLASSIFY@@*/", core.slice(ci, cj));
-  const infer = replaceAll(readText(S("src/nn_infer.js")), "if (typeof module !== 'undefined') module.exports = { nnInferHost };", "");
+  const infer = opts.inferShim ?? replaceAll(readText(S("src/nn_infer.js")), "if (typeof module !== 'undefined') module.exports = { nnInferHost };", "");
   const gait = replaceAll(readText(S("src/nn_gait.js")), "/*@@NNBIND@@*/[]", pyJsonCompact(readText(S("nn/bind.json"))));
   const parts = {
     "/*@@ORGANIC@@*/": readText(S("src/organic.js")), "/*@@BODY@@*/": readText(S("src/body.js")), "/*@@NNINFER@@*/": infer,
@@ -123,6 +126,26 @@ export function buildLegacy(opts = {}) {
   return { html: s, likeness: { human: humanGlb !== "", voice: voice !== "" } };
 }
 
+// nnInferHost with the legacy message protocol ({ t: 'load', meta, bin }, { t: 'run', id, x })
+// answered by motion-net's CPU model. Lockstep only: the host source is rebuilt with new Function,
+// so it reads motion-net from globalThis.__HMN, which the bundle sets.
+export async function inferShim(accum) {
+  const { build } = await import("esbuild");
+  const r = await build({
+    stdin: { contents: "export { load, createCpuModel, codebookManifest } from '@hackbuild/motion-net';", resolveDir: ROOT, loader: "js" },
+    bundle: true, format: "iife", globalName: "__HMN_BUNDLE", platform: "browser", target: "es2023", minify: true, write: false, logLevel: "warning", logOverride: { "empty-import-meta": "silent" },
+  });
+  const js = r.outputFiles[0].text.split("</script").join("<\\/script");
+  return `${js}\nglobalThis.__HMN = __HMN_BUNDLE;\n` +
+    "function nnInferHost(post) {\n" +
+    "  let model = null;\n" +
+    "  return msg => {\n" +
+    "    if (msg.t === 'load') globalThis.__HMN.load().then(() => { model = globalThis.__HMN.createCpuModel(globalThis.__HMN.codebookManifest(msg.meta), msg.bin, '" + accum + "'); post({ t: 'ready' }); }, e => post({ t: 'error', msg: String(e.message || e) }));\n" +
+    "    else if (msg.t === 'run') { const t0 = performance.now(); const o = model.run(msg.x); post({ t: 'out', id: msg.id, out: o, ms: performance.now() - t0 }); }\n" +
+    "  };\n" +
+    "}\n";
+}
+
 function args(argv) {
   const o = { _: [] };
   for (let i = 0; i < argv.length; i++) {
@@ -137,7 +160,9 @@ async function main(argv) {
   const mode = o._[0] ?? "app";
   let html, out;
   if (mode === "legacy") {
-    const r = buildLegacy({ src: o.src, mods: o.mods, assets: o.assets });
+    const shim = o.infer ? await inferShim(o.infer.replace(/^motion-net-/, "")) : undefined;
+    if (o.infer && !/^motion-net-f(32|64)$/.test(o.infer)) throw new Error(`unknown --infer ${o.infer}`);
+    const r = buildLegacy({ src: o.src, mods: o.mods, assets: o.assets, inferShim: shim });
     html = r.html;
     out = resolve(o.out ?? join(ROOT, "dist/hackle-legacy.html"));
     if (!r.likeness.human) console.log("build-html: no assets-local/moheeb.glb, the human slot is empty and the page uses its placeholder");

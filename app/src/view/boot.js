@@ -1,6 +1,5 @@
 // ---------- boot ----------
-// the network host is not in this build, so its layer starts off
-tuneLoad(); TUNE.v['L.neural'] = 0; CLOCK.h = TV('W.hour');
+tuneLoad(); CLOCK.h = TV('W.hour');
 tuneUI.build($('pTune'));
 if (!store.get('tune', null)) seedPersonality(store.get('name', 'Pixel'));
 TUNE.onChange = k => { if (k === 'L.neural' && TV(k) && !NG.ready) nnLoadUI(); if (k === 'W.hour') CLOCK.h = TV('W.hour'); };

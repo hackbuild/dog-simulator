@@ -15,6 +15,8 @@ not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 | `legacy/pack/work/hanims_min.json` | clip data baked from the Universal Animation Library (CC0-1.0) onto the owner rig; embedded in the app build |
 | `legacy/det/src/` | as the `legacy/pack/src/` file each one copies; `nn_gait.js` and `nn_infer.js` stay CC-BY-NC-4.0 |
 | `app/src/human/placeholder.js` | MIT; capsule humanoid on the auto rig bone layout, no likeness data |
+| `app/src/dog/neural.js` | MIT; the app side of the neural gait over @hackbuild/motion-net. Holds no network data: the bind pose is computed from the network at load, `legacy/pack/nn/bind.json` is not read |
+| `vendor/gait`, `vendor/motion-net` | MIT; built packages of hackbuild/hackbuild-motion at the commit in `vendor/lock.json`, written from published descriptions of the architectures |
 
 The app build embeds dog.glb, whose licence is unknown; dist/ is outside git
 and no build is published until that is settled.
@@ -26,7 +28,7 @@ and no build is published until that is settled.
 | dog.glb | Meshy model reduced by `legacy/pack/tools/opt.mjs` | unknown (Meshy output terms not checked) |
 | moheeb.glb | the owner's likeness | not for redistribution; rig origin unknown. Never committed or uploaded. |
 | voice.wav | the owner's voice reference | not for redistribution. Never committed or uploaded. |
-| quadruped.bin | sweriko/ai4anim-webgpu at b539455f, public/quadruped.bin | CC-BY-NC-4.0 (vendor) |
+| quadruped.bin | sweriko/ai4anim-webgpu at b539455f, public/quadruped.bin | CC-BY-NC-4.0 (vendor). The app fetches it and quadruped.json from that commit at runtime, checks the sha256 and states the licence on load; never bundled |
 | yolov8n.onnx | Hyuto/yolov8-onnxruntime-web at fc4a52c4, public/model/yolov8n.onnx | AGPL-3.0 (vendor, Ultralytics YOLOv8) |
 | nms-yolov8.onnx | the pack; likely the same Hyuto repository (inferred) | unknown |
 | AnimationLibrary_Godot_Standard.gltf and .bin | Quaternius Universal Animation Library | CC0-1.0 (`legacy/pack/ferrule/UAL_LICENSE.txt`) |
@@ -37,6 +39,7 @@ and no build is published until that is settled.
 | name | version | where it comes from | licence |
 |---|---|---|---|
 | three | 0.187.0 | legacy: jsDelivr; app: bundled | MIT |
+| @hackbuild/gait, @hackbuild/motion-net | 0.1.0 | app: bundled from `vendor/` | MIT |
 | @dimforge/rapier3d-compat | 0.21.0 | legacy: jsDelivr; app: bundled | Apache-2.0 |
 | onnxruntime-web | 1.23.2 | jsDelivr, on demand for the detector | MIT |
 | @mediapipe/tasks-vision | 1.2.3 | jsDelivr, on demand for webcam gestures | Apache-2.0 (vendor, not rechecked) |

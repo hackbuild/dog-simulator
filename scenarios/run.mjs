@@ -4,7 +4,8 @@
 //   --seeds a,b and --tag t: more seeds per scenario, a separate report name
 //   --no-metrics skips the motion metrics (tools/runner/metrics.mjs); --size 420x280 sets the viewport
 // variant cpg turns L.neural off (the golden set every build must hold);
-// variant neural runs the legacy network host, legacy builds only.
+// variant neural runs the app build with the motion-net gait host (--nnacc f32|f64 picks the sums);
+// variant neural-legacy runs the legacy network host, legacy/det builds only.
 // Goldens: scenarios/golden/<variant>/<name>.json. Screenshots go to
 // scenarios/shots/<variant>/, outside git: they show the human model.
 import { existsSync, readFileSync } from "node:fs";
@@ -19,7 +20,8 @@ const opt = (k, d) => (argv.includes(`--${k}`) ? argv[argv.indexOf(`--${k}`) + 1
 if (mode !== "record" && mode !== "compare") { console.error("usage: run.mjs record|compare [--file F] [--variant cpg|neural] [--only a,b] [--jobs n]"); process.exit(2); }
 const variant = opt("variant", "cpg");
 // the app build holds golden/cpg; the network host is in legacy/det only
-const file = opt("file", join(ROOT, variant === "neural" ? "dist/hackle-det.html" : "dist/dog-simulator.html"));
+const file = opt("file", join(ROOT, variant === "neural-legacy" ? "dist/hackle-det.html" : "dist/dog-simulator.html"));
+const nnacc = opt("nnacc", "");
 const only = opt("only", "") ? opt("only").split(",") : null;
 const jobs = +opt("jobs", 3);
 const [width, height] = opt("size", "") ? opt("size").split("x").map(Number) : [];
@@ -33,7 +35,7 @@ const say = (s) => console.log(`[${Math.round((Date.now() - t0) / 1000)}s] ${s}`
 async function one(sc) {
   const shots = (sc.shots ?? []).map((s) => ({ ...s, path: join(ROOT, "scenarios/shots", variant, s.path.replace(/\.png$/, (sc.name.match(/-s\d+$/)?.[0] ?? "") + ".png")) }));
   say(`${sc.name}: start, ${sc.seconds} sim s`);
-  const tr = await run({ file, seed: sc.seed, off, seconds: sc.seconds, actions: sc.actions, probes: sc.probes, shots: mode === "record" ? shots : [], metrics: !argv.includes("--no-metrics"), width, height, onProgress: (s, w) => say(`${sc.name}: sim ${s.toFixed(0)} s, wall ${w.toFixed(0)} s`) });
+  const tr = await run({ file, seed: sc.seed, off, nnacc, seconds: sc.seconds, actions: sc.actions, probes: sc.probes, shots: mode === "record" ? shots : [], metrics: !argv.includes("--no-metrics"), width, height, onProgress: (s, w) => say(`${sc.name}: sim ${s.toFixed(0)} s, wall ${w.toFixed(0)} s`) });
   const R = tr.rows.map(row);
   const expect = sc.expect.map((e) => { let ok; try { ok = !!e.check(R, tr.rows, tr.probes); } catch (err) { ok = false; } return { label: e.label, pass: ok }; });
   const res = { name: sc.name, seed: sc.seed, issue: sc.issue ?? null, hash: tr.hash, rows: tr.rows.length, wallSeconds: tr.wallSeconds, errors: tr.errors, blocked: tr.blocked, expect, fired: tr.fired ?? [], metrics: tr.metrics ?? null };
