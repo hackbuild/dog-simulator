@@ -16,7 +16,7 @@ export const STEPS_PER_SECOND = 60;
  * metrics: false skips the motion metrics; frames: rAF sampler frame count after the trace (0 skips)
  */
 export async function run(o) {
-  const hash = `#test&seed=${o.seed}` + (o.off?.length ? `&off=${o.off.join(",")}` : "") + (o.nnacc ? `&nnacc=${o.nnacc}` : "");
+  const hash = `#test&seed=${o.seed}` + (o.on?.length ? `&on=${o.on.join(",")}` : "") + (o.off?.length ? `&off=${o.off.join(",")}` : "") + (o.nnacc ? `&nnacc=${o.nnacc}` : "");
   const { browser, page, log } = await open({ url: o.file, hash, offline: o.offline, width: o.width, height: o.height });
   const t0 = Date.now();
   const out = { file: o.file, seed: o.seed, off: o.off ?? [], chrome: log.version, probes: [] };

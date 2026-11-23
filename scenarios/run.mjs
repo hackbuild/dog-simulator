@@ -29,13 +29,15 @@ const [width, height] = opt("size", "") ? opt("size").split("x").map(Number) : [
 const seeds = opt("seeds", "") ? opt("seeds").split(",").map(Number) : null;
 const list = SCENARIOS.filter((s) => !only || only.includes(s.name)).flatMap((s) => (seeds ? seeds.map((seed) => ({ ...s, seed, name: seed === s.seed ? s.name : `${s.name}-s${seed}` })) : [s]));
 const off = variant === "cpg" ? ["L.neural"] : [];
+// the neural layer starts off in the app build; the neural variant turns it on
+const on = variant === "neural" ? ["L.neural"] : [];
 const t0 = Date.now();
 const say = (s) => console.log(`[${Math.round((Date.now() - t0) / 1000)}s] ${s}`);
 
 async function one(sc) {
   const shots = (sc.shots ?? []).map((s) => ({ ...s, path: join(ROOT, "scenarios/shots", variant, s.path.replace(/\.png$/, (sc.name.match(/-s\d+$/)?.[0] ?? "") + ".png")) }));
   say(`${sc.name}: start, ${sc.seconds} sim s`);
-  const tr = await run({ file, seed: sc.seed, off, nnacc, seconds: sc.seconds, actions: sc.actions, probes: sc.probes, shots: mode === "record" ? shots : [], metrics: !argv.includes("--no-metrics"), width, height, onProgress: (s, w) => say(`${sc.name}: sim ${s.toFixed(0)} s, wall ${w.toFixed(0)} s`) });
+  const tr = await run({ file, seed: sc.seed, off, on, nnacc, seconds: sc.seconds, actions: sc.actions, probes: sc.probes, shots: mode === "record" ? shots : [], metrics: !argv.includes("--no-metrics"), width, height, onProgress: (s, w) => say(`${sc.name}: sim ${s.toFixed(0)} s, wall ${w.toFixed(0)} s`) });
   const R = tr.rows.map(row);
   const expect = sc.expect.map((e) => { let ok; try { ok = !!e.check(R, tr.rows, tr.probes); } catch (err) { ok = false; } return { label: e.label, pass: ok }; });
   const res = { name: sc.name, seed: sc.seed, issue: sc.issue ?? null, hash: tr.hash, rows: tr.rows.length, wallSeconds: tr.wallSeconds, errors: tr.errors, blocked: tr.blocked, expect, fired: tr.fired ?? [], metrics: tr.metrics ?? null };

@@ -29,6 +29,7 @@ $('showSal').onchange = e => { attention.show = e.target.checked; };
     if (TEST) {
       // lockstep: no detector (its timing is wall clock), the gait network loaded before step 0
       $('netOn').checked = false;
+      for (const k of TEST.on) TUNE.v[k] = 1;
       for (const k of TEST.off) TUNE.v[k] = 0;
       if (ON('L.neural')) await NG.load(st => { $('nnSt').textContent = st; });
       installSim();

@@ -17,6 +17,7 @@ Lockstep scenarios on a built file. `list.mjs` holds the scenarios,
   network and its gait host, `app/src/dog/neural.js` retargets it. Needs
   `assets-local/quadruped.bin` (CC-BY-NC-4.0), served by the runner in
   place of the pinned upstream URL. `--nnacc f32|f64` picks the sums.
+  The layer starts off in the app; the variant opens with `&on=L.neural`.
 - `golden/neural-legacy/`: the same runs with the legacy network host
   (CC-BY-NC-4.0), legacy/det builds only (`--variant neural-legacy`).
 - `reports/`: the results of each record and compare run, expectations

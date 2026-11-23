@@ -125,7 +125,8 @@ const ON = k => TREG.layer(k);
  ['L.noise', 'noise and heavy tailed latencies'], ['L.sample', 'sampled choice with commitment'], ['L.drives', 'homeostatic drive reward'], ['L.sleep', 'sleep cycles and body clock'],
  ['L.social', 'social signals: bow, appease, bond, pointing'], ['L.learn', 'attention learning, traces, offers'], ['L.salience', 'visual saliency and inhibition of return'],
  ['L.plume', 'sniffing in a turbulent plume'], ['L.hgaze', 'human gaze statistics'], ['L.hbody', 'human body layers'], ['L.neural', 'neural gait (AI4Animation mocap)'], ['L.day', 'day and night']]
-  .forEach(([k, l]) => tdef('layers', k, l, 1, 0, 1, 1));
+  // the neural gait fetches CC-BY-NC-4.0 weights, so it waits until you turn it on
+  .forEach(([k, l]) => tdef('layers', k, l, k === 'L.neural' ? 0 : 1, 0, 1, 1));
 // personality: seven temperament dimensions from Jones and Gosling 2005, as z scores, plus age
 [['P.reactivity', 'reactivity'], ['P.fearfulness', 'fearfulness'], ['P.aggression', 'bark and guard'], ['P.sociability', 'sociability'],
  ['P.trainability', 'trainability'], ['P.independence', 'independence'], ['P.activity', 'activity']].forEach(([k, l]) => tdef('personality', k, l, 0, -2, 2, 0.1));

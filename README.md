@@ -41,7 +41,8 @@ manifest are CC-BY-NC-4.0, non commercial use only, and are fetched at
 runtime from the pinned upstream commit; the page states the licence when
 they load. The code that runs them is MIT: `@hackbuild/motion-net` (kernels
 and the gait host) and `app/src/dog/neural.js` (bind pose computed from the
-network, retarget onto this dog). The layer `L.neural` turns it off.
+network, retarget onto this dog). The layer `L.neural` starts off and
+loads the network when you turn it on, so the file opens offline.
 
 ## Checks in Chrome
 
