@@ -1,11 +1,11 @@
-// Scenario runner core: the system Chrome through puppeteer-core, with every
-// network request routed to a pinned local file. A request with no local
+// Scenario runner core: the system Chrome through @hackbuild/scenario (puppeteer-core), with
+// every network request routed to a pinned local file. A request with no local
 // route is aborted and recorded; the run fails on any such request.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import puppeteer from "puppeteer-core";
+import { fixedBody, open as openPage } from "@hackbuild/scenario";
 
 export const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 export const CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
@@ -75,54 +75,31 @@ export function route(url) {
 }
 
 /**
- * Launch Chrome and open a page with routing on.
+ * Launch Chrome and open a page with routing on, through @hackbuild/scenario's open().
  * opts.url: file path or URL; opts.offline: abort every non file request
  * (the self contained build check).
  */
 export async function open(opts) {
+  const routes = [
+    fixedBody((u) => u.hostname === "fonts.googleapis.com" && u.pathname === "/css2", fontCss((pkg, file) => `https://fonts.gstatic.com/local/${pkg}/${file}`), "text/css"),
+    (u) => { const f = route(u.href); return f ? { file: f, contentType: typeOf(f) } : null; },
+  ];
   // a loaded machine can take longer than the 30 s default to start Chrome; try three times
-  const launch = () => puppeteer.launch({
-    executablePath: CHROME,
-    headless: opts.headless ?? true,
-    timeout: 90000,
-    args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-unsafe-webgpu", "--autoplay-policy=no-user-gesture-required", "--mute-audio"],
-    defaultViewport: { width: opts.width ?? 1360, height: opts.height ?? 860 },
-  });
-  let browser;
+  let o;
   for (let k = 1; ; k++) {
-    try { browser = await launch(); break; } catch (e) { if (k >= 3) throw e; await new Promise((r) => setTimeout(r, 5000 * k)); }
-  }
-  const page = await browser.newPage();
-  const log = { errors: [], warnings: [], blocked: [], served: [], version: await browser.version() };
-  page.on("pageerror", (e) => log.errors.push(`pageerror: ${String(e.message ?? e).slice(0, 400)}`));
-  page.on("console", (m) => {
-    const t = m.type(), text = m.text().slice(0, 400);
-    // onnxruntime-web prints its own warnings ("[W:onnxruntime") through console.error
-    if (t === "error" && /\[W:onnxruntime/.test(text)) log.warnings.push(text);
-    else if (t === "error") log.errors.push(`console: ${text}`);
-    else if (t === "warn" || t === "warning") log.warnings.push(text);
-  });
-  await page.setRequestInterception(true);
-  page.on("request", (req) => {
-    const url = req.url();
-    if (url.startsWith("file:") || url.startsWith("data:") || url.startsWith("blob:")) return req.continue();
-    if (opts.offline) { log.blocked.push(url); return req.abort("internetdisconnected"); }
-    const headers = { "access-control-allow-origin": "*", "cross-origin-resource-policy": "cross-origin" };
     try {
-      const u = new URL(url);
-      if (u.hostname === "fonts.googleapis.com" && u.pathname === "/css2") {
-        log.served.push(url);
-        return req.respond({ status: 200, headers, contentType: "text/css", body: fontCss((pkg, file) => `https://fonts.gstatic.com/local/${pkg}/${file}`) });
-      }
-      const f = route(url);
-      if (f) { log.served.push(url); return req.respond({ status: 200, headers, contentType: typeOf(f), body: readFileSync(f) }); }
-    } catch (e) { log.errors.push(`route: ${e.message}`); }
-    log.blocked.push(url);
-    return req.abort("blockedbyclient");
-  });
-  const target = /^[a-z]+:/.test(opts.url) ? opts.url : pathToFileURL(resolve(opts.url)).href;
-  await page.goto(target + (opts.hash ?? ""), { waitUntil: "load", timeout: 120000 });
-  return { browser, page, log };
+      o = await openPage({ url: opts.url, hash: opts.hash, offline: opts.offline, routes, chrome: CHROME, headless: opts.headless ?? true, width: opts.width ?? 1360, height: opts.height ?? 860, gpu: "swiftshader" });
+      break;
+    } catch (e) { if (k >= 3 || !/launch|WS endpoint|Timed out/i.test(String(e.message))) throw e; await new Promise((r) => setTimeout(r, 5000 * k)); }
+  }
+  const raw = o.log;
+  // onnxruntime-web prints its own warnings ("[W:onnxruntime") through console.error
+  const log = {
+    get errors() { return raw.errors.filter((e) => !/\[W:onnxruntime/.test(e)); },
+    get warnings() { return [...raw.warnings, ...raw.errors.filter((e) => /\[W:onnxruntime/.test(e))]; },
+    blocked: raw.blocked, served: raw.served, version: raw.version,
+  };
+  return { browser: o.browser, page: o.page, log };
 }
 
 export async function waitFor(page, fn, arg, timeoutMs, everyMs = 500) {

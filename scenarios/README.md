@@ -89,6 +89,14 @@ commit in `vendor/lock.json`).
   of the traced state. Drives, Chooser, CueLearner, Sleep and
   MemoryStream are not adopted: different algorithms and draw orders
   from the app brain.
+- scenario: `tools/runner/chrome.mjs` opens Chrome through
+  `@hackbuild/scenario`'s `open()` with the app's routes (the font sheet
+  as a fixed body, the pinned local files, the npm CDN map). The app
+  keeps its launch retry (three tries; a loaded machine took over 30 s to
+  start Chrome) and moves onnxruntime warnings out of the error list. The
+  lockstep loop, metrics and scenario list stay in the app: the
+  package's runner reports in its own shape, and the app's metrics run
+  in the page.
 
 ### 2026-11-23, one motor state, f64 sums kept
 

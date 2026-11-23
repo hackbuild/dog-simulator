@@ -39,7 +39,8 @@
     "puppeteer-core": "25.18.1",
     "three": "0.187.0",
     "typescript": "7.0.2",
-    "vitest": "5.0.3"
+    "vitest": "5.0.3",
+    "@hackbuild/scenario": "0.1.0"
   },
   "dependencies": {
     "@hackbuild/gait": "0.1.0",
