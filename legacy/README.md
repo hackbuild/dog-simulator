@@ -29,6 +29,12 @@ not run; its scripts carry paths for another machine.
   detector, the gait network loaded before step 0 and answered inside
   the same step, `window.__sim.step(n)` and `window.__sim.trace()`.
 
+- the five fixes the owner later made to the handoff build: diff only
+  settings, touchdown timed gait phase, per system profiler, head yaw
+  seam hysteresis, owned scratch vector, cortex interval 25 s. The
+  network host side of the phase fix (`legClock`) sits in `body.js`;
+  `nn_gait.js` is unchanged.
+
 `node tools/build-html.mjs legacy --mods legacy/det/src --out dist/hackle-det.html`
 builds it. `det/src/nn_gait.js` and `det/src/nn_infer.js` keep the
 CC-BY-NC-4.0 licence of the files they were copied from.

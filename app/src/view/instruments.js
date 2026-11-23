@@ -35,7 +35,7 @@ function drawInstruments() {
   $('kFocus').textContent = ON('L.salience') ? attention.label || '-' : 'off';
   $('kWind').textContent = ON('L.plume') ? TV('W.wind').toFixed(1) + ' m/s at ' + Math.round(((wind.a * 180 / Math.PI) % 360 + 360) % 360) + ' deg' : 'off'; $('kPuffs').textContent = puffs.length; $('kLR').textContent = sniff.cL.toFixed(3) + ' / ' + sniff.cR.toFixed(3);
   $('sniffSt').textContent = sniff.inBout > 0 ? 'sniffing ' + TV('Se.sniffHz').toFixed(1) + ' Hz' : brain.sn ? brain.sn.mode : '-';
-  $('kSpeed').textContent = dog.v.toFixed(2) + ' m/s'; $('kFreq').textContent = dog.standing ? '-' : dog.freq.toFixed(2) + ' Hz'; $('kDuty').textContent = dog.duty.toFixed(2); $('kTurn').textContent = dog.w.toFixed(2) + ' rad/s';
+  $('kSpeed').textContent = dog.v.toFixed(2) + ' m/s'; $('kFreq').textContent = dog.standing ? '-' : (NG.active ? dog.nnFreq || 0 : dog.freq).toFixed(2) + ' Hz'; $('kDuty').textContent = dog.duty.toFixed(2); $('kTurn').textContent = dog.w.toFixed(2) + ' rad/s';
   const P = dog.posture; const pm = Object.entries(P).sort((x, y) => y[1] - x[1])[0]; $('kPost').textContent = pm[1] > 0.3 ? pm[0] : 'stand';
   rows($('utilRows'), BEH.map(b => [b, Math.min(brain.util[b] || 0, 1), b === brain.cur]));
   rows($('driveRows'), Object.entries(brain.d).map(([k, v]) => [k, v, false, k === 'prey']).concat([['bond', brain.bond, false, true]]));

@@ -202,9 +202,23 @@ function locomotion(dt) {
     if (q.x !== nx || q.z !== nz) { const dx = (q.x - nx) / NR.s, dz = (q.z - nz) / NR.s; NG.A.root[12] += dx; NG.A.root[14] += dz; for (const m of NG.A.T) { m[12] += dx; m[14] += dz; } NG.A.raw.forEach(r => { r[0] += dx; r[2] += dz; }); }
     dog.pos.x = q.x; dog.pos.z = q.z; dog.yaw = Math.atan2(f[0], f[2]);
   }
-  dog.standing = NG.speed < 0.1; dog.freq = 0; dog.duty = 0;
+  dog.standing = NG.speed < 0.1; dog.freq = 0;
   const g = NG.guidance; dog.gaitW = [g === 'Walk' ? 1 : 0, g === 'Pace' ? 1 : 0, g === 'Trot' ? 1 : 0, g === 'Canter' ? 1 : 0, 0];
   logFeet(dt);
+}
+
+// phase for the gait ring when a learned model drives the legs: touchdown to touchdown is one cycle,
+// liftoff marks the duty factor; dog.duty and dog.nnFreq average the legs with a recent cycle
+function legClock(t) {
+  for (const l of dog.legs) {
+    if (l.stance && !l.nnSt) { if (l.tdT != null) { const P = t - l.tdT; if (P > 0.18 && P < 2.5) l.per = l.per ? l.per * 0.6 + P * 0.4 : P; } l.tdT = t; }
+    if (!l.stance && l.nnSt && l.tdT != null && l.per) l.duty = clamp((t - l.tdT) / l.per, 0.2, 0.95);
+    l.nnSt = l.stance;
+    if (l.tdT != null && l.per && t - l.tdT < l.per * 2.5) l.ph = frac((t - l.tdT) / l.per);
+  }
+  let s = 0, n = 0, f = 0, m = 0;
+  for (const l of dog.legs) { if (l.duty) { s += l.duty; n++; } if (l.per && t - l.tdT < l.per * 2.5) { f += 1 / l.per; m++; } }
+  dog.duty = n ? s / n : 0; dog.nnFreq = m ? f / m : 0;
 }
 
 // posture parameter sets for the procedural body
@@ -273,7 +287,7 @@ function poseDog(dt, t) {
     dog.root.rotation.set(0, dog.yaw, 0);
     dog.root.updateMatrixWorld(true);
     terrQ.setFromEuler(dqE.set(tPitch * 0.8, 0, tRoll, 'YXZ')); // terrain tilt in the root frame
-    nnApply(dt, terrQ);
+    nnApply(dt, terrQ); legClock(NG.time ?? now);
     dog.bones['spine_03'].quaternion.premultiply(dq(breathe * 2, 0, 0));
     pitch = 0; dog.bodyPitch = 0;
   } else {

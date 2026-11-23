@@ -13,3 +13,6 @@ Versions follow semver per package. Nothing is published to npm yet.
 - scenarios: eleven lockstep scenarios with golden traces.
 - app: TypeScript entry, esbuild bundle with three.js and Rapier, local
   fonts, placeholder human, scope modules carried over with traces held.
+- app, legacy/det: the owner's five fixes to the handoff build (settings
+  diffs, network gait phase, profiler, head yaw seam, scratch vector,
+  cortex interval); goldens re-recorded.

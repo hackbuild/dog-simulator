@@ -25,6 +25,43 @@ the goldens do not apply.
 Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 4 decimals, plus an FNV hash over full precision state at every step.
 
+## Trace changes
+
+### 2026-11-22, the owner's five fixes (hackle-plan lesson set)
+
+Ported to `app/src` and `legacy/det/src` together; both builds give the
+same hash on all 20 cpg runs (measured). Goldens re-recorded on
+legacy/det.
+
+- settings saved as `{ ver: 2, d }` with the defaults left out, older
+  saves keep only the personality: trace neutral (lockstep reads no
+  saved settings).
+- touchdown timed phase, duty and stride frequency for the network gait,
+  and the frequency chip reading the active source: trace neutral (cpg
+  runs never call it; the trace does not hold instrument values).
+- per system profiler `pm(label)` into `window.__prof`, shown on hover
+  of the fps chip: trace neutral (wall clock only).
+- owned scratch vector in place of `nk.clone()` in `lookAt`: trace
+  neutral (`nk` already was `tmpV[6]`).
+- cortex minimum interval 12 to 25 s: trace neutral (no cortex in
+  lockstep).
+- atan2 seam hysteresis on the head yaw: changes every trace. For a
+  target behind the dog the head keeps the side it turned to instead of
+  whipping across, which moves the eye camera (what the dog sees and
+  attends to), the mouth and the carried ball, so behaviour choices
+  shift within the first second. A build with only this fix reverted
+  gave identical traces to the old goldens on fetch-roundtrip,
+  crouch-greeting and repeat-cue (measured).
+
+Expectation outcomes that moved with the new traces (cpg): bench-sit
+fail to pass (the dog stays idle and plays instead of fetching until
+22 s, so the human is still seated facing out past 15 s; at 26 s the
+ball still stands him up), scent-trail pass to fail (the old run
+reached the decide phase at 57 of 60 s; the new run spends the minute
+on chase, fetch and greet), fetch-walkoff seed 3 now also misses the 20 s
+delivery bound. With the legacy network host (golden/neural), corridor-pass
+seed 3 now stalls the human (1 of 12 neural runs; 0 of 12 before).
+
 ## Findings, 2026-11-22, legacy/det build
 
 Measured in lockstep (sim seconds, not real frame rate). Motion quality

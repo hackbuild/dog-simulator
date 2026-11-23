@@ -6,6 +6,9 @@ const bubble = $('bubble');
 // fixed step: real time times simSpeed fills an accumulator, the sim runs whole 1/60 s steps,
 // at most 3 per frame per unit of simSpeed (the old 1/20 s cap), then one render
 let eyeWait = null;
+// cheap per system frame profiler: window.__prof holds total and worst ms per label
+const PROF = window.__prof = {}; let pT = 0;
+function pm(label) { const t = performance.now(), d = t - pT; pT = t; const e = PROF[label] || (PROF[label] = { tot: 0, max: 0, n: 0 }); e.tot += d; e.n++; if (d > e.max) e.max = d; }
 function frame() {
   const tnow = performance.now(); const dt = Math.min((tnow - last) / 1000, 1 / 20) * (window.__simSpeed || 1); last = tnow;
   acc += dt; let n = 0; const cap = 3 * Math.max(1, Math.round(window.__simSpeed || 1));
@@ -17,14 +20,14 @@ function simStep(dt) {
   now += dt; SIMQ.run(now);
   if (dog.ready && world) {
     const tempo = +$('tempo').value;
-    clockTick(dt, tempo); lightTick(); for (const t of TRAITS) PDRIFT[t].step(dt * tempo / 60);
-    humTick(dt, now);
-    sense(now); loomCheck(dt); plumeTick(dt); puffDraw();
+    pT = performance.now(); clockTick(dt, tempo); lightTick(); for (const t of TRAITS) PDRIFT[t].step(dt * tempo / 60); pm('clock');
+    humTick(dt, now); pm('human');
+    sense(now); pm('sense'); loomCheck(dt); plumeTick(dt); puffDraw(); pm('plume');
     sniffTick(dt, brain.cur === 'sniff' || brain.cur === 'investigate' || (brain.cur === 'explore' && Math.sin(now * 0.7) > 0.3));
-    brain.tick(dt);
+    brain.tick(dt); pm('brain');
     if (brain.pointT && now - brain.pointT < 2.5 && brain.cur !== 'sleep') lookAt(marker.position);
-    steer(dt); locomotion(dt);
-    poseDog(dt, now);
+    steer(dt); locomotion(dt); pm('loco');
+    poseDog(dt, now); pm('pose');
     // physics
     world.step();
     for (const o of dyn) {
@@ -34,13 +37,13 @@ function simStep(dt) {
       const vy = o.rb.linvel().y; if (o.prevVy < -1.2 && vy > -0.2 && !o.held && !o.humanHeld) { emitSound(o.mesh.position, clamp(-o.prevVy * 0.12, 0.1, 0.7), 'bounce'); thud(o.mesh.position, -o.prevVy); } o.prevVy = vy;
       if (t.y < -3) { o.rb.setTranslation({ x: 0, y: 1, z: 3 }, true); o.rb.setLinvel({ x: 0, y: 0, z: 0 }, true); }
     }
-    squirrelTick(dt);
+    pm('physics'); squirrelTick(dt);
     hearLevel = Math.max(0, hearLevel - dt * 0.8);
     // pant sound
     if (dog.heat > 0.5 && brain.cur !== 'sleep') { pantT -= dt; if (pantT < 0) { pantT = 0.33; pant(dog.root.position); } }
-    eyeTimer += dt; if (eyeTimer > 0.1) { eyeTimer = 0; eyeWait = renderEye(); }
-    if (!TEST && !eyeDetect.t || now - eyeDetect.t > Math.max(0.45, net.ms * 0.004)) { eyeDetect.t = now; eyeDetect(); }
-    camTick(now); micTick(dt);
+    pm('misc'); eyeTimer += dt; if (eyeTimer > 0.1) { eyeTimer = 0; eyeWait = renderEye(); } pm('eyeKick');
+    if (!TEST && !eyeDetect.t || now - eyeDetect.t > Math.max(0.45, net.ms * 0.004)) { eyeDetect.t = now; eyeDetect(); } pm('yoloKick');
+    camTick(now); micTick(dt); pm('camMic');
     // the cortex thinks on events: when summed importance passes a budget, never more often than a floor (Generative Agents style)
     if ($('autoThink').checked && vlm.state === 'ready' && !thinking && ((brain.imp > TV('Br.reflect') && now - lastAuto > TV('Br.cortexMin')) || now - lastAuto > 60)) { lastAuto = now; brain.imp = 0; think(); }
   }
@@ -49,7 +52,10 @@ function simStep(dt) {
   food.scale.set(1, Math.max(foodAmt, 0.02), 1); food.visible = foodAmt > 0.02; food.position.y = 0.02 + 0.03 * foodAmt;
 }
 function view(dt) {
-  fpsN++; fpsT += dt; if (fpsT > 0.5) { $('chipFps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0; }
+  fpsN++; fpsT += dt; if (fpsT > 0.5) { $('chipFps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0;
+    // hover the fps chip: average and worst main thread ms per system since the last readout, so a hitch can be traced to its source
+    $('chipFps').title = Object.entries(PROF).sort((a, b) => b[1].max - a[1].max).map(([k, e]) => k + ' ' + (e.tot / Math.max(e.n, 1)).toFixed(1) + ' avg, ' + e.max.toFixed(0) + ' worst ms').join('\n') + (thinking ? '\ncortex thinking (shares the GPU)' : '');
+    for (const k in PROF) { PROF[k].tot = PROF[k].n = PROF[k].max = 0; } }
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').classList.remove('on'); }
   // you
   if (HUM.ready) { const hp = humHead(tmpV[2]).add(V3(0, 0.32, 0)).project(camera), r2 = stage.getBoundingClientRect(), hb = $('hbubble');
@@ -69,8 +75,8 @@ function view(dt) {
   }
   if (camMode === 4 && HUM.map && !HUM.away) { updateHumCam(dt); povCam.aspect = camera.aspect; povCam.updateProjectionMatrix(); humHeadHide(true); renderer.render(scene, povCam); humHeadHide(false); povCam.aspect = 2; povCam.updateProjectionMatrix(); }
   else if (camMode === 2 && dog.ready) { updateEyeCam(); eyeCam.aspect = camera.aspect; eyeCam.updateProjectionMatrix(); dog.mesh.visible = false; renderer.render(scene, eyeCam); dog.mesh.visible = true; eyeCam.aspect = 2; eyeCam.updateProjectionMatrix(); }
-  else renderer.render(scene, camera);
-  instT += dt; if (instT > 0.1) { instT = 0; if (dog.ready) drawInstruments(); }
+  else { pT = performance.now(); renderer.render(scene, camera); pm('render'); }
+  pT = performance.now(); instT += dt; if (instT > 0.1) { instT = 0; if (dog.ready) drawInstruments(); } pm('instruments');
 }
 
 // ---------- lockstep hook ----------

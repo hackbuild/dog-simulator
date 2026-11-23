@@ -57,9 +57,9 @@ async function renderEye() {
       const sy = flip ? EH - 1 - y : y;
       for (let x = 0; x < EW; x++) { const si = sy * rowBytes + x * 4, di = (y * EW + x) * 4; d[di] = srgbLUT[px[si]]; d[di + 1] = srgbLUT[px[si + 1]]; d[di + 2] = srgbLUT[px[si + 2]]; d[di + 3] = 255; }
     }
-    rawCtx.putImageData(img, 0, 0);
-    if (eyeWho === 'dog') drawEyeDisplay(); else if (HUM.map) await renderHumEye();
-    attention.update(); const sc2 = $('eyeSal').getContext('2d'); sc2.clearRect(0, 0, EW, EH); attention.draw(sc2);
+    rawCtx.putImageData(img, 0, 0); pT = performance.now();
+    if (eyeWho === 'dog') drawEyeDisplay(); else if (HUM.map) await renderHumEye(); pm('eyeDisplay');
+    attention.update(); const sc2 = $('eyeSal').getContext('2d'); sc2.clearRect(0, 0, EW, EH); attention.draw(sc2); pm('saliency');
   } catch (err) { console.warn('eye', err); }
   eyeBusy = false;
 }

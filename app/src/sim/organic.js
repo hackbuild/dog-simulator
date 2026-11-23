@@ -140,7 +140,7 @@ tdef('brain', 'Br.reactMu', 'react latency mu s', 0.3, 0.05, 1.5, 0.01);
 tdef('brain', 'Br.reactTau', 'react latency tail s', 0.3, 0, 2, 0.01);
 tdef('brain', 'Br.cueMu', 'cue latency mu s', 0.45, 0.1, 2, 0.01);
 tdef('brain', 'Br.cueTau', 'cue latency tail s', 0.45, 0, 3, 0.01);
-tdef('brain', 'Br.cortexMin', 'cortex min interval s', 12, 4, 60, 1);
+tdef('brain', 'Br.cortexMin', 'cortex min interval s (each think shares the GPU with rendering)', 25, 4, 90, 1);
 tdef('brain', 'Br.ignore', 'cue non compliance base', 0.25, 0, 0.6, 0.01, 'Browne: dogs ignored 44 percent of everyday sit and down commands');
 tdef('brain', 'Br.lookBack', 'look back time scale', 0.5, 0.1, 1.5, 0.05, 'Marshall-Pescini 2009: first look back about 14 s in an unsolvable task; scaled for play');
 tdef('brain', 'Br.reflect', 'cortex importance budget', 12, 3, 40, 1, 'Generative Agents style: think when summed importance passes this');
@@ -201,8 +201,15 @@ const TRAITS = ['reactivity', 'fearfulness', 'aggression', 'sociability', 'train
 const PT = t => (TUNE.v['P.' + t] || 0) + (PDRIFT[t] ? PDRIFT[t].x : 0); // trait plus slow drift
 const PDRIFT = {};
 TRAITS.forEach(t => { PDRIFT[t] = new ORG.OU(600, 0.12); });
-function tuneLoad() { const s = store.get('tune', null); if (s) for (const k in s) if (k in TUNE.v) TUNE.v[k] = s[k]; }
-function tuneSave() { store.set('tune', TUNE.v); }
+// only values that differ from the defaults are kept, so a new build's defaults reach saved sessions.
+// the first format saved every value; from that one only the personality survives, the rest go back to current defaults.
+function tuneLoad() {
+  const s = store.get('tune', null); if (!s) return;
+  if (s.ver === 2) { for (const k in s.d) if (k in TUNE.v) TUNE.v[k] = s.d[k]; return; }
+  for (const k in s) if (k.startsWith('P.') && k in TUNE.v) TUNE.v[k] = s[k];
+  tuneSave();
+}
+function tuneSave() { const d = {}; for (const k in TUNE.v) if (TUNE.v[k] !== TUNE.defs[k].def) d[k] = TUNE.v[k]; store.set('tune', { ver: 2, d }); }
 function applyPreset(name) {
   const p = PRESETS[name]; if (!p) return;
   TRAITS.forEach(t => { TUNE.v['P.' + t] = p.P[t] || 0; }); TUNE.v['P.age'] = p.age || 30; tuneSave(); tuneUI.refresh();
