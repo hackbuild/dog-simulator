@@ -63,6 +63,18 @@ Trace rows: one every 0.25 sim s, columns in `list.mjs` `COLS`, rounded to
 
 ## Trace changes
 
+### 2026-11-23, hackbuild-agents packages, one at a time
+
+Each adoption is its own commit and held the 29 cpg and 12 neural
+goldens identical (measured), 28 of 29 and 12 of 12 passing, unless the
+entry says otherwise. The packages come from `vendor/` (hackbuild-agents
+commit in `vendor/lock.json`).
+
+- tunables: `TUNE.v`, `TV` and `ON` read and write a
+  `@hackbuild/tunables` registry (master layer `L.organic`, saves as
+  `{ ver: 2, d }` under the old storage key, a first format save keeps
+  its personality through `migrate[0]`). The app keeps its own panel.
+
 ### 2026-11-23, one motor state, f64 sums kept
 
 The gait ring, frequency, duty and source label read one

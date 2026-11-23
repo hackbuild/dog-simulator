@@ -95,13 +95,31 @@ const ORG = (() => {
 })();
 
 // ---------- tunables: every number that shapes behavior lives here, persisted, live editable ----------
-const TUNE = { defs: {}, order: [], v: {}, groups: {} };
+// the registry is @hackbuild/tunables: values clamp to their range, saves keep only what differs
+// from the defaults as { ver: 2, d } under the old storage key, and a save from the first format
+// keeps its personality only. TUNE.v reads and writes the registry, so the call sites stay as they were.
+const TREG = HTUNE.createRegistry({
+  master: 'L.organic', version: 2, storageKey: 'hackle.tune',
+  storage: { getItem: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, setItem: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } },
+  migrate: { 0: v => Object.fromEntries(Object.entries(v).filter(([k]) => k.startsWith('P.'))) }
+});
+const TUNE = {
+  defs: {}, order: [], groups: {},
+  v: new Proxy({}, {
+    get: (_, k) => (typeof k === 'string' && TREG.has(k) ? TREG.get(k) : undefined),
+    set: (_, k, v) => { TREG.set(k, v); return true; },
+    has: (_, k) => typeof k === 'string' && TREG.has(k),
+    ownKeys: () => TREG.keys(),
+    getOwnPropertyDescriptor: (_, k) => (typeof k === 'string' && TREG.has(k) ? { value: TREG.get(k), enumerable: true, configurable: true, writable: true } : undefined)
+  })
+};
 function tdef(group, key, label, def, min, max, step, note) {
   TUNE.defs[key] = { group, key, label, def, min, max, step, note }; TUNE.order.push(key);
-  (TUNE.groups[group] = TUNE.groups[group] || []).push(key); TUNE.v[key] = def;
+  (TUNE.groups[group] = TUNE.groups[group] || []).push(key);
+  TREG.define(note ? { key, group, label, def, min, max, step, note } : { key, group, label, def, min, max, step });
 }
-const TV = k => TUNE.v[k];
-const ON = k => TUNE.v['L.organic'] > 0 && TUNE.v[k] > 0;
+const TV = k => TREG.get(k);
+const ON = k => TREG.layer(k);
 // layers
 [['L.organic', 'organic (off is the old canned build)'], ['L.springs', 'springs on posture and gaze'], ['L.inert', 'inertialized transitions'], ['L.secondary', 'secondary motion: ears, tail, lean'],
  ['L.noise', 'noise and heavy tailed latencies'], ['L.sample', 'sampled choice with commitment'], ['L.drives', 'homeostatic drive reward'], ['L.sleep', 'sleep cycles and body clock'],
@@ -203,13 +221,8 @@ const PDRIFT = {};
 TRAITS.forEach(t => { PDRIFT[t] = new ORG.OU(600, 0.12); });
 // only values that differ from the defaults are kept, so a new build's defaults reach saved sessions.
 // the first format saved every value; from that one only the personality survives, the rest go back to current defaults.
-function tuneLoad() {
-  const s = store.get('tune', null); if (!s) return;
-  if (s.ver === 2) { for (const k in s.d) if (k in TUNE.v) TUNE.v[k] = s.d[k]; return; }
-  for (const k in s) if (k.startsWith('P.') && k in TUNE.v) TUNE.v[k] = s[k];
-  tuneSave();
-}
-function tuneSave() { const d = {}; for (const k in TUNE.v) if (TUNE.v[k] !== TUNE.defs[k].def) d[k] = TUNE.v[k]; store.set('tune', { ver: 2, d }); }
+function tuneLoad() { if (store.get('tune', null)) TREG.restore(); }
+function tuneSave() { store.set('tune', TREG.toJSON()); }
 function applyPreset(name) {
   const p = PRESETS[name]; if (!p) return;
   TRAITS.forEach(t => { TUNE.v['P.' + t] = p.P[t] || 0; }); TUNE.v['P.age'] = p.age || 30; tuneSave(); tuneUI.refresh();
@@ -251,9 +264,9 @@ const tuneUI = {
     });
     el.querySelectorAll('[data-preset]').forEach(b => b.onclick = () => { applyPreset(b.dataset.preset); toast('personality: ' + PRESETS[b.dataset.preset].label); });
     $('bSeed').onclick = () => { seedPersonality($('dogName').value || 'Pixel'); toast('personality drawn from the name ' + ($('dogName').value || 'Pixel')); };
-    $('bTuneExp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(TUNE.v, null, 1)], { type: 'application/json' })); a.download = 'hackle-tune.json'; a.click(); };
-    $('tuneImp').onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); for (const k in j) if (k in TUNE.v) TUNE.v[k] = +j[k]; tuneSave(); this.refresh(); toast('settings imported'); } catch (err) { toast('could not read that file'); } };
-    $('bTuneReset').onclick = () => { for (const k in TUNE.defs) TUNE.v[k] = TUNE.defs[k].def; tuneSave(); this.refresh(); toast('defaults restored'); };
+    $('bTuneExp').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(TREG.snapshot(), null, 1)], { type: 'application/json' })); a.download = 'hackle-tune.json'; a.click(); };
+    $('tuneImp').onchange = async e => { try { const j = JSON.parse(await e.target.files[0].text()); TREG.load(j); tuneSave(); this.refresh(); toast('settings imported'); } catch (err) { toast('could not read that file'); } };
+    $('bTuneReset').onclick = () => { TREG.reset(); tuneSave(); this.refresh(); toast('defaults restored'); };
   },
   fmt(k) { const d = TUNE.defs[k], v = TUNE.v[k]; return d.step >= 1 ? String(Math.round(v)) : v.toFixed(d.step < 0.01 ? 3 : 2); },
   row(k) { const d = TUNE.defs[k]; return `<div class="row trow" title="${(d.note || '').replace(/"/g, '')}"><span class="lab">${d.label}</span><input type="range" data-tk="${k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${TUNE.v[k]}"><span class="v" data-tv="${k}">${this.fmt(k)}</span></div>`; },

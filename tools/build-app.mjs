@@ -39,6 +39,7 @@ export function scopeSource() {
     "import * as RAPIER_MODULE from '@dimforge/rapier3d-compat';",
     "import * as HMN from '@hackbuild/motion-net';",
     "import * as HGAIT from '@hackbuild/gait';",
+    "import * as HTUNE from '@hackbuild/tunables';",
     "{",
     ...parts,
     "}",

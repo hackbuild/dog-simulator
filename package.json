@@ -43,6 +43,7 @@
   },
   "dependencies": {
     "@hackbuild/gait": "0.1.0",
-    "@hackbuild/motion-net": "0.1.0"
+    "@hackbuild/motion-net": "0.1.0",
+    "@hackbuild/tunables": "0.1.0"
   }
 }

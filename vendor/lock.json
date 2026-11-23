@@ -67,6 +67,23 @@
         "dist/worker-entry.js": "bd4ff9b21e12bd12e9fdf344909608a74fdc4115c39fd25ced06e00c7ae740e8",
         "package.json": "2870a955353e1822d8cf90416416dd80413478492c411fb20fb047555ca07960"
       }
+    },
+    "tunables": {
+      "repo": "hackbuild/hackbuild-agents",
+      "path": "packages/tunables",
+      "commit": "d369aa542cc443e4d8173ac99b22374ef89f9035",
+      "version": "0.1.0",
+      "files": {
+        "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
+        "README.md": "1c24a75e74dfa0b72f4a1c2e8643b47d7b22c07ced37d8e9013d7ed82560a8b8",
+        "dist/dom.d.ts": "ade1e2b9a835529ad7969df156f1fe138d83e70c5083037475d0c783a96711d1",
+        "dist/dom.js": "b7cb51fff1a275a7fc59a37dbca429a192b35a40fba0b147200e3c43c4f6e2ad",
+        "dist/index.d.ts": "6939bbb1f19a2a3ad5f87e65a3b2cbb6417a076eb72760811217a0bec845d18d",
+        "dist/index.js": "60ed9e8fdb5b1ca1cd2f8864d7ced46074062047f1e8b4802862e3ded85ecc59",
+        "dist/single.d.ts": "b14bd916e54635a4ffceb412473750c89c19e5b94062f2bb0ca2086644cd9899",
+        "dist/single.js": "50aa9c5e54a1bda20f662d34849f9ea960cfb0927cab840c4e0a5a179415ccf9",
+        "package.json": "cf2526b76c5ff24b36407127f3322811a97b835373ae198ba2eeb155e62ec894"
+      }
     }
   }
 }
