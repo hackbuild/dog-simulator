@@ -2,6 +2,8 @@
 
 A dog and its person living in a browser tab. The dog walks, sniffs, plays fetch, sleeps and learns cues; the person runs their day around it. One self contained HTML file.
 
+Play it: https://hackbuild.github.io/dog-simulator/
+
 Status: 2026-11-22, the handoff build (in `legacy/`) moved here and made
 deterministic. `app/src` holds the app; `legacy/` holds the pack as
 received and its deterministic copy; `scenarios/` holds golden traces.

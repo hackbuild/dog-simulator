@@ -1,0 +1,53 @@
+name: pages
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    # the public build only, as in the ci app job: stub dog, placeholder human, no voice, no weights
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+      - run: npm install -g npm@11.21.0
+      - run: npm ci
+      - run: npm run build:public
+      - run: node --test tools/test/build-app.test.mjs
+      - name: check the public file
+        run: |
+          node -e '
+          const s = require("fs").readFileSync("dist/dog-simulator-public.html", "utf8");
+          const block = (id) => (s.match(new RegExp("id=\"" + id + "\">([\\s\\S]*?)</script>")) || [])[1].trim();
+          const fail = (m) => { console.error(m); process.exit(1); };
+          if (block("voiceB64")) fail("voice clip present");
+          if (block("humanGLB")) fail("human model present");
+          const glb = (s.match(/Z2xURg/g) || []).length;
+          if (glb !== 1) fail("expected one GLB (the stub dog), found " + glb);
+          const text = s.replace(/[A-Za-z0-9+\/]{200,}={0,2}/g, "");
+          for (const n of []) if (text.includes(n)) fail(n + " named in the page");
+          console.log("public file clean");
+          '
+      - run: mkdir -p _site && cp dist/dog-simulator-public.html _site/index.html
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+  deploy:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5
