@@ -20,6 +20,8 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: npm install -g npm@11.21.0
+      # the hackbuild-ui pin: tarball, sha-256, SHA256SUMS, package.json and lockfile agree
+      - run: node tools/vendor/pin-ui.mjs --check
       - run: npm ci
       - run: npm run build:public
       - run: node --test tools/test/build-app.test.mjs

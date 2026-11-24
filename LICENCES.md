@@ -80,7 +80,7 @@ OFL-1.1), with the licence texts, written by `tools/build-app.mjs`.
 
 | name | version | source | licence |
 |---|---|---|---|
-| @virgilvox/hackbuild-ui | 0.5.0, commit fb95d7c, `tools/vendor/hackbuild-ui-0.5.0-fb95d7c.tgz`, sha256 in `tools/vendor/SHA256SUMS` (CI checks it) | its `tokens.css`, `hackbuild.css` and `fonts-inline.css` are inlined into the page | MIT |
+| @virgilvox/hackbuild-ui | 0.5.0, commit 5211c3a, `tools/vendor/hackbuild-ui-0.5.0-5211c3a.tgz`, sha256 in `tools/vendor/SHA256SUMS` and `tools/vendor/hackbuild-ui.pin` (CI checks it) | its `tokens.css`, `hackbuild.css` and `fonts-inline.css` are inlined into the page | MIT |
 
 ## Development tools
 

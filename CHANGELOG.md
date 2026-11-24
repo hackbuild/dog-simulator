@@ -4,6 +4,11 @@ Versions follow semver per package. Nothing is published to npm yet.
 
 ## 0.1.0 (unreleased)
 
+- ui: hackbuild-ui 0.5.0 repinned from commit fb95d7c to 5211c3a by
+  hackbuild-ui `tools/pin-ui.mjs` (the class layer is unchanged, the
+  readme in the tarball moved); `npm run ui:check`, run in CI before
+  `npm ci`, checks the tarball, SHA256SUMS, package.json and the lockfile
+  against `tools/vendor/hackbuild-ui.pin`.
 - repository scaffold: rules, hooks, voice and commit linters, CI.
 - legacy: the HACKLE pack under legacy/pack, build.py ported to
   tools/build-html.mjs with byte parity, licence audit in LICENCES.md.
