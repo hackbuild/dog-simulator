@@ -230,13 +230,18 @@ function handPos(out = V3()) { return HUM.hand ? HUM.hand.getWorldPosition(out) 
 // released explicitly: a held kneel skips the rest of its hold and plays the stand up (1.3 s), where
 // before it played on through the hold window and froze the feet up to 3.9 s
 const TASK_LAYERS = { get_ball: ['kneel'], pet: ['kneel', 'crouch'], feed: ['kneel'] };
+// read only tap: where the next task comes from (rule, routine, mind, you), set by the caller
+let humSrcNext = null;
 function startTask(name, args = {}, why = '') {
+  const src = humSrcNext || (args.user ? 'you' : 'task'); humSrcNext = null;
+  if (src === 'rule') HUM.lastPlan = { at: now, rule: why, choice: name };
+  HUM.taskEv = EV.emit({ agent: 'human', kind: 'act', text: name.replace('_', ' ') + (why ? ', ' + why : ''), cause: src === 'rule' && /dog/.test(why) ? brain.evAct || null : src === 'mind' ? HUM.mindEv || null : null });
   HUM.task = { name, t: 0, s: '', args, why };
+  HUM.taskSrc = src;
   const A = HA.act; if (A && A.hold && !A.done && A.t < A.hold[1] && !(TASK_LAYERS[name] || []).includes(A.name)) A.t = Math.max(A.t, A.hold[1]);
   HUM.motor.mode = 'stop'; HUM.motor.face = null; HUM.motor.done = false; HUM.reach = null; haRelease();
   // a new task while seated: stand up first (the sit layer blocks the feet until the exit clip ends); a repeat sit just stays down
   if (HA.sit && HA.sit.ph !== 'exit') { if (name === 'sit') { HUM.task.s = 'down'; HUM.task.k = 0; } else haSit(false); }
-  $('humTask').textContent = name.replace('_', ' '); $('humWhy').textContent = why;
 }
 
 // steering and gait
@@ -616,6 +621,7 @@ function humNeeds(dt) {
 function humPlan() {
   const d = brain.d, ballFree = ball && !ball.held && !ball.humanHeld, N = HUM.need, h = CLOCK.h, org = ON('L.organic');
   if (HUM.away) return;
+  humSrcNext = 'rule';
   if (HUM.holding) return startTask('throw', {}, 'holding the ball');
   const bp = ball ? bodyPos(ball) : V3();
   if (ON('L.social') && ballFree && brain.cur === 'fetch' && ((brain.search || 0) > 1.5 || now - (brain.lookBackT || -99) < 2) && dist2(bp, HUM.pos) < 12) return startTask('point', { p: bp.clone().setY(H(bp.x, bp.z) + 0.05) }, brain.lookBackT && now - brain.lookBackT < 2 ? 'the dog looked back at him for help' : 'the dog lost the ball, he points at it');
@@ -634,7 +640,8 @@ function humPlan() {
   if (!org) {
     const opts = [['train', now - HUM.lastTrain > 90 && brain.cur !== 'sleep' ? 0.25 : 0], ['pet', d.social * 0.4], ['wander', 0.25], ['chat', 0.12], ['watch', 0.18], ['call', dist2(HUM.pos, dog.pos) > 7 ? 0.15 : 0]];
     let tot = opts.reduce((s, o) => s + o[1], 0), r = RNG() * tot, choice = 'watch'; for (const [n, w] of opts) { if ((r -= w) <= 0) { choice = n; break; } }
-    return startPlain(choice);
+    HUM.lastPlan = { at: now, U: Object.fromEntries(opts), U0: Object.fromEntries(opts), top: opts.filter(o => o[1] > 0).map(o => o[0]), probs: Object.fromEntries(opts.map(o => [o[0], tot ? o[1] / tot : 0])), choice, routine: null };
+    humSrcNext = 'routine'; return startPlain(choice);
   }
   const R = routine(h), dayGap = TV('W.dayMin') * 60 / 24; // real seconds per game hour
   const U = {
@@ -647,11 +654,14 @@ function humPlan() {
     sit: R.sit + 0.7 * N.rest,
     greet: brain.cur === 'greet' && dist2(HUM.pos, dog.pos) < 3 ? 0.7 : 0
   };
+  const U0 = Object.assign({}, U);
   // repetition penalty: the same thing three times running gets dull
   for (const k in U) { const n = HUM.recent.filter(x => x === k).length; U[k] *= Math.pow(0.55, n); }
   // pick at random among the top three (The Sims), weighted
   const top = Object.entries(U).filter(x => x[1] > 0.01).sort((a, b) => b[1] - a[1]).slice(0, 3); let tot = top.reduce((s, x) => s + x[1], 0), r = RNG() * tot, choice = top[0][0];
   for (const [k, w] of top) { if ((r -= w) <= 0) { choice = k; break; } }
+  HUM.lastPlan = { at: now, U: Object.assign({}, U), U0, top: top.map(x => x[0]), probs: Object.fromEntries(top.map(x => [x[0], tot ? x[1] / tot : 0])), choice, routine: R, recent: HUM.recent.slice() };
+  humSrcNext = 'routine';
   HUM.recent.unshift(choice); HUM.recent.length = Math.min(HUM.recent.length, 4);
   if (choice === 'greet') return startTask('pet', { crouch: true, greet: true }, 'the dog came over to say hi, he crouches');
   if (choice === 'phone') { HUM.lastPhone = now; return startTask('phone', { dur: ORG.exg(7, 2, 8) }, 'checking his phone'); }
@@ -681,6 +691,7 @@ async function humSnap() {
 async function humThink() {
   if (vlm.state !== 'ready' || HUM.thinking) return false;
   HUM.thinking = true; HUM.lastMind = now; $('humMind').textContent = 'thinking';
+  const callT = now;
   try {
     const view = await humSnap(); if (!view) throw new Error('no view');
     const d = brain.d, n = $('dogName').value.trim() || 'the dog';
@@ -693,6 +704,9 @@ SAY: one short thing you say out loud, under 14 words
 DO: one of throw, train sit, train down, train spin, train paw, train speak, train boop, pet, feed, wander, watch`;
     const r = await vlmAsk(view, prompt, 48);
     const txt = r.text.trim();
+    vlmLog({ t: callT, who: 'human', kind: 'think', prompt, text: txt, ms: r.ms, tokens: r.tokens, ok: true });
+    HUM.mindEv = EV.emit({ agent: 'human', kind: 'model', text: 'his mind replied in ' + (r.ms / 1000).toFixed(1) + ' s: ' + txt.replace(/\s+/g, ' ').slice(0, 90) });
+    humSrcNext = 'mind';
     const say = ((txt.match(/SAY:\s*(.+)/i) || [])[1] || txt.split('\n')[0] || '').replace(/^["']|["']$/g, '').replace(new RegExp('[' + String.fromCharCode(0x2013, 0x2014) + ']', 'g'), ',').trim();
     const doL = ((txt.match(/DO:\s*(.+)/i) || [])[1] || '').toLowerCase();
     $('humMind').textContent = 'say: ' + say + '\ndo: ' + (doL || '?') + '  (' + (r.ms / 1000).toFixed(1) + ' s)';
@@ -705,9 +719,10 @@ DO: one of throw, train sit, train down, train spin, train paw, train speak, tra
     else if (/wander/.test(doL)) startTask('wander', {}, 'his mind chose a walk');
     else if (/watch/.test(doL)) startTask('watch', { dur: 5 }, 'his mind chose to watch');
     else started = false;
+    humSrcNext = null;
     if (say) humSay(say.slice(0, 110), 4.5, false, true);
     HUM.thinking = false; return started;
-  } catch (e) { console.warn('human mind', e); $('humMind').textContent = 'error: ' + (e.message || e); HUM.thinking = false; return false; }
+  } catch (e) { console.warn('human mind', e); vlmLog({ t: callT, who: 'human', kind: 'think', prompt: '', text: String(e.message || e), ms: 0, tokens: 0, ok: false }); $('humMind').textContent = 'error: ' + (e.message || e); HUM.thinking = false; return false; }
 }
 function humTick(dt, t) {
   if (!HUM.ready) return;
@@ -718,7 +733,7 @@ function humTick(dt, t) {
   if (ball) { const moving = ball.held || ball.humanHeld || bodyVel(ball).length() > 0.3; HUM.ballIdle = moving ? 0 : HUM.ballIdle + dt; }
   if ($('humAI').checked) {
     if (!HUM.task) { if ($('humMindOn').checked && vlm.state === 'ready' && !HUM.thinking && humMindSched.state(now) === 'ready') { HUM.lastMind = now; humMindSched.run(now, true, humThink).then(ok => { if (!ok && !HUM.task) humPlan(); }); } else if (!HUM.thinking) humPlan(); }
-  } else if (!HUM.task || ['wander', 'chat', 'pet', 'feed', 'train', 'get_ball', 'call', 'phone', 'stroll', 'sit', 'errand'].includes(HUM.task.name) && !HUM.task.args.user) { if (HUM.task && HUM.task.name !== 'throw') { HUM.task = null; HUM.phoneOn = false; if (HUM.away) { HUM.away = false; HUM.root.visible = true; } if (HA.sit) haSit(false); } HUM.motor.mode = 'face'; HUM.motor.face = V3(dog.pos.x, 0, dog.pos.z); HUM.look = dog.root.position.clone().add(V3(0, 0.4, 0)); $('humTask').textContent = 'manual'; $('humWhy').textContent = 'you are driving: buttons and cues act through him'; }
+  } else if (!HUM.task || ['wander', 'chat', 'pet', 'feed', 'train', 'get_ball', 'call', 'phone', 'stroll', 'sit', 'errand'].includes(HUM.task.name) && !HUM.task.args.user) { if (HUM.task && HUM.task.name !== 'throw') { HUM.task = null; HUM.phoneOn = false; if (HUM.away) { HUM.away = false; HUM.root.visible = true; } if (HA.sit) haSit(false); } HUM.motor.mode = 'face'; HUM.motor.face = V3(dog.pos.x, 0, dog.pos.z); HUM.look = dog.root.position.clone().add(V3(0, 0.4, 0)); HUM.manualWhy = 'you are driving: buttons and cues act through him'; } else HUM.manualWhy = null;
   humTask(dt);
   humSteer(dt);
   if (HUM.throwT >= 0) {
@@ -740,6 +755,6 @@ function humTick(dt, t) {
 }
 function renderHumTrain() {
   const tr = HUM.train;
-  $('humTrain').innerHTML = `<div class="kv"><b>cue word</b><span>${tr.word || '-'}</span><b>should mean</b><span>${tr.trick || '-'}</span><b>this session</b><span>${tr.ok} / ${tr.tries}</span></div>` +
+  $('humTrain').innerHTML = `<div class="hb-kv"><span>word</span><span>${tr.word || '-'}</span></div><div class="hb-kv"><span>should mean</span><span>${tr.trick || '-'}</span></div><div class="hb-kv"><span>this session</span><span>${tr.ok} of ${tr.tries}</span></div>` +
     '<div class="lst" style="margin-top:6px">' + tr.hist.map(h => `<div><span>"${h.word}"</span><span>${h.got}</span><span class="${h.ok ? 'vis' : ''}">${h.ok ? 'good' : 'no'}</span></div>`).join('') + '</div>';
 }

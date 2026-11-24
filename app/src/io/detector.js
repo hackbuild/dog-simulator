@@ -21,7 +21,7 @@ async function loadNet() {
   } catch (e) { console.warn(e); setNet('failed: ' + (e.message || e).toString().slice(0, 60), 'eye net x'); }
   net.loading = false;
 }
-function setNet(s, chip, on) { $('netSt').textContent = s; $('chipNet').textContent = chip; $('chipNet').classList.toggle('on', !!on); }
+function setNet(s, chip, on) { net.label = s; $('netSt').textContent = s; $('chipNet').textContent = chip; $('chipNet').hidden = !on; hudTags(); if (typeof capsRefresh === 'function') capsRefresh(); }
 async function detect(src, sw, sh, thr = 0.3) {
   if (!net.sess || net.busy) return null; net.busy = true;
   const t0 = performance.now();
@@ -83,10 +83,11 @@ async function showPhoto(file) {
   const c = $('photo'), ctx = c.getContext('2d');
   const sc = Math.min(320 / bmp.width, 240 / bmp.height); c.width = Math.round(bmp.width * sc); c.height = Math.round(bmp.height * sc);
   ctx.drawImage(bmp, 0, 0, c.width, c.height); $('photoView').style.display = 'block';
-  document.querySelector('[data-p=pSense]').click();
-  // the detector loads only when you turn it on: a photo never fetches it
+  showTab('pSense');
+  // the detector loads only when you say so: a photo asks first and never fetches it on its own
   let dets = null;
-  if (!$('netOn').checked) toast('to label photos, turn on yolov8n under sense (12.8 mb, agpl 3.0 weights).');
+  $('photoAsk').hidden = $('netOn').checked;
+  if (!$('netOn').checked) photoWaiting = file;
   else {
     if (!net.sess) await loadNet();
     if (!net.sess) toast('detector not available');
@@ -98,16 +99,20 @@ async function showPhoto(file) {
   if (vlm.state === 'ready' && !thinking) {
     const pc = document.createElement('canvas'); pc.width = c.width; pc.height = c.height; pc.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
     thinking = true; $('cortexSt').textContent = 'looking at photo';
-    vlmAsk(pc, 'You are a dog and your human is showing you this picture. In one short sentence, in a dog\'s voice, say what it is and how you feel about it.', 48)
-      .then(r => { const a = r.text.trim().split('\n')[0]; brain.say(a.slice(0, 90), 6); $('cortexOut').textContent = 'photo: ' + a; $('cortexSt').textContent = 'ready'; })
+    const prompt = 'You are a dog and your human is showing you this picture. In one short sentence, in a dog\'s voice, say what it is and how you feel about it.', callT = now;
+    vlmAsk(pc, prompt, 48)
+      .then(r => { const a = r.text.trim().split('\n')[0]; vlmLog({ t: callT, who: 'dog', kind: 'photo', prompt, text: r.text.trim(), ms: r.ms, tokens: r.tokens, ok: true }); EV.emit({ agent: 'dog', kind: 'model', text: 'looked at your photo in ' + (r.ms / 1000).toFixed(1) + ' s: ' + a.slice(0, 60) }); brain.say(a.slice(0, 90), 6); $('cortexOut').textContent = 'photo: ' + a; $('cortexSt').textContent = 'ready'; })
       .catch(() => { $('cortexSt').textContent = 'error'; }).finally(() => { thinking = false; });
   }
 }
+let photoWaiting = null;
 $('photoIn').addEventListener('change', e => showPhoto(e.target.files[0]));
-stage.addEventListener('dragover', e => { e.preventDefault(); $('drop').style.display = 'grid'; });
-stage.addEventListener('dragleave', e => { if (e.target === $('drop')) $('drop').style.display = 'none'; });
+$('bPhotoYes').onclick = () => { $('netOn').checked = true; loadNet(); $('photoAsk').hidden = true; const f = photoWaiting; photoWaiting = null; if (f) showPhoto(f); };
+$('bPhotoNo').onclick = () => { $('photoAsk').hidden = true; photoWaiting = null; };
+stage.addEventListener('dragover', e => { e.preventDefault(); $('drop').classList.add('is-over'); });
+stage.addEventListener('dragleave', e => { if (e.target === $('drop')) $('drop').classList.remove('is-over'); });
 stage.addEventListener('drop', async e => {
-  e.preventDefault(); $('drop').style.display = 'none';
+  e.preventDefault(); $('drop').classList.remove('is-over');
   const f = e.dataTransfer.files[0]; if (!f) return;
   if (/\.glb$/i.test(f.name)) { const buf = await f.arrayBuffer(); new GLTFLoader().parse(buf, '', g => { if (setupDog(g, f.name)) toast('new body: ' + f.name); }, err => toast('could not read GLB')); }
   else showPhoto(f);
@@ -115,10 +120,11 @@ stage.addEventListener('drop', async e => {
 // webcam, works only outside sandboxed viewers
 const camState = { on: false, gest: null, face: null, lastT: 0 };
 $('bWebcam').addEventListener('click', async () => {
-  if (camState.on) { const v = $('cam'); v.srcObject && v.srcObject.getTracks().forEach(t => t.stop()); v.style.display = 'none'; camState.on = false; $('bWebcam').classList.remove('on'); return; }
+  if (camState.on) { const v = $('cam'); v.srcObject && v.srcObject.getTracks().forEach(t => t.stop()); v.style.display = 'none'; camState.on = false; $('bWebcam').setAttribute('aria-pressed', 'false'); camState.err = ''; capsRefresh(); return; }
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { camState.err = 'this page cannot reach a camera here. open it over https or localhost.'; toast(camState.err); capsRefresh(); return; }
   try {
     const st = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
-    const v = $('cam'); v.srcObject = st; v.style.display = 'block'; await v.play(); camState.on = true; $('bWebcam').classList.add('on');
+    const v = $('cam'); v.srcObject = st; v.style.display = 'block'; await v.play(); camState.on = true; camState.err = ''; $('bWebcam').setAttribute('aria-pressed', 'true'); capsRefresh();
     // yolov8n (agpl 3.0 weights) loads only when you turn it on under sense
     if ($('netOn').checked) loadNet();
     try {
@@ -128,8 +134,9 @@ $('bWebcam').addEventListener('click', async () => {
       camState.gest = await mp.GestureRecognizer.createFromOptions(fs, { baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/gesture_recognizer/gesture_recognizer/float16/1/gesture_recognizer.task', delegate: 'GPU' }, runningMode: 'VIDEO', numHands: 1 });
       camState.face = await mp.FaceLandmarker.createFromOptions(fs, { baseOptions: { modelAssetPath: 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task', delegate: 'GPU' }, runningMode: 'VIDEO', outputFaceBlendshapes: true, numFaces: 1 });
       console.info('mediapipe gesture and face landmarker models (version 1): apache 2.0'); toast('gestures and smiles on. mediapipe models apache 2.0.');
-    } catch (e) { console.warn('mediapipe', e); toast('webcam on, gesture models unreachable'); }
-  } catch (e) { toast('camera blocked here; host the page yourself to use it'); }
+      camState.models = true; capsRefresh();
+    } catch (e) { console.warn('mediapipe', e); camState.err = 'the camera is on, the gesture models did not download.'; toast(camState.err); capsRefresh(); }
+  } catch (e) { camState.err = 'the camera was blocked. allow it in the address bar, then try again.'; toast(camState.err); capsRefresh(); }
 });
 let lastGesture = '', gestT = 0;
 async function camTick(t) {
@@ -156,11 +163,12 @@ function gestureCue(name) {
 }
 // clap detection: its own button, the only path that asks for the microphone level
 $('bClap').addEventListener('click', async () => {
-  if (micAn) { micAn = null; $('bClap').classList.remove('on'); $('bClap').textContent = 'clap detection (microphone)'; return; }
-  try { startMicLevel(await navigator.mediaDevices.getUserMedia({ audio: true })); $('bClap').classList.add('on'); $('bClap').textContent = 'clap detection on'; }
-  catch (e) { toast('no microphone access. clap detection stays off.'); }
+  if (micAn) { micAn = null; $('bClap').setAttribute('aria-pressed', 'false'); clapErr = ''; capsRefresh(); return; }
+  try { startMicLevel(await navigator.mediaDevices.getUserMedia({ audio: true })); $('bClap').setAttribute('aria-pressed', 'true'); clapErr = ''; }
+  catch (e) { clapErr = 'the microphone was blocked. allow it in the address bar, then try again.'; toast(clapErr); }
+  capsRefresh();
 });
-let micAn = null;
+let micAn = null, clapErr = '';
 function startMicLevel(stream) { try { const a = audio() || new AudioContext(); const src = a.createMediaStreamSource(stream); micAn = a.createAnalyser(); micAn.fftSize = 512; src.connect(micAn); } catch (e) {} }
 const micBuf = new Float32Array(512); let micCool = 0;
 function micTick(dt) { if (!micAn) return; micAn.getFloatTimeDomainData(micBuf); let pk = 0; for (const x of micBuf) pk = Math.max(pk, Math.abs(x)); micCool -= dt; if (pk > 0.5 && micCool <= 0) { micCool = 1; emitSound(V3(YOU.x, 1.4, YOU.z), clamp(pk, 0, 1), 'clap'); } }

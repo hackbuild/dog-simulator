@@ -208,13 +208,13 @@ tdef('human', 'Hu.side', 'approach the dog from the side', 1, 0, 1, 1);
 const TUNE_LABEL = { layers: 'layers', personality: 'personality', body: 'body', brain: 'choice', learn: 'learning', world: 'day and sleep', senses: 'senses', human: 'human' };
 // personality presets, z scores
 const PRESETS = {
-  balanced: { label: 'Balanced', P: {} },
-  velcro: { label: 'Velcro lab', P: { sociability: 1.6, trainability: 1.2, activity: 0.4, independence: -1, fearfulness: -0.6 } },
-  anxious: { label: 'Anxious rescue', P: { fearfulness: 1.7, reactivity: 1.4, sociability: -0.4, trainability: -0.3, activity: -0.2 } },
-  herder: { label: 'Herding nut', P: { activity: 1.8, reactivity: 1.2, trainability: 1.4, aggression: 0.4, independence: -0.3 } },
-  couch: { label: 'Couch potato', P: { activity: -1.8, reactivity: -1, sociability: 0.6, fearfulness: -0.5 }, age: 96 },
-  hound: { label: 'Stubborn hound', P: { independence: 1.7, trainability: -1.2, activity: 0.3, sociability: 0.2 } },
-  puppy: { label: 'Puppy', P: { activity: 1.4, trainability: -0.8, reactivity: 0.8, sociability: 1 }, age: 4 }
+  balanced: { label: 'balanced', P: {} },
+  velcro: { label: 'velcro lab', P: { sociability: 1.6, trainability: 1.2, activity: 0.4, independence: -1, fearfulness: -0.6 } },
+  anxious: { label: 'anxious rescue', P: { fearfulness: 1.7, reactivity: 1.4, sociability: -0.4, trainability: -0.3, activity: -0.2 } },
+  herder: { label: 'herding nut', P: { activity: 1.8, reactivity: 1.2, trainability: 1.4, aggression: 0.4, independence: -0.3 } },
+  couch: { label: 'couch potato', P: { activity: -1.8, reactivity: -1, sociability: 0.6, fearfulness: -0.5 }, age: 96 },
+  hound: { label: 'stubborn hound', P: { independence: 1.7, trainability: -1.2, activity: 0.3, sociability: 0.2 } },
+  puppy: { label: 'puppy', P: { activity: 1.4, trainability: -0.8, reactivity: 0.8, sociability: 1 }, age: 4 }
 };
 const TRAITS = ['reactivity', 'fearfulness', 'aggression', 'sociability', 'trainability', 'independence', 'activity'];
 const PT = t => (TUNE.v['P.' + t] || 0) + (PDRIFT[t] ? PDRIFT[t].x : 0); // trait plus slow drift
@@ -243,17 +243,17 @@ const tuneUI = {
     for (const g of Object.keys(TUNE.groups)) {
       const keys = TUNE.groups[g];
       if (g === 'personality') {
-        h += `<div class="blk"><div class="bh"><span>PERSONALITY</span><span id="tuneWho">seeded by name</span></div><div class="bb"><div class="btns" id="presetBtns">` +
-          Object.entries(PRESETS).map(([k, p]) => `<button class="btn" data-preset="${k}">${p.label}</button>`).join('') +
-          `<button class="btn pk" id="bSeed">From the name</button></div>` + keys.map(k => this.row(k)).join('') +
-          `<div class="note" style="margin-top:6px">Seven temperament dimensions from the Jones and Gosling review, as z scores. Each feeds startle thresholds, latencies, drive growth, learning rate and how far the dog roams. Traits drift a little over days, since real temperament test retest reliability is only about .45.</div></div></div>`;
+        h += `<details class="hb-fold" open><summary>personality <span class="aux" id="tuneWho">seeded by name</span></summary><div><div class="chips" id="presetBtns">` +
+          Object.entries(PRESETS).map(([k, p]) => `<button class="hb-chip" type="button" data-preset="${k}">${p.label}</button>`).join('') +
+          `<button class="hb-chip" type="button" id="bSeed">from the name</button></div>` + keys.map(k => this.row(k)).join('') +
+          `<p class="note">seven temperament dimensions from the jones and gosling review, as z scores. each feeds startle thresholds, latencies, drive growth, learning rate and how far the dog roams. traits drift a little over days, since real temperament test retest reliability is only about .45.</p></div></details>`;
       } else if (g === 'layers') {
-        h += `<div class="blk"><div class="bh"><span>LAYERS</span><span>A/B the research</span></div><div class="bb">` + keys.map(k => `<label class="tog"><input type="checkbox" data-tk="${k}"${TUNE.v[k] ? ' checked' : ''}>${TUNE.defs[k].label}</label>`).join('') + `</div></div>`;
+        h += `<details class="hb-fold"><summary>turn parts of the model off <span class="aux">${keys.length} layers</span></summary><div>` + keys.map(k => `<label class="hb-check"><input type="checkbox" data-tk="${k}"${TUNE.v[k] ? ' checked' : ''}>${TUNE.defs[k].label}</label>`).join('') + `</div></details>`;
       } else {
-        h += `<details class="blk tdet"><summary class="bh"><span>${TUNE_LABEL[g] || g}</span><span>${keys.length}</span></summary><div class="bb">` + keys.map(k => this.row(k)).join('') + `</div></details>`;
+        h += `<details class="hb-fold"><summary>${TUNE_LABEL[g] || g} <span class="aux">${keys.length}</span></summary><div>` + keys.map(k => this.row(k)).join('') + `</div></details>`;
       }
     }
-    h += `<div class="blk"><div class="bh"><span>SAVE</span><span>json</span></div><div class="bb"><div class="btns"><button class="btn" id="bTuneExp">Export</button><label class="btn" for="tuneImp">Import</label><input type="file" id="tuneImp" accept=".json,application/json" hidden><button class="btn" id="bTuneReset">Reset all</button></div></div></div>`;
+    h += `<div class="btns" style="margin-top:var(--hb-s3)"><button class="hb-btn hb-btn-2" type="button" id="bTuneExp">export settings</button><label class="hb-btn hb-btn-2" for="tuneImp" tabindex="0">import settings</label><input type="file" id="tuneImp" accept=".json,application/json" hidden><button class="hb-btn hb-btn-2" type="button" id="bTuneReset">reset every number</button></div>`;
     el.innerHTML = uiHtml(h);
     el.querySelectorAll('input[data-tk]').forEach(inp => {
       const k = inp.dataset.tk;
@@ -270,7 +270,7 @@ const tuneUI = {
     $('bTuneReset').onclick = () => { TREG.reset(); tuneSave(); this.refresh(); toast('defaults restored'); };
   },
   fmt(k) { const d = TUNE.defs[k], v = TUNE.v[k]; return d.step >= 1 ? String(Math.round(v)) : v.toFixed(d.step < 0.01 ? 3 : 2); },
-  row(k) { const d = TUNE.defs[k]; return `<div class="row trow" title="${(d.note || '').replace(/"/g, '')}"><span class="lab">${d.label}</span><input type="range" data-tk="${k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${TUNE.v[k]}"><span class="v" data-tv="${k}">${this.fmt(k)}</span></div>`; },
+  row(k) { const d = TUNE.defs[k], id = 'tk-' + k.replace(/\W/g, '-'); return `<div class="rangerow tunerow" title="${(d.note || '').replace(/"/g, '')}"><label for="${id}">${d.label}</label><input type="range" id="${id}" data-tk="${k}" min="${d.min}" max="${d.max}" step="${d.step}" value="${TUNE.v[k]}"><output data-tv="${k}" for="${id}">${this.fmt(k)}</output></div>`; },
   refresh() { if (!this.el) return; this.el.querySelectorAll('input[data-tk]').forEach(inp => { const k = inp.dataset.tk; if (inp.type === 'checkbox') inp.checked = !!TUNE.v[k]; else inp.value = TUNE.v[k]; const o = this.el.querySelector(`[data-tv="${k}"]`); if (o) o.textContent = this.fmt(k); }); }
 };
 // game clock: hours 0..24, advanced by tempo

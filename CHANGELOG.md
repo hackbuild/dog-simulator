@@ -27,3 +27,9 @@ Versions follow semver per package. Nothing is published to npm yet.
 - app: ui copy lowercase (page, tune panel, toasts, status chips).
 - runner: check:boot no longer overwrites the build with its screenshot
   when --shot is not given.
+- app: the page on hackbuild-ui 0.5.0, mobile first; five tabs with the
+  yard pinned on phones; welcome card; capability panel; disabled
+  controls say why; minds tab for both agents with a cause timeline;
+  read only instrumentation, goldens held.
+- runner: tools/runner/ux-walk.mjs for screenshots, persona goals and
+  frame times.

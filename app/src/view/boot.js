@@ -2,21 +2,21 @@
 tuneLoad(); CLOCK.h = TV('W.hour');
 tuneUI.build($('pTune'));
 if (!store.get('tune', null)) seedPersonality(store.get('name', 'Pixel'));
-TUNE.onChange = k => { if (k === 'L.neural' && TV(k) && !NG.ready) nnLoadUI(); if (k === 'W.hour') CLOCK.h = TV('W.hour'); };
+TUNE.onChange = k => { if (k === 'L.neural' && TV(k) && !NG.ready) nnLoadUI(); if (k === 'W.hour') CLOCK.h = TV('W.hour'); if (k.startsWith('L.')) gaitUI(); };
+// the neural gait loads and turns on in one action, from the body tab or the capability panel
+const nnLoad = { state: 'off', err: '' };
 function nnLoadUI() {
-  $('bNnLoad').disabled = true;
-  NG.load(st => { $('nnSt').textContent = st; }).then(() => {
-    if (!NG.ready) { $('bNnLoad').disabled = false; return; }
-    $('bNnLoad').textContent = 'neural gait loaded';
-    if (!ON('L.neural')) toast('neural gait loaded. turn it on under tune, layers.');
+  if (nnLoad.state === 'loading') return; nnLoad.state = 'loading'; nnLoad.err = ''; capsRefresh();
+  NG.load(st => { $('nnSt').textContent = st; capsRefresh(true); }).then(() => {
+    nnLoad.state = NG.ready ? 'on' : 'failed'; if (!NG.ready) nnLoad.err = 'the neural gait did not load: ' + String($('nnSt').textContent).slice(0, 80) + '.';
+    gaitUI(); capsRefresh();
   });
 }
-$('bNnLoad').onclick = nnLoadUI;
 $('showSal').onchange = e => { attention.show = e.target.checked; };
 (async () => {
   try {
     await renderer.init();
-    const gpu = renderer.backend.isWebGPUBackend; $('chipGpu').textContent = gpu ? 'webgpu' : 'webgl2'; $('chipGpu').classList.add('on');
+    const gpu = renderer.backend.isWebGPUBackend; $('chipGpu').textContent = gpu ? 'webgpu' : 'webgl2'; $('chipGpu').classList.add(gpu ? 'is-ok' : 'is-warn'); $('chipGpu').title = gpu ? 'the yard draws on webgpu' : 'no webgpu adapter. the yard draws on webgl2; the cortex cannot run here.';
     resize();
     $('loadNote').textContent = 'starting physics';
     await initPhysics(); initProps();
@@ -30,9 +30,9 @@ $('showSal').onchange = e => { attention.show = e.target.checked; };
       const hg = h64 ? await new GLTFLoader().parseAsync(await (await fetch('data:model/gltf-binary;base64,' + h64)).arrayBuffer(), '') : { scene: placeholderHuman() };
       setupHuman(hg, JSON.parse(document.getElementById('humanAnims').textContent));
       renderHumTrain();
-    } catch (e) { console.warn('human failed', e); toast('Moheeb failed to load'); }
+    } catch (e) { console.warn('human failed', e); toast('the human model failed to load. the placeholder stands in.'); }
     brain.init();
-    $('load').style.display = 'none';
+    $('load').hidden = true;
     if (TEST) {
       // lockstep: no detector (its timing is wall clock), the gait network loaded before step 0
       $('netOn').checked = false;
@@ -51,9 +51,10 @@ $('showSal').onchange = e => { attention.show = e.target.checked; };
       }
       last = performance.now();
       renderer.setAnimationLoop(frame);
+      uiStart();
       setTimeout(() => { if ($('netOn').checked) loadNet(); }, 1500);
       setTimeout(() => { if (ON('L.neural')) nnLoadUI(); }, 2600);
     }
     window.__hackle = { HUM, startTask, humThink, humSnap, Voice, vlm, vlmLoad, think, dog, brain, motor, percepts, net, throwBall, ball: () => ball, tossTreat, camera, controls, setCam: m => setCamMode(m), setEyeWho, V3, squirrel, spawnSquirrel, NG, NR, TUNE, CLOCK, attention, ORG, sniff, puffs, wind, applyPreset, startShake, humPoint, trail, time: () => now };
-  } catch (e) { console.error(e); $('loadNote').textContent = 'failed: ' + e.message; }
+  } catch (e) { console.error(e); $('load').classList.add('is-err'); $('loadNote').textContent = 'the yard failed to start: ' + String(e.message).toLowerCase(); }
 })();

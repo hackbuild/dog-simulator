@@ -40,8 +40,12 @@ const brain = {
   },
   V(c, a) { return (this.W[c] ? this.W[c][a] : 0) - (ON('L.learn') && this.N[c] ? this.N[c][a] : 0); },
   say(s, dur = 2.5) { if (!s) return; this.line = s; this.sayT = dur; },
-  remember(txt, imp) { this.mem.unshift({ t: now, h: CLOCK.day * 24 + CLOCK.h, txt, imp }); if (this.mem.length > 60) this.mem.pop(); this.imp += imp; },
+  remember(txt, imp) { this.mem.unshift({ t: now, h: CLOCK.day * 24 + CLOCK.h, txt, imp, ev: EV.n }); if (this.mem.length > 60) this.mem.pop(); this.imp += imp; },
   set(b, why = '') {
+    // read only taps: the why, which path chose it, and an act event caused by the pending choice
+    const kind = this.kindNext || 'top', cause = this.causeNext || null; this.kindNext = null; this.causeNext = null;
+    if (b !== this.cur) this.evAct = EV.emit({ agent: 'dog', kind: 'act', text: b + (why ? ', ' + why : ''), b, cause });
+    this.why = why; this.whyKind = kind; this.whyAt = now;
     if (b !== this.cur) {
       const prev = this.cur;
       this.cur = b; this.t = 0; this.sub = ''; this.subT = 0; this.done = false; this.say(pick(LINES[b] || ['...']), 2.6);
@@ -50,7 +54,6 @@ const brain = {
       if (prev === 'sleep') { this.stage = 'awake'; if (dog.org) dog.org.rem = 0; }
       this.dwell = now + (ON('L.noise') ? ORG.exg(TV('Br.dwellMu'), 1, TV('Br.dwellTau')) : 6);
     }
-    $('behWhy').textContent = why;
   },
   stimulus(kind, s = 1) {
     if (kind === 'prey') { this.d.prey = clamp(this.d.prey + 0.7 * s, 0, 1); this.a = clamp(this.a + 0.4, 0, 1); bark(dog.root.position, 1, 2); dog.earPerk = 1; }
@@ -64,8 +67,10 @@ const brain = {
     else if (kind === 'rest') { this.d.fatigue = clamp(this.d.fatigue + 0.1, 0, 1); }
   },
   force(b, dur) { this.forced = { b, until: now + dur }; },
-  wake(why) { if (this.cur !== 'sleep') return; this.Sp = Math.max(0, this.Sp - 0.05); this.stage = 'awake'; this.set('stretch', why || 'woke up'); },
+  wake(why) { if (this.cur !== 'sleep') return; this.Sp = Math.max(0, this.Sp - 0.05); this.stage = 'awake'; this.kindNext = 'woke'; this.set('stretch', why || 'woke up'); },
   hear(pos, loud, type) {
+    { const az = wrapA(Math.atan2(pos.x - dog.pos.x, pos.z - dog.pos.z) - dog.yaw); this.lastHeard = { type, loud, az, t: now };
+      const lt = (this.heardT || (this.heardT = {}))[type]; if (loud >= 0.2 && !(lt > now - 1.5)) { this.heardT[type] = now; this.evHeard = EV.emit({ agent: 'dog', kind: 'sense', sense: 'ear', text: 'heard a ' + type + ', loudness ' + loud.toFixed(2) + ', ' + Math.abs(az * 180 / Math.PI).toFixed(0) + ' deg ' + (az >= 0 ? 'left' : 'right') }); } }
     // sleepers wake to loud sounds more easily in light sleep and REM than in deep NREM
     if (this.cur === 'sleep') { const thr = this.stage === 'nrem' ? 0.75 : 0.45; if (loud < thr) return; this.wake('woken by a ' + type); }
     const react = ON('L.organic') ? 0.75 - 0.08 * PT('reactivity') : 0.75;
@@ -95,6 +100,7 @@ const brain = {
   cue(word) {
     if (!word) return;
     word = word.toLowerCase().slice(0, 18);
+    const cueEv = EV.emit({ agent: 'dog', kind: 'cue', text: 'heard "' + word + '"' });
     if (!this.W[word]) { this.W[word] = Object.fromEntries(ACTIONS.map(b => [b, 0.02 + RNG() * 0.03])); this.ensure(word); renderCueButtons(); }
     if (this.cur === 'sleep') this.wake('heard "' + word + '"');
     const tr = ON('L.organic') ? PT('trainability') : 0;
@@ -102,16 +108,17 @@ const brain = {
     // everyday non compliance is high (Browne: 44 percent of sit and down ignored); more when he is not watching
     const watched = HUM.lookingAtDog || (HUM.task && HUM.task.name === 'train');
     if (ON('L.organic') && RNG() < clamp(TV('Br.ignore') - 0.08 * tr + 0.4 * distract + (watched ? 0 : 0.15), 0.03, 0.85) && this.V(word, pick(ACTIONS)) < 2) {
-      this.trial = { cue: word, action: 'ignored', t0: now, done: now, rewarded: false }; dog.earPerk = Math.max(dog.earPerk, 0.5); this.say(pick(['...', 'hm?', '']), 1); renderHeat(word, null); return;
+      this.trial = { cue: word, action: 'ignored', t0: now, done: now, rewarded: false, ev: cueEv }; dog.earPerk = Math.max(dog.earPerk, 0.5); this.say(pick(['...', 'hm?', '']), 1); renderHeat(word, null); return;
     }
     let best = 'none', bs = 0.75 + distract;
     for (const a of ACTIONS) { const g = -Math.log(-Math.log(RNG() + 1e-9) + 1e-9) * 0.55; const s = this.V(word, a) * 4 * (1 + 0.1 * tr) + g; if (s > bs) { bs = s; best = a; } }
     // nothing strong: offer something it has been rewarded for before (free operant history), or a random guess
     if (best === 'none' && RNG() < 0.5 && distract < 0.8) { best = ON('L.learn') ? this.sampleOffer() : pick(['sit', 'down', 'spin', 'speak', 'paw', 'come']); this.say('this?', 2); }
-    this.trial = { cue: word, action: best, t0: now, done: null, rewarded: false };
+    this.trial = { cue: word, action: best, t0: now, done: null, rewarded: false, ev: cueEv };
     dog.postureT.sit = dog.postureT.down = dog.postureT.bow = dog.postureT.reach = 0; dog.pawLift = 0; motor.mode = 'stop';
     const lat = ON('L.noise') ? ORG.exg(TV('Br.cueMu') * (1 - 0.15 * tr), 0.08, TV('Br.cueTau') * (1 - 0.2 * tr)) : 0;
     const go = () => {
+      this.kindNext = 'cue'; this.causeNext = cueEv;
       if (best === 'none') { this.set('confused', 'did not understand "' + word + '"'); this.cmd = { action: 'none', t: 0 }; }
       else { this.cmd = { action: best, t: 0, cue: word }; this.set('obey', '"' + word + '" means ' + best + ' (V=' + this.V(word, best).toFixed(2) + ', latency ' + Math.round(lat * 1000) + ' ms)'); }
       this.trace.unshift({ cue: word, action: best, t: now, done: null }); if (this.trace.length > 8) this.trace.pop();
@@ -123,6 +130,7 @@ const brain = {
   // a trick the dog does on its own (free operant): reward can later attach it to whatever cue the human says
   offerTrick(a) { this.offered = { a, t: now }; this.trace.unshift({ cue: null, action: a, t: now, done: now }); if (this.trace.length > 8) this.trace.pop(); },
   reward(r, src) {
+    EV.emit({ agent: 'dog', kind: 'reward', text: (r > 0 ? 'got ' : 'was told off: ') + src + ' (' + (r > 0 ? '+' : '') + r.toFixed(1) + ')', cause: this.trial && now - this.trial.t0 < 25 ? this.trial.ev : null });
     this.v = clamp(this.v + 0.3 * r, -1, 1); this.a = clamp(this.a + 0.12 * Math.abs(r), 0, 1);
     if (r > 0) { this.d.social = clamp(this.d.social - 0.15 * r, 0, 1); this.bond = clamp(this.bond + 0.012 * r, 0, 1); }
     if (r < 0) this.negT = now;
@@ -153,11 +161,12 @@ const brain = {
       const age = now - (e.done || e.t), w = Math.exp(-age / TV('Ln.trace')); if (w < 0.05) continue;
       if (e.action === 'none' || e.action === 'ignored') continue;
       if (e.cue) {
-        this.ensure(e.cue); const Vv = this.V(e.cue, e.action), al = this.al[e.cue], k = base * al * w * Math.abs(r);
+        this.ensure(e.cue); const Vv = this.V(e.cue, e.action), al = this.al[e.cue], k = base * al * w * Math.abs(r); const tap = { cue: e.cue, action: e.action, before: Vv, credit: w, r, src, t: now, age };
         if (lam > Vv) { this.W[e.cue][e.action] = clamp(this.W[e.cue][e.action] + k * (lam - Vv), 0, 1.2); for (const a of ACTIONS) if (a !== e.action) this.W[e.cue][a] *= 1 - k * 0.15; }
         else this.N[e.cue][e.action] = clamp(this.N[e.cue][e.action] + k * (Vv - lam), 0, 1.2);
         this.al[e.cue] = clamp((1 - th) * al + th * Math.abs(lam - Vv), 0.05, 1);
         txt = (r > 0 ? 'learned: ' : 'unlearned: ') + '"' + e.cue + '" -> ' + e.action + ' V=' + this.V(e.cue, e.action).toFixed(2) + ' (credit ' + Math.round(w * 100) + '%)';
+        tap.after = this.V(e.cue, e.action); this.lastLearn = tap;
         renderHeat(e.cue, e.action);
       }
       this.offer[e.action] = clamp((this.offer[e.action] || 0.1) + (r > 0 ? 0.25 : -0.15) * w * TV('Ln.offer'), 0, 3);
@@ -219,7 +228,7 @@ const brain = {
     this.utilities();
     this.choose(dt);
     this.t += dt;
-    if ($('manual').checked) { this.cmd = null; for (const k in dog.postureT) dog.postureT[k] = 0; dog.pawLift = 0; const s = percepts.ball; if (s && s.vis) lookAt(s.pos); else lookForward(-0.05); $('behWhy').textContent = 'manual drive: you are the motor cortex'; return; }
+    if ($('manual').checked) { this.cmd = null; for (const k in dog.postureT) dog.postureT[k] = 0; dog.pawLift = 0; const s = percepts.ball; if (s && s.vis) lookAt(s.pos); else lookForward(-0.05); this.why = 'manual drive: you are the motor cortex'; this.whyKind = 'you'; return; }
     if (this.pending && this.pending.look) lookAt(this.pending.look); else this.run(dt);
     this.sayT -= dt; if (this.sayT < -4 + RNG()) this.say(pick(LINES[this.cur] || ['...']), 2.4);
   },
@@ -302,24 +311,39 @@ const brain = {
   },
   choose(dt) {
     const U = this.util;
-    if (this.pending) { if (now >= this.pending.at) { const p = this.pending; this.pending = null; if (p.fn) p.fn(); else this.set(p.b, p.why); } return; }
+    if (this.pending) { if (now >= this.pending.at) { const p = this.pending; this.pending = null; if (p.fn) p.fn(); else { this.kindNext = p.kind; this.causeNext = p.ev; this.set(p.b, p.why); } } return; }
     let best = 'idle', bv = -1; for (const b of BEH) if (U[b] > bv) { bv = U[b]; best = b; }
-    if (!ON('L.sample')) { U[this.cur] += 0.12; if (U[this.cur] >= bv) best = this.cur; if (best !== this.cur) this.set(best, whyOf(best)); return; }
+    if (!ON('L.sample')) { U[this.cur] += 0.12; if (U[this.cur] >= bv) best = this.cur; if (best !== this.cur) { this.lastChoice = { at: now, U: Object.assign({}, U), cur: this.cur, best, picked: best, path: 'argmax' }; this.kindNext = 'top'; this.causeNext = this.choiceEv(best, whyOf(best), 'top'); this.set(best, whyOf(best)); } return; }
     const commit = TV('Br.commit') * (1 + 0.35 * PT('independence'));
     const curU = U[this.cur] + (this.done ? -1 : commit);
     const lat = mul => ON('L.noise') ? ORG.exg(TV('Br.reactMu') * mul * (1 - 0.12 * PT('reactivity')), 0.06, TV('Br.reactTau') * mul) : 0;
     // react: something much better that cannot wait starts after a short heavy tailed latency, while the head already turns to it
     if (best !== this.cur && bv > curU + 0.05 && (REACTIVE.has(best) || (this.forced && this.forced.b === best && this.forced.until > now))) {
-      this.pending = { b: best, why: whyOf(best), at: now + lat(1), look: this.causeOf(best) }; return;
+      this.pending = { b: best, why: whyOf(best), at: now + lat(1), look: this.causeOf(best) };
+      { const P = this.pending, kind = this.forced && this.forced.b === best && this.forced.until > now ? 'forced' : 'react'; P.kind = kind; this.lastChoice = { at: now, U: Object.assign({}, U), cur: this.cur, curU, commit, best, picked: best, path: 'react', lat: P.at - now }; P.ev = this.choiceEv(best, P.why, kind, P.at - now); }
+      return;
     }
     // otherwise choose only when the current act is done or its dwell ran out: sample, so the best option usually but not always wins
     if (this.done || now > this.dwell) {
       const T = TV('Br.temp'), ex = BEH.map(b => [b, Math.exp(((b === this.cur ? curU : U[b]) - bv) / T)]);
       let tot = ex.reduce((s, x) => s + x[1], 0), r = RNG() * tot, pickB = best; for (const [b, w] of ex) if ((r -= w) <= 0) { pickB = b; break; }
       this.dwell = now + ORG.exg(TV('Br.dwellMu'), 1, TV('Br.dwellTau'));
-      if (pickB !== this.cur) this.pending = { b: pickB, why: whyOf(pickB) + (pickB !== best ? ' (sampled, not the top score)' : ''), at: now + lat(0.6), look: this.causeOf(pickB) };
+      if (pickB !== this.cur) this.pending = { b: pickB, why: whyOf(pickB) + (pickB !== best ? ', took a lower scored option this time' : ''), at: now + lat(0.6), look: this.causeOf(pickB) };
       else this.done = false;
+      this.lastChoice = { at: now, U: Object.assign({}, U), cur: this.cur, curU, commit, T, probs: Object.fromEntries(ex.map(([b, w]) => [b, w / tot])), best, picked: pickB, path: 'sample' };
+      if (pickB !== this.cur) { const P = this.pending; P.kind = pickB !== best ? 'sampled' : 'top'; this.lastChoice.lat = P.at - now; P.ev = this.choiceEv(pickB, P.why, P.kind, P.at - now); }
     }
+  },
+  // the sense event a choice answers: the newest sighting of the thing causeOf() turns the head to
+  causeKey(b) { return ({ fetch: 'ball', chase: 'squirrel', greet: 'you', beg: 'you', playbow: 'you', obey: 'you', eat: 'bowl', treat: 'treat', sniff: 'scent', investigate: 'point' })[b] || null; },
+  choiceEv(b, why, kind, lat) {
+    const k = this.causeKey(b); let cause = null;
+    if (k === 'scent') cause = this.evScent || null;
+    else if (k === 'treat') { for (const id in percepts) if (id.startsWith('treat') && percepts[id].ev) cause = Math.max(cause || 0, percepts[id].ev); }
+    else if (k === 'point') cause = this.evPoint || null;
+    else if (k && percepts[k] && percepts[k].ev) cause = percepts[k].ev;
+    if (cause && EV.get(cause) && SIMQ.t - EV.get(cause).t > 60) cause = null;
+    return EV.emit({ agent: 'dog', kind: 'choice', b, text: b + (why ? ', ' + why : '') + (lat > 0.02 ? ', ' + (kind === 'react' || kind === 'forced' ? 'react' : 'start') + ' in ' + Math.round(lat * 1000) + ' ms' : ''), cause });
   },
   causeOf(b) {
     const p = id => percepts[id] && percepts[id].seen > -1e8 ? percepts[id].pos.clone() : null;
@@ -333,6 +357,7 @@ const brain = {
       const dd = dist2(dog.pos, target), z = -0.4 + (proximal ? 1.2 : 0.2) + (dynamic ? 0.6 : 0.1) + 1.4 * (this.bond - 0.5) - 0.3 * PT('independence') - dd * 0.05;
       follow = RNG() < 1 / (1 + Math.exp(-z * 1.6));
     }
+    this.evPoint = EV.emit({ agent: 'dog', kind: 'sense', sense: 'eye', text: (follow ? 'saw his point and followed it' : 'saw his point, ignored it') });
     if (follow) { this.inv = { p: target.clone(), until: now + 14, why: 'followed the point' }; this.force('investigate', 1.2); this.remember('the human pointed somewhere', 1.5); }
     else { this.pointT = now; this.say(pick(['?', 'your hand?', 'what']), 1.6); }
   },

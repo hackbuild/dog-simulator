@@ -72,6 +72,7 @@ you turn it on, so the file opens offline.
     npm run scenarios -- compare --set public      # the set CI runs
     npm run check:speed -- dist/dog-simulator.html --seed 7 --seconds 60
     node tools/runner/gait-probe.mjs dist/dog-simulator.html   # neural gait speed and paw slide
+    node tools/runner/ux-walk.mjs shots|personas|frames       # phones and desktops, see docs/browser-checks.md
 
 puppeteer-core drives the system Chrome; requests are served from pinned
 local files and any other request fails the run.
@@ -86,6 +87,23 @@ local files and any other request fails the run.
 in RULES.md and CONTRIBUTING.md.
 
 ## What is verified, and what is not
+
+### Verified, 2026-11-23, page on the hack.build design system
+
+- The page is rebuilt on hackbuild-ui 0.5.0 (vendored pinned by commit,
+  class layer and fonts inlined), mobile first: the yard pinned at 46
+  percent of the height on a phone with five tabs under it (play, minds,
+  senses, body, more), a first run welcome card, one capability panel
+  (turn things on) for every optional model and permission, and a
+  minds tab for the dog and the human: goal, why and how it was chosen,
+  drive and need sparklines over 120 s, choice bars with score, chance
+  and commitment, senses with the saliency pull, memory and learned
+  words, his plan, model calls, and one cause timeline.
+- The minds tab reads read only taps (`EV` in sim/prelude.js,
+  `brain.why`, `brain.lastChoice`, `HUM.lastPlan`, `vlm.log` and kin);
+  none draws from RNG. 31 of 31 cpg, 12 of 12 neural and 13 of 13
+  public goldens replay identical on the new build (measured).
+- docs/browser-checks.md: widths, persona results and frame times.
 
 ### Verified, 2026-11-23, clean-room motion-net
 

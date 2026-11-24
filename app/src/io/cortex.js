@@ -4,20 +4,27 @@ const VLM = {
   gemma: { id: 'onnx-community/gemma-4-E2B-it-ONNX', rev: '6f21c99d7e18237f8d2ce92aadfdbfeba877f63a', name: 'gemma 4 e2b', licence: 'weights apache 2.0' },
   lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', rev: '308cf784b35ce25274540e1bf5592c33a0433469', name: 'lfm2-vl 450m', licence: 'weights lfm open license 1.0' }
 };
-const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'gemma'), nid: 0, wait: new Map(), ms: 0 };
-$('vlmPick').value = vlm.kind;
-$('vlmPick').onchange = e => { vlm.kind = e.target.value; store.set('vlm', vlm.kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; setVlm('off'); } };
-function setVlm(st) { $('cortexSt').textContent = st; const ready = vlm.state === 'ready'; $('bThink').disabled = !ready; $('askIn').disabled = !ready; $('bVlmLoad').disabled = vlm.state === 'loading' || ready; }
+// vlm.log: the last 40 model calls of both agents, newest first (read by the minds tab)
+const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'lfm'), nid: 0, wait: new Map(), ms: 0, progress: null, err: '', log: [] };
+function vlmLog(e) { vlm.log.unshift(e); if (vlm.log.length > 40) vlm.log.pop(); }
+function vlmPick(kind) { if (!VLM[kind] || kind === vlm.kind) return; vlm.kind = kind; store.set('vlm', kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; vlm.progress = null; setVlm('off'); } }
+// the cortex controls in minds stay disabled, with the reason beside them, until a model is ready
+function setVlm(st) {
+  vlm.label = st; $('cortexSt').textContent = st; const ready = vlm.state === 'ready';
+  $('bThink').disabled = !ready; $('askIn').disabled = !ready; $('autoThink').disabled = !ready; $('autoThinkL').classList.toggle('is-disabled', !ready);
+  $('cortexWhy').textContent = ready ? '' : !navigator.gpu ? 'no webgpu adapter. the cortex needs it, so these stay off.' : vlm.state === 'loading' ? 'the model is still downloading.' : 'no cortex model loaded. load one in turn things on.';
+  if (typeof capsRefresh === 'function') capsRefresh();
+}
 setVlm(navigator.gpu ? 'off' : 'needs webgpu');
 function vlmLoad() {
-  if (!navigator.gpu) { toast('no webgpu in this browser. the cortex stays off.'); return; }
+  if (!navigator.gpu) { toast('no webgpu adapter. the cortex stays off.'); return; }
   if (vlm.worker) return;
   const BODY = document.getElementById('vlmWorker').textContent;
   const onmsg = e => {
     const m = e.data;
-    if (m.t === 'progress') { vlm.alive = true; const p = m.total ? m.loaded / m.total : 0; $('vlmBar').style.width = (p * 100).toFixed(1) + '%'; $('vlmPct').textContent = Math.round(p * 100) + '%'; $('cortexSt').textContent = (m.loaded / 1e6).toFixed(0) + ' / ' + (m.total / 1e6).toFixed(0) + ' MB' + (vlm.inPage ? ' (in page)' : ''); }
-    else if (m.t === 'ready') { vlm.state = 'ready'; $('vlmBar').style.width = '100%'; $('vlmPct').textContent = '100%'; setVlm('ready ' + VLM[vlm.kind].name + ', ' + VLM[vlm.kind].licence); console.info(VLM[vlm.kind].id + ' at ' + VLM[vlm.kind].rev + ': ' + VLM[vlm.kind].licence); toast('cortex online: ' + VLM[vlm.kind].name + '. ' + VLM[vlm.kind].licence + '.'); }
-    else if (m.t === 'answer' || m.t === 'error') { if (m.t === 'error' && m.id == null) { vlm.state = 'off'; setVlm('failed: ' + m.msg.slice(0, 60)); if (vlm.worker) vlm.worker.terminate(); vlm.worker = null; return; } const w = vlm.wait.get(m.id); vlm.wait.delete(m.id); if (w) (m.t === 'answer' ? w.res(m) : w.rej(new Error(m.msg))); }
+    if (m.t === 'progress') { vlm.alive = true; vlm.progress = { loaded: m.loaded, total: m.total }; $('cortexSt').textContent = (m.loaded / 1e6).toFixed(0) + ' / ' + (m.total / 1e6).toFixed(0) + ' MB' + (vlm.inPage ? ' (in page)' : ''); if (typeof capsRefresh === 'function') capsRefresh(true); }
+    else if (m.t === 'ready') { vlm.state = 'ready'; vlm.progress = null; setVlm('ready, ' + VLM[vlm.kind].name); console.info(VLM[vlm.kind].id + ' at ' + VLM[vlm.kind].rev + ': ' + VLM[vlm.kind].licence); toast('cortex on: ' + VLM[vlm.kind].name + '. ' + VLM[vlm.kind].licence + '.'); }
+    else if (m.t === 'answer' || m.t === 'error') { if (m.t === 'error' && m.id == null) { vlm.state = 'failed'; vlm.err = m.msg.slice(0, 80).toLowerCase(); vlm.progress = null; setVlm('failed'); if (vlm.worker) vlm.worker.terminate(); vlm.worker = null; return; } const w = vlm.wait.get(m.id); vlm.wait.delete(m.id); if (w) (m.t === 'answer' ? w.res(m) : w.rej(new Error(m.msg))); }
   };
   const inPage = () => { // fallback when module workers from blob URLs are refused
     vlm.inPage = true;
@@ -25,7 +32,7 @@ function vlmLoad() {
     vlm.worker = { postMessage: m => { setTimeout(() => h(m), 0); }, terminate() {} };
     vlm.worker.postMessage({ t: 'load', id: VLM[vlm.kind].id, rev: VLM[vlm.kind].rev, kind: vlm.kind });
   };
-  vlm.state = 'loading'; vlm.alive = false; setVlm('loading ' + VLM[vlm.kind].name);
+  vlm.state = 'loading'; vlm.alive = false; vlm.err = ''; vlm.progress = { loaded: 0, total: 0 }; setVlm('loading ' + VLM[vlm.kind].name);
   try {
     const src = 'const h = (new Function("post", ' + JSON.stringify(BODY) + '))(m => postMessage(m)); onmessage = e => h(e.data);';
     const w = new Worker(URL.createObjectURL(new Blob([src], { type: 'text/javascript' })), { type: 'module' });
@@ -35,7 +42,6 @@ function vlmLoad() {
     w.postMessage({ t: 'load', id: VLM[vlm.kind].id, rev: VLM[vlm.kind].rev, kind: vlm.kind });
   } catch (e) { inPage(); }
 }
-$('bVlmLoad').onclick = vlmLoad;
 let vlmChain = Promise.resolve();
 function vlmAsk(canvas, prompt, max = 80) {
   const job = vlmChain.then(() => vlmAsk1(canvas, prompt, max)); vlmChain = job.catch(() => {}); return job;
@@ -53,11 +59,14 @@ let thinking = false;
 // automatic cortex calls go through @hackbuild/drives InferenceScheduler: one at a time, at least
 // Br.cortexMin s apart while something important happened, otherwise 60 s apart
 const cortexOpts = { minInterval: 60 }, cortexSched = new HDRIVE.InferenceScheduler(cortexOpts);
+// memory stream retrieval: recency (0.995 per game hour) plus importance plus relevance to what is in view (Park et al. 2023)
+function memRank(vis) { const hNow = CLOCK.day * 24 + CLOCK.h; return brain.mem.map(m => ({ m, s: Math.pow(0.995, hNow - m.h) + m.imp / 6 + (vis.some(v => m.txt.includes(v)) ? 0.5 : 0) })).sort((a, b) => b.s - a.s); }
 async function think() {
   if (vlm.state !== 'ready' || thinking) return; thinking = true; $('cortexSt').textContent = 'thinking';
   const d = brain.d, vis = Object.values(percepts).filter(p => p.vis).map(p => p.id.replace(/\d+$/, ''));
-  // memory stream retrieval: recency (0.995 per game hour) plus importance plus relevance to what is in view (Park et al. 2023)
-  const hNow = CLOCK.day * 24 + CLOCK.h, mems = brain.mem.map(m => ({ m, s: Math.pow(0.995, hNow - m.h) + m.imp / 6 + (vis.some(v => m.txt.includes(v)) ? 0.5 : 0) })).sort((a, b) => b.s - a.s).slice(0, 4).map(x => x.m.txt);
+  const ranked = memRank(vis).slice(0, 4), mems = ranked.map(x => x.m.txt);
+  brain.lastRecall = { t: now, items: ranked.map(x => ({ m: x.m, s: x.s })) };
+  const callT = now, cause = EV.n;
   const prompt = `You are the mind of a dog in a backyard. The picture is what your eyes see right now. How you feel: hunger ${pct(d.hunger)}, tiredness ${pct(d.fatigue)}, wanting to play ${pct(d.play)}, wanting company ${pct(d.social)}, curiosity ${pct(d.curiosity)}, urge to chase ${pct(d.prey)}. ${ball.held ? 'You have the ball in your mouth.' : ''} Your nose and ears also notice: ${vis.join(', ') || 'nothing much'}. It is ${Math.floor(CLOCK.h)} o'clock. Things you remember: ${mems.join('; ') || 'nothing yet'}.
 Reply in exactly three lines and nothing else:
 SAW: what you see, under 10 words
@@ -66,15 +75,17 @@ GOAL: one word from explore, sniff, eat, fetch, chase, greet, beg, playbow, zoom
   try {
     const r = await vlmAsk(rawEye, prompt, 72); vlm.ms = r.ms;
     const txt = r.text.trim();
+    vlmLog({ t: callT, who: 'dog', kind: 'think', prompt, text: txt, ms: r.ms, tokens: r.tokens, ok: true });
     const saw = (txt.match(/SAW:\s*(.+)/i) || [])[1] || '';
     const thought = ((txt.match(/THOUGHT:\s*(.+)/i) || [])[1] || txt.split('\n')[0] || '...').replace(/^["']|["']$/g, '');
     const gl = ((txt.match(/GOAL:\s*(.+)/i) || [])[1] || txt).toLowerCase();
     const goal = BEH.find(b => new RegExp('\\b' + b + '\\b').test(gl)) || 'idle';
     brain.cortexGoal = { b: goal, until: now + 20 };
+    EV.emit({ agent: 'dog', kind: 'model', text: 'cortex in ' + (r.ms / 1000).toFixed(1) + ' s: "' + thought.trim().slice(0, 60) + '", goal ' + goal + ', +0.35 for 20 s', cause });
     brain.say(thought.slice(0, 80), 5);
     $('cortexOut').textContent = (saw ? 'saw ' + saw.trim() + '. ' : '') + '"' + thought.trim() + '" goal: ' + goal;
     $('cortexSt').textContent = 'ready, ' + (r.ms / 1000).toFixed(1) + ' s, ' + r.tokens + ' tok';
-  } catch (e) { $('cortexSt').textContent = 'error'; console.warn('cortex', e); }
+  } catch (e) { $('cortexSt').textContent = 'error'; vlmLog({ t: callT, who: 'dog', kind: 'think', prompt, text: String(e.message || e), ms: 0, tokens: 0, ok: false }); console.warn('cortex', e); }
   thinking = false;
 }
 $('bThink').onclick = think;
@@ -83,8 +94,11 @@ $('askIn').addEventListener('keydown', async e => {
   const q = e.target.value.trim().slice(0, 200); e.target.value = ''; thinking = true; $('cortexSt').textContent = 'thinking';
   brain.named();
   try {
-    const r = await vlmAsk(rawEye, `You are a dog. The picture is what you see right now with your own eyes. Your human asks: "${q}". Answer in one or two short sentences, in a dog's voice.`, 64);
+    const prompt = `You are a dog. The picture is what you see right now with your own eyes. Your human asks: "${q}". Answer in one or two short sentences, in a dog's voice.`;
+    const r = await vlmAsk(rawEye, prompt, 64);
     const a = r.text.trim().split('\n').filter(Boolean).slice(0, 2).join(' ');
+    vlmLog({ t: now, who: 'dog', kind: 'ask', prompt, text: r.text.trim(), ms: r.ms, tokens: r.tokens, ok: true });
+    EV.emit({ agent: 'dog', kind: 'model', text: 'you asked "' + q.slice(0, 40) + '", it answered in ' + (r.ms / 1000).toFixed(1) + ' s' });
     $('cortexOut').textContent = 'you: ' + q + '\ndog: ' + a; brain.say(a.slice(0, 90), 6);
     $('cortexSt').textContent = 'ready, ' + (r.ms / 1000).toFixed(1) + ' s';
   } catch (err) { $('cortexSt').textContent = 'error'; }

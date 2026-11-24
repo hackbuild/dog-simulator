@@ -80,7 +80,8 @@ export function route(url) {
 /**
  * Launch Chrome and open a page with routing on, through @hackbuild/scenario's open().
  * opts.url: file path or URL; opts.offline: abort every non file request
- * (the self contained build check); opts.gpu: "swiftshader" (default, lockstep) or "default".
+ * (the self contained build check); opts.gpu: "swiftshader" (default, lockstep) or "default";
+ * opts.beforeGoto(page): runs before the first navigation (device emulation, init scripts).
  */
 export async function open(opts) {
   const routes = [
@@ -91,7 +92,7 @@ export async function open(opts) {
   let o;
   for (let k = 1; ; k++) {
     try {
-      o = await openPage({ url: opts.url, hash: opts.hash, offline: opts.offline, routes, chrome: CHROME, headless: opts.headless ?? true, width: opts.width ?? 1360, height: opts.height ?? 860, gpu: opts.gpu ?? "swiftshader", args: EXTRA_ARGS });
+      o = await openPage({ url: opts.url, hash: opts.hash, offline: opts.offline, routes, chrome: CHROME, headless: opts.headless ?? true, width: opts.width ?? 1360, height: opts.height ?? 860, gpu: opts.gpu ?? "swiftshader", args: EXTRA_ARGS, beforeGoto: opts.beforeGoto });
       break;
     } catch (e) { if (k >= 3 || !/launch|WS endpoint|Timed out/i.test(String(e.message))) throw e; await new Promise((r) => setTimeout(r, 5000 * k)); }
   }

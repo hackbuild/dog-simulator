@@ -23,6 +23,7 @@ const attention = {
     for (let i = 0; i < S.length; i++) S[i] = g * (mI[i] + 0.7 * mB[i] + 0.6 * mE[i] + 1.7 * mM[i]);
     // top down: the drives raise what matters, projected into the eye image
     const want = { you: 0.4 + brain.d.social + (brain.bond || 0.5) * 0.5, ball: brain.d.play * 1.4, squirrel: brain.d.prey * 2 + 0.6, bowl: brain.d.hunger * 0.8, bone: brain.d.play * 0.5 };
+    this.want = want;
     for (const p of Object.values(percepts)) {
       if (!p.vis) continue; const k = want[p.kind] ?? (p.kind === 'treat' ? 1.2 + brain.d.hunger : 0.2);
       const v = tmpV[0].copy(p.pos).project(eyeCam); if (v.z > 1 || Math.abs(v.x) > 1 || Math.abs(v.y) > 1) continue;
@@ -42,8 +43,10 @@ const attention = {
     if (bi < 0) { this.focusP = null; this.label = ''; return; }
     const x = bi % W, y = Math.floor(bi / W), ndc = V3((x + 0.5) / W * 2 - 1, 1 - (y + 0.5) / Hh * 2, 0.5).unproject(eyeCam), dir = ndc.sub(eyeCam.position).normalize();
     // snap to a known object near that ray, else the ground under it
-    let best = null, bd = 0.25, lab = '';
-    for (const p of Object.values(percepts)) { if (!p.vis) continue; const to = p.pos.clone().sub(eyeCam.position), dd = to.length(), c = to.normalize().dot(dir); const a = Math.acos(clamp(c, -1, 1)); if (a < bd) { bd = a; best = p.pos.clone(); lab = p.id.replace(/\d+$/, ''); } }
+    let best = null, bd = 0.25, lab = '', bid = null;
+    for (const p of Object.values(percepts)) { if (!p.vis) continue; const to = p.pos.clone().sub(eyeCam.position), dd = to.length(), c = to.normalize().dot(dir); const a = Math.acos(clamp(c, -1, 1)); if (a < bd) { bd = a; best = p.pos.clone(); lab = p.id.replace(/\d+$/, ''); bid = p.id; } }
+    if (bid !== this.focusId && bid) EV.emit({ agent: 'dog', kind: 'sense', sense: 'eye', text: 'looked at ' + (lab === 'you' ? 'moheeb' : lab), cause: percepts[bid].ev || null });
+    this.focusId = bid; this.focusV = bv;
     if (!best) { const t = dir.y < -0.02 ? (eyeCam.position.y - 0.05) / -dir.y : 6; best = eyeCam.position.clone().addScaledVector(dir, Math.min(t, 8)); lab = 'something'; }
     this.focusP = best; this.label = lab; this.focusT = now;
     this.ior.push({ dir: best.clone().sub(eyeCam.position).normalize(), until: now + TV('Se.ior') * (0.7 + RNG() * 0.6) });
@@ -76,6 +79,7 @@ function loomCheck(dt) {
     const tau = HSENSE.timeToContact(q.th, th, now - q.t); if (tau === Infinity) continue;
     const thr = TV('Se.loom') * (1 + 0.2 * PT('reactivity') + 0.15 * PT('fearfulness'));
     if (tau < thr && th > 0.04 && (!p.loomT || now - p.loomT > 2.5)) {
+      p.ev = EV.emit({ agent: 'dog', kind: 'sense', sense: 'eye', text: (p.id === 'you' ? 'moheeb' : p.id.replace(/\d+$/, '')) + ' came at me fast, startled' });
       p.loomT = now; brain.startle = 0.5; dog.hop = 0.035; dog.earPerk = PT('fearfulness') > 0.5 ? -1 : 1; lookAt(p.pos);
       brain.a = clamp(brain.a + 0.3, 0, 1); brain.remember((p.id === 'you' ? 'my human' : p.id.replace(/\d+$/, '')) + ' came at me fast', 2);
       if (PT('fearfulness') > 0.8 && p.kind === 'you') brain.stimulus('fear');
@@ -146,7 +150,7 @@ function sniffTick(dt, active) {
   const n = headWorld(dog.noseL, tmpV[0]), side = V3(Math.cos(dog.yaw + dog.head.yaw), 0, -Math.sin(dog.yaw + dog.head.yaw)).multiplyScalar(0.03);
   sniff.cL = scentAt(n.x + side.x, n.z + side.z); sniff.cR = scentAt(n.x - side.x, n.z - side.z); sniff.c = (sniff.cL + sniff.cR) / 2;
   sniff.mean += (sniff.c - sniff.mean) * 0.15;
-  if (sniff.c > Math.max(0.03, sniff.mean * 1.4)) sniff.whiffT = now;
+  if (sniff.c > Math.max(0.03, sniff.mean * 1.4)) { if (now - sniff.whiffT > 3) brain.evScent = EV.emit({ agent: 'dog', kind: 'sense', sense: 'nose', text: 'caught a whiff, ' + sniff.c.toFixed(3) + (sniff.cL > sniff.cR ? ', stronger left' : ', stronger right') }); sniff.whiffT = now; }
   if (now - sniff.sndT > 0.12) { sniff.sndT = now; sniffSound(n); }
   return true;
 }

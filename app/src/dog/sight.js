@@ -121,6 +121,8 @@ function sense(t) {
     if (o.id === 'ball' && ball.held) vis = false;
     if (brain.cur === 'sleep' && dog.posture.down > 0.7 && (!ON('L.sleep') || brain.stage === 'nrem' || brain.stage === 'rem')) vis = false;
     const p = percepts[o.id] || (percepts[o.id] = { id: o.id, seen: -1e9, pos: V3(), vis: false, sal: 0, kind: o.kind || o.id, net: 0 });
+    // read only tap: a sense event when something comes into view after 3 s out of it
+    if (vis && !p.vis && t - p.seen > 3) p.ev = EV.emit({ agent: 'dog', kind: 'sense', sense: 'eye', text: (p.seen > -1e8 ? 'saw ' : 'first saw ') + (o.id === 'you' ? 'moheeb' : o.id.replace(/\d+$/, '')) + ' at ' + dist.toFixed(1) + ' m' });
     p.vis = vis; p.obj = o.obj; p.dist = dist; p.speed = speed;
     if (vis) { p.seen = t; p.pos.copy(o.p); p.vel = o.v.clone(); }
     if (!vis && p.seen > -1e8 && !['bowl', 'bed'].includes(p.id) && ON('L.organic')) { if (!p.err) p.err = V3(ORG.gauss(), 0, ORG.gauss()); if (t - p.seen > 240) { p.seen = -1e9; p.err = null; } } else if (vis) p.err = null;

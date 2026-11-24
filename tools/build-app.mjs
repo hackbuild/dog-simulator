@@ -17,19 +17,23 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const SRC = join(ROOT, "app/src");
 const NM = join(ROOT, "node_modules");
 
+// the hack.build design system (hackbuild-ui, vendored pinned by commit in tools/vendor, sha256 in
+// tools/vendor/SHA256SUMS): its class layer and its fonts as data urls, so the page opens from
+// file:// and offline
+const HBUI = join(NM, "@virgilvox/hackbuild-ui/dist/styles");
 const FONTS = [
-  ["IBM Plex Mono", "ibm-plex-mono", [400, 600]],
-  ["Permanent Marker", "permanent-marker", [400]],
-  ["Special Elite", "special-elite", [400]],
-  ["VT323", "vt323", [400]],
+  ["IBM Plex Mono", "ibm-plex-mono"],
+  ["Permanent Marker", "permanent-marker"],
+  ["Special Elite", "special-elite"],
+  ["VT323", "vt323"],
+  ["Libre Baskerville", "libre-baskerville"],
 ];
-function fontCss() {
-  const out = [];
-  for (const [family, pkg, weights] of FONTS) for (const w of weights) {
-    const f = join(NM, "@fontsource", pkg, "files", `${pkg}-latin-${w}-normal.woff2`);
-    out.push(`@font-face{font-family:'${family}';font-style:normal;font-weight:${w};font-display:block;src:url(data:font/woff2;base64,${readFileSync(f).toString("base64")}) format('woff2')}`);
-  }
-  return out.join("\n");
+const fontCss = () => readFileSync(join(HBUI, "fonts-inline.css"), "utf8");
+// hackbuild.css starts with @import "./tokens.css"; the tokens go inline in its place
+export function hbuiCss() {
+  const css = readFileSync(join(HBUI, "hackbuild.css"), "utf8");
+  // the header comment names the Google Fonts url; this page inlines the fonts instead
+  return sub(css, '@import "./tokens.css";', readFileSync(join(HBUI, "tokens.css"), "utf8")).replace(/^.*https:\/\/fonts\.googleapis\.com.*$/m, "");
 }
 
 export function scopeSource() {
@@ -77,11 +81,13 @@ export function licenceComment() {
     "dog-simulator, one self contained file. App code MIT (https://github.com/hackbuild/dog-simulator, LICENSE).",
     "Full list: LICENCES.md. The neural gait weights (CC-BY-NC-4.0) are fetched at run time and are not in this file.",
     "Bundled: three.js (MIT, see its header in the script), @hackbuild/gait, motion-net, tunables, senses, drives, cameras (MIT),",
-    "@dimforge/rapier3d-compat (Apache-2.0), fonts IBM Plex Mono and VT323 (OFL-1.1), Permanent Marker and",
-    "Special Elite (Apache-2.0), Quaternius Universal Animation Library clips (CC0-1.0).",
+    "@dimforge/rapier3d-compat (Apache-2.0), the hack.build design system @virgilvox/hackbuild-ui 0.5.0 (MIT, its class layer),",
+    "fonts IBM Plex Mono, VT323 and Libre Baskerville (OFL-1.1), Permanent Marker and Special Elite (Apache-2.0),",
+    "Quaternius Universal Animation Library clips (CC0-1.0).",
     "",
     "==== @dimforge/rapier3d-compat LICENSE", text("@dimforge/rapier3d-compat/LICENSE"),
-    ...FONTS.flatMap(([family, pkg]) => [`==== ${family} (@fontsource/${pkg}) LICENSE`, text(`@fontsource/${pkg}/LICENSE`)]),
+    "==== @virgilvox/hackbuild-ui LICENSE", text("@virgilvox/hackbuild-ui/LICENSE"),
+    ...FONTS.flatMap(([family, pkg]) => [`==== ${family} (hackbuild-ui fonts, from Fontsource 5.3.0) LICENSE`, text(`@virgilvox/hackbuild-ui/dist/styles/fonts/LICENSE-${pkg}.txt`)]),
   ];
   return `<!--\n${parts.join("\n")}\n-->\n`;
 }
@@ -101,6 +107,7 @@ export async function buildApp(opts = {}) {
   let html = readFileSync(join(SRC, "view/page.html"), "utf8");
   html = sub(html, "<!DOCTYPE html>\n", "<!DOCTYPE html>\n" + licenceComment());
   html = sub(html, "/*@@FONTS@@*/", fontCss());
+  html = sub(html, "/*@@HBUI@@*/", hbuiCss());
   html = sub(html, "/*@@APP@@*/", js);
   html = sub(html, "@@VOICE_B64@@", voice);
   html = sub(html, "@@ANIMS@@", readFileSync(join(ROOT, "legacy/pack/work/hanims_min.json"), "utf8"));

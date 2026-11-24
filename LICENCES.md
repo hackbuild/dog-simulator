@@ -63,17 +63,24 @@ and no build is published until that is settled.
 | onnxruntime-web | 1.20.0 | jsDelivr, loaded by the Pocket TTS worker | MIT |
 
 The built page carries a licence comment at its top: three.js (MIT, its own
-header), Rapier (Apache-2.0), the four fonts (Apache-2.0 and OFL-1.1), with
-the licence texts, written by `tools/build-app.mjs`.
+header), Rapier (Apache-2.0), hackbuild-ui (MIT) and its five fonts (Apache-2.0 and
+OFL-1.1), with the licence texts, written by `tools/build-app.mjs`.
 
 ## Fonts
 
 | family | legacy source | app source | licence |
 |---|---|---|---|
-| IBM Plex Mono | Google Fonts | @fontsource/ibm-plex-mono 5.3.0, embedded | OFL-1.1 |
-| Permanent Marker | Google Fonts | @fontsource/permanent-marker 5.3.0, embedded | Apache-2.0 (package metadata) |
-| Special Elite | Google Fonts | @fontsource/special-elite 5.3.0, embedded | Apache-2.0 (package metadata) |
-| VT323 | Google Fonts | @fontsource/vt323 5.3.0, embedded | OFL-1.1 |
+| IBM Plex Mono | Google Fonts | hackbuild-ui 0.5.0 `fonts-inline.css` (Fontsource 5.3.0, latin), embedded | OFL-1.1 |
+| Permanent Marker | Google Fonts | the same | Apache-2.0 (package metadata) |
+| Special Elite | Google Fonts | the same | Apache-2.0 (package metadata) |
+| VT323 | Google Fonts | the same | OFL-1.1 |
+| Libre Baskerville | none | the same, italic, unused by the page | OFL-1.1 |
+
+## Design system
+
+| name | version | source | licence |
+|---|---|---|---|
+| @virgilvox/hackbuild-ui | 0.5.0, commit fb95d7c, `tools/vendor/hackbuild-ui-0.5.0-fb95d7c.tgz`, sha256 in `tools/vendor/SHA256SUMS` (CI checks it) | its `tokens.css`, `hackbuild.css` and `fonts-inline.css` are inlined into the page | MIT |
 
 ## Development tools
 

@@ -16,18 +16,21 @@ function handleSpeech(text) {
   const known = words.find(w => ACTIONS.includes(w) || brain.W[w]);
   brain.cue(known || words[words.length - 1]);
 }
-let rec = null, micOn = false;
+let rec = null, micOn = false, micErr = '';
+const SR_OK = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+if (!SR_OK) { $('bMic').disabled = true; $('micNote').textContent = 'this browser has no speech recognition, so talk stays off. tap a cue or type one.'; }
+function micUI(on) { micOn = on; $('bMic').setAttribute('aria-pressed', String(on)); $('micLab').textContent = on ? 'listening, tap to stop' : 'talk'; if (typeof capsRefresh === 'function') capsRefresh(); }
 $('bMic').addEventListener('click', () => {
   audio();
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SR) { toast('no speech here; use the cue buttons or type a cue'); return; }
+  if (!SR) { toast('no speech recognition here. tap a cue or type one.'); return; }
   if (micOn && rec) { rec.stop(); return; }
   try {
     rec = new SR(); rec.continuous = true; rec.interimResults = true; rec.lang = 'en-US';
     rec.onresult = e => { for (let i = e.resultIndex; i < e.results.length; i++) { const r = e.results[i]; if (r.isFinal) handleSpeech(r[0].transcript); else $('heard').textContent = '... ' + r[0].transcript; } };
-    rec.onend = () => { micOn = false; $('bMic').classList.remove('on'); $('micLab').textContent = 'talk'; };
-    rec.onerror = e => { toast('speech: ' + e.error); };
-    rec.start(); micOn = true; $('bMic').classList.add('on'); $('micLab').textContent = 'listening';
-  } catch (e) { toast('speech blocked here; type a cue instead'); }
+    rec.onend = () => micUI(false);
+    rec.onerror = e => { micErr = e.error === 'not-allowed' ? 'the microphone was blocked. allow it in the address bar, then try again.' : 'speech recognition stopped: ' + e.error + '.'; toast(micErr); };
+    rec.start(); micErr = ''; micUI(true);
+  } catch (e) { micErr = 'speech recognition is blocked here. type a cue instead.'; toast(micErr); }
 });
 

@@ -13,6 +13,13 @@ const SIMQ = { t: 0, n: 0, q: [],
   after(s, fn) { this.q.push({ at: this.t + s, n: this.n++, fn }); this.q.sort((a, b) => a.at - b.at || a.n - b.n); },
   run(t) { this.t = t; while (this.q.length && this.q[0].at <= t) this.q.shift().fn(); } };
 const STEP = 1 / 60;
+// ---------- instrumentation: read only taps for the minds tab ----------
+// one event list for both agents, newest first. An event names its kind (sense, choice, act,
+// model, reward, cue), its agent and, when known, the id of the event that caused it. Emitting
+// never draws from RNG and never feeds back into the sim; the time is the sim queue clock.
+const EV = { log: [], n: 0,
+  emit(e) { e.id = ++this.n; e.t = SIMQ.t; this.log.unshift(e); if (this.log.length > 300) this.log.pop(); return e.id; },
+  get(id) { if (!id) return null; for (const e of this.log) if (e.id === id) return e; return null; } };
 // optional runtimes fetched on demand, never bundled
 window.HACKLE_LIB = { ort: 'https://cdn.jsdelivr.net/npm/onnxruntime-web@1.23.2/dist/ort.webgpu.bundle.min.mjs' };
 // ---------- asset locations: hosted blobs first, then files beside the page ----------
@@ -52,4 +59,4 @@ let toastT = 0;
 // ui copy is lowercase (RULES.md); unit symbols keep their case
 const uiText = s => String(s).toLowerCase().replace(/\bhz\b/g, 'Hz');
 const uiHtml = h => h.replace(/>([^<>]*)</g, (m, t) => '>' + uiText(t) + '<').replace(/\btitle="([^"]*)"/g, (m, v) => 'title="' + uiText(v) + '"');
-function toast(msg) { const t = $('toast'); t.textContent = uiText(msg); t.classList.add('on'); toastT = 2.2; }
+function toast(msg) { const t = $('toast'); t.textContent = uiText(msg); t.classList.add('is-on'); toastT = 3.2; }
