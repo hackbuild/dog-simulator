@@ -18,8 +18,8 @@ function handleSpeech(text) {
 }
 let rec = null, micOn = false, micErr = '';
 const SR_OK = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-if (!SR_OK) { $('bMic').disabled = true; $('micNote').textContent = 'this browser has no speech recognition, so talk stays off. tap a cue or type one.'; }
-function micUI(on) { micOn = on; $('bMic').setAttribute('aria-pressed', String(on)); $('micLab').textContent = on ? 'listening, tap to stop' : 'talk'; if (typeof capsRefresh === 'function') capsRefresh(); }
+if (!SR_OK) { $('bMic').hidden = true; $('micNote').textContent = 'this browser has no speech recognition, so talk is not on the yard. tap a cue or type one.'; }
+function micUI(on) { micOn = on; $('bMic').setAttribute('aria-pressed', String(on)); $('micLab').textContent = on ? 'listening' : 'talk'; if (typeof capsRefresh === 'function') capsRefresh(); }
 $('bMic').addEventListener('click', () => {
   audio();
   const SR = window.SpeechRecognition || window.webkitSpeechRecognition;

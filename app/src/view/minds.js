@@ -1,4 +1,4 @@
-// ---------- minds tab: what each agent wants, weighed, sensed and did ----------
+// ---------- brain and human tabs: what each agent wants, weighed, sensed and did ----------
 // View only. Everything here reads sim state and writes the DOM; nothing draws from RNG or feeds
 // back into the sim. History is sampled at 2 Hz of sim time, 240 samples (120 s) per series.
 const HIST = { n: 240, dt: 0.5, last: -1, dog: {}, hum: {}, dogTick: [], humTick: [], cur: '', task: '' };
@@ -67,6 +67,15 @@ function choiceBars(el, opts, sr) {
     return `<li class="hb-opt${o.chosen ? ' is-chosen' : ''}${o.top ? ' is-top' : ''}${o.score <= 0.005 ? ' is-zero' : ''}"><span class="hb-sr">${esc(sr(o))}</span><span class="hb-opt-label" aria-hidden="true">${esc(o.label)}</span><span class="hb-opt-bar" aria-hidden="true"><i class="hb-opt-base" style="width:${w(o.score)}"></i>${o.bonus ? `<i class="hb-opt-bonus" style="width:${w(o.bonus)}"></i>` : ''}${o.penalty ? `<i class="hb-opt-penalty" style="width:${w(o.penalty)}"></i>` : ''}</span><span class="hb-opt-score" aria-hidden="true">${f2(o.score + (o.bonus || 0))}</span><span class="hb-opt-prob" aria-hidden="true">${p}</span></li>`;
   }).join('');
 }
+// the original's rows: a label, a bar and a number; the current one pink
+function barRows(el, rows) {
+  if (el.dataset.n !== String(rows.length)) { el.innerHTML = rows.map(() => '<div class="row"><span class="lab"></span><div class="bar" aria-hidden="true"><i></i></div><span class="v"></span></div>').join(''); el.dataset.n = String(rows.length); }
+  rows.forEach((r, i) => {
+    const d = el.children[i]; d.classList.toggle('cur', !!r.cur);
+    d.children[0].textContent = r.label; d.children[1].firstChild.style.width = (clamp(r.value / (r.max || 1), 0, 1) * 100).toFixed(1) + '%';
+    d.children[2].textContent = f2(r.value); d.title = r.title || '';
+  });
+}
 // the probabilities choose() would use now: the same formula, no draw
 function dogPreview() {
   const U = brain.util, sample = ON('L.sample'), indep = PT('independence'), commit = TV('Br.commit') * (1 + 0.35 * indep);
@@ -89,20 +98,15 @@ function dogNow(P) {
   $('goalNote').textContent = (B.cortexGoal ? 'the cortex asked for ' + B.cortexGoal.b + ', +0.35 for ' + Math.max(0, B.cortexGoal.until - now).toFixed(0) + ' s more. ' : '') + (B.forced && B.forced.until > now ? 'forced: ' + B.forced.b + ' for ' + (B.forced.until - now).toFixed(1) + ' s.' : '');
 }
 function dogChoice(P) {
-  const all = BEH.map(b => ({ id: b, label: b, score: P.U[b] || 0, bonus: b === brain.cur && P.sample && !brain.done ? P.commit : 0, prob: P.probs[b], chosen: b === brain.cur, top: b === P.best }))
-    .sort((a, b) => (b.score + b.bonus) - (a.score + a.bonus));
-  const sr = o => `${o.label}, score ${f2(o.score)}, chance ${Math.round((o.prob || 0) * 100)} percent${o.bonus ? ', commitment bonus ' + f2(o.bonus) : ''}${o.chosen ? ', doing now' : ''}${o.top ? ', top score' : ''}`;
-  const top = all.slice(0, 3); if (!top.some(o => o.chosen)) { const c = all.find(o => o.chosen); if (c) top[2] = c; }
-  choiceBars($('choiceTop'), top, sr);
-  $('choiceWhy').textContent = brain.cur + ': ' + (brain.why || 'nothing pressing');
+  const all = BEH.map(b => ({ id: b, score: P.U[b] || 0, bonus: b === brain.cur && P.sample && !brain.done ? P.commit : 0, prob: P.probs[b], chosen: b === brain.cur }));
+  const max = Math.max(1, ...all.map(o => o.score));
+  barRows($('utilRows'), all.map(o => ({ label: o.id, value: o.score, max, cur: o.chosen, title: o.id + ', score ' + f2(o.score) + ', chance ' + Math.round((o.prob || 0) * 100) + ' percent' + (o.bonus ? ', commitment bonus ' + f2(o.bonus) : '') })));
   $('utilMode').textContent = P.sample ? 'sampled' : 'argmax';
   $('choiceMeta').textContent = P.sample
     ? `temperature ${P.T.toFixed(2)}, commitment ${TV('Br.commit').toFixed(2)} x ${(1 + 0.35 * P.indep).toFixed(2)} (independence)${brain.done ? ', the current act is done' : ''}, next look in ${Math.max(0, brain.dwell - now).toFixed(1)} s. computed.`
     : 'the highest score wins, plus 0.12 for the current act. computed.';
-  const allEl = $('choiceAll'); $('choiceAllN').textContent = all.filter(o => o.score > 0.005).length + ' of ' + all.length + ' above zero';
-  if (foldOpen(allEl)) choiceBars(allEl, all, sr);
   const fe = $('choiceFeed');
-  if (foldOpen(fe)) fe.innerHTML = all.filter(o => o.score > 0.005).map(o => { const K = EFFECT[o.id]; const g = K ? brain.gain(K) : 0; const terms = K ? Object.entries(K).map(([k, v]) => (v < 0 ? 'lowers ' : 'raises ') + k + ' ' + Math.abs(v).toFixed(2) + ' (now ' + f2(brain.d[k]) + ')').join(', ') : 'no drive term; set by the situation'; return `<li><b>${esc(o.label)} ${f2(o.score)}</b>: ${K ? 'drive gain ' + f2(g) + ', ' : ''}${esc(terms)}${o.bonus ? ', plus commitment ' + f2(o.bonus) : ''}</li>`; }).join('') || '<li>no option above zero</li>';
+  if (foldOpen(fe)) fe.innerHTML = all.filter(o => o.score > 0.005).sort((x, y) => y.score - x.score).map(o => { const K = EFFECT[o.id]; const g = K ? brain.gain(K) : 0; const terms = K ? Object.entries(K).map(([k, v]) => (v < 0 ? 'lowers ' : 'raises ') + k + ' ' + Math.abs(v).toFixed(2) + ' (now ' + f2(brain.d[k]) + ')').join(', ') : 'no drive term; set by the situation'; return `<li><b>${esc(o.id)} ${f2(o.score)}</b>: ${K ? 'drive gain ' + f2(g) + ', ' : ''}${esc(terms)}${o.bonus ? ', plus commitment ' + f2(o.bonus) : ''}</li>`; }).join('') || '<li>no option above zero</li>';
 }
 function dogSenses() {
   const want = attention.want || {}, lab = attention.focusId, vis = Object.values(percepts).filter(p => p.vis).sort((a, b) => b.sal - a.sal);
@@ -123,7 +127,6 @@ function knownUI() {
   const rows = knownRows(), html = rows.map(r => `<li>"${esc(r.c)}" means <b>${esc(r.a)}</b>, ${f2(r.v)}</li>`).join('');
   $('knownList').innerHTML = html || '<li>no word passes 0.45 yet. say one, then praise what it does.</li>';
   $('knownN').textContent = rows.length + (rows.length === 1 ? ' word' : ' words');
-  $('knownMind').innerHTML = html || '<li>no word passes 0.45 yet</li>'; $('knownMindN').textContent = rows.length + ' over 0.45';
 }
 function dogMemory() {
   const R = TV('Br.reflect'); $('impMeter').firstChild.style.width = clamp(brain.imp / R * 100, 0, 100).toFixed(0) + '%'; $('impMeter').setAttribute('aria-valuenow', Math.round(clamp(brain.imp / R, 0, 1) * 100));
@@ -204,16 +207,17 @@ document.querySelectorAll('#tlAgents [data-agent], #tlKinds [data-kind]').forEac
   const set = b.dataset.agent ? TL.agents : TL.kinds, k = b.dataset.agent || b.dataset.kind, on = !set.has(k);
   if (on) set.add(k); else set.delete(k); b.classList.toggle('is-on', on); b.setAttribute('aria-pressed', String(on)); timelineUI(true);
 });
-// ---------- the tab, the stage why line, the hud tags ----------
-let mindsT = 0, mindWho = 'dog', lastCurSaid = '';
+// ---------- the panes, the spoken why, the eye net chip ----------
+let mindsT = 0, lastCurSaid = '';
 function mindsUI() {
   const t = performance.now(); if (t - mindsT < 240) return; mindsT = t;
-  const wide = $('app').classList.contains('is-minds') && matchMedia('(min-width:1200px)').matches;
-  const dogOn = wide || mindWho === 'dog', humOn = wide || mindWho === 'hum';
+  const dogOn = paneOn('pBrain'), humOn = paneOn('pHuman');
+  if (paneOn('pSense')) dogSenses();
+  if (paneOn('pTrain')) dogMemory();
   if (dogOn) {
     const P = dogPreview(); dogNow(P);
-    sparkRows($('driveSparks'), DOG_SERIES.map(([k]) => ({ label: k, values: HIST.dog[k] || [], value: (HIST.dog[k] || [0]).at(-1) ?? 0, ticks: HIST.dogTick, who: 'the dog', note: k === 'bond' ? '' : 'at 0.70 the dog remembers it got strong, which counts toward a cortex thought.' })));
-    dogChoice(P); dogSenses(); dogMemory(); dogCortex();
+    barRows($('driveRows'), DOG_SERIES.map(([k, f]) => ({ label: k, value: clamp(+f() || 0, 0, 1) })));
+    dogChoice(P); dogMemory(); dogCortex();
     $('affectTxt').textContent = affectWords(); $('affectAux').textContent = 'valence ' + f2(brain.v) + ', arousal ' + f2(brain.a);
     $('affect').setAttribute('aria-label', affectWords());
   }
@@ -222,22 +226,17 @@ function mindsUI() {
     if (HUM.need) sparkRows($('humSparks'), HUM_SERIES.map(([k, l]) => ({ label: l, values: HIST.hum[k] || [], value: (HIST.hum[k] || [0]).at(-1) ?? 0, ticks: HIST.humTick, who: 'he', note: '' })));
     else $('humSparks').innerHTML = '<li class="note">needs run with the organic layer on (more, tune, layers).</li>';
   }
-  timelineUI();
+  if (dogOn) timelineUI();
 }
 function affectWords() {
   const v = brain.v, a = brain.a, mood = (a > 0.6 ? (v > 0.2 ? 'excited and happy' : v < -0.2 ? 'tense and upset' : 'alert') : a < 0.3 ? (v > 0.2 ? 'calm and content' : v < -0.2 ? 'low and flat' : 'calm') : (v > 0.2 ? 'content' : v < -0.2 ? 'uneasy' : 'neutral'));
   return mood + ', valence ' + f2(v) + ', arousal ' + f2(a) + '. anticipation ' + f2(brain.antic) + ', frustration ' + f2(brain.frus) + ', fear ' + f2(brain.fear) + (brain.calm ? ', calming signal: ' + brain.calm.k : '') + '.';
 }
+// the screen reader hears what the dog does now; nothing is drawn on the yard for it
 function whyLineUI() {
-  const el = $('whyLine'), txt = brain.cur + ': ' + (brain.why || 'nothing pressing');
-  el.hidden = paneOn('pMinds') || !dog.ready;
-  if (!el.hidden && el.dataset.t !== txt) { el.dataset.t = txt; el.innerHTML = `<b>${esc(brain.cur)}:</b> ${esc(brain.why || 'nothing pressing')}`; }
   if (brain.cur !== lastCurSaid && dog.ready) { lastCurSaid = brain.cur; announce(dogName() + ': ' + brain.cur + (brain.why ? '. ' + brain.why : '')); }
 }
-function hudTags() {
-  const nn = NG.ready && ON('L.neural'), cx = vlm.state === 'ready', yo = !!(net.sess && $('netOn').checked);
-  $('tagNn').hidden = !nn; $('tagCortex').hidden = !cx; $('chipNet').hidden = !yo; $('hudTags').hidden = !(nn || cx || yo);
-}
+function hudTags() { $('chipNet').classList.toggle('on', !!(net.sess && $('netOn').checked)); }
 function gaitUI() {
   const on = ON('L.neural');
   document.querySelectorAll('#gaitSeg>button').forEach(b => { const me = (b.dataset.gait === 'nn') === on; b.classList.toggle('is-on', me); b.setAttribute('aria-pressed', String(me)); });
@@ -246,8 +245,4 @@ function gaitUI() {
 document.querySelectorAll('#gaitSeg>button').forEach(b => b.onclick = () => {
   const nn = b.dataset.gait === 'nn'; TUNE.v['L.neural'] = nn ? 1 : 0; tuneSave(); tuneUI.refresh();
   if (nn && !NG.ready) nnLoadUI(); gaitUI(); capsRefresh();
-});
-document.querySelectorAll('#mindSeg>button').forEach(b => b.onclick = () => {
-  mindWho = b.dataset.mind; document.querySelectorAll('#mindSeg>button').forEach(x => { const me = x === b; x.classList.toggle('is-on', me); x.setAttribute('aria-pressed', String(me)); });
-  $('mindDog').classList.toggle('is-off', mindWho !== 'dog'); $('mindHum').classList.toggle('is-off', mindWho !== 'hum'); mindsT = 0; mindsUI();
 });

@@ -1,8 +1,8 @@
 // ---------- capabilities: one registry for every optional feature ----------
 // Each row: what it is, what it needs, the download with the word for where the number came
 // from, the licence, its state, the reason when this device cannot run it, and one action. The
-// panel (turn things on), the header count and every inline mention read their state from here,
-// so a toggle in minds and the row in the panel never disagree. View only: nothing here runs
+// panel (turn on more, opened from tune), its count and every inline mention read their state from here,
+// so a toggle in a tab and the row in the panel never disagree. View only: nothing here runs
 // inside a sim step.
 const isPhone = () => matchMedia('(max-width:640px), (pointer:coarse) and (max-width:900px)').matches;
 const hasMic = () => !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
@@ -79,7 +79,7 @@ const CAPS = [
     needs: () => [['microphone', hasMic()], ['speech recognition', SR_OK]],
     ask: () => 'in chrome your voice goes to the browser\'s speech service to become text. nothing else leaves the page.',
     state: () => !SR_OK ? 'unavailable' : micOn ? 'on' : micErr ? 'failed' : 'off',
-    why: () => !SR_OK ? 'this browser has no speech recognition. tap or type a cue in play.' : micErr,
+    why: () => !SR_OK ? 'this browser has no speech recognition. tap or type a cue in train.' : micErr,
     action: st => st === 'on' ? 'stop listening' : st === 'failed' ? 'try again' : 'allow the microphone', run: () => $('bMic').click() },
   { id: 'webcam', icon: 'cam', name: 'webcam gestures and smiles',
     what: 'thumbs up praises the dog, thumbs down scolds it, a smile cheers it up. other hand signs become cues it can learn.',
@@ -115,8 +115,8 @@ function capsRefresh(light) {
   capsT = performance.now();
   // a dependent row waits for the model, then turns itself on
   if (vlm.state === 'ready') { if (capsWant.autoThink) { capsWant.autoThink = false; $('autoThink').checked = true; } if (capsWant.humMind) { capsWant.humMind = false; $('humMindOn').checked = true; } }
-  const [on, n] = capsCount(); $('capsCount').textContent = on + ' of ' + n + ' on'; $('capsCount2').textContent = on + ' of ' + n + ' on';
-  hudTags();
+  const [on, n] = capsCount(); $('capsCount').textContent = on + ' of ' + n + ' on';
+  hudTags(); if (typeof nnBtnUI === 'function') { nnBtnUI(); voiceBtnUI(); }
   if ($('caps').hidden) return;
   const body = $('capsBody'), focusId = document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.cap : null;
   let running = false;
@@ -130,7 +130,7 @@ function capsRefresh(light) {
     }
     const L = c.licence;
     return `<li class="hb-cap is-${st === 'unavailable' ? 'unavailable' : st}"><div class="hb-cap-hd">${capIcon(c.icon)}<span class="hb-cap-name">${esc(c.name)}</span><span class="hb-verdict ${vc}">${vw}${st === 'loading' && prog && prog.pct != null ? ' ' + prog.pct + ' percent' : ''}</span></div>` +
-      (act ? `<button class="hb-btn hb-btn-2 hb-btn-sm hb-cap-act" type="button" data-cap="${c.id}"${st === 'unavailable' ? ` disabled aria-describedby="${rid}"` : why ? ` aria-describedby="${rid}"` : ''}>${esc(act)}</button>` : '') +
+      (act ? `<button class="hb-btn hb-btn-sm hb-cap-act" type="button" data-cap="${c.id}"${st === 'unavailable' ? ` disabled aria-describedby="${rid}"` : why ? ` aria-describedby="${rid}"` : ''}>${esc(act)}</button>` : '') +
       `<p class="hb-cap-ask">${esc(ev(c.what))}</p>` +
       (c.needs().length ? `<ul class="hb-cap-needs">${c.needs().map(([t, ok]) => `<li class="hb-cap-need${ok ? '' : ' is-missing'}">${ok ? '' : '<span class="hb-sr">missing: </span>'}${esc(t)}</li>`).join('')}</ul>` : '') +
       (ask ? `<p class="hb-cap-ask">${esc(ask)}</p>` : '') + (dep ? `<p class="hb-cap-dep">${esc(dep)}</p>` : '') + (why ? `<p class="hb-cap-why" id="${rid}">${esc(why)}</p>` : '') + pg +
@@ -146,7 +146,6 @@ function capsOpen(id) {
   (row || $('capsClose')).focus(); if (row) row.closest('.hb-cap').scrollIntoView({ block: 'center' });
 }
 function capsClose() { $('caps').hidden = true; if (capsReturn && capsReturn.focus) capsReturn.focus(); }
-$('bCaps').onclick = () => capsOpen();
 $('capsClose').onclick = capsClose;
 $('caps').addEventListener('click', e => { if (e.target === $('caps')) capsClose(); });
 $('caps').addEventListener('keydown', e => {

@@ -1,6 +1,6 @@
 // ---------- boot ----------
 tuneLoad(); CLOCK.h = TV('W.hour');
-tuneUI.build($('pTune'));
+tuneUI.build($('pTuneBody'));
 if (!store.get('tune', null)) seedPersonality(store.get('name', 'Pixel'));
 TUNE.onChange = k => { if (k === 'L.neural' && TV(k) && !NG.ready) nnLoadUI(); if (k === 'W.hour') CLOCK.h = TV('W.hour'); if (k.startsWith('L.')) gaitUI(); };
 // the neural gait loads and turns on in one action, from the body tab or the capability panel

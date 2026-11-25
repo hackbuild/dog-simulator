@@ -45,7 +45,7 @@ function loadVoice() {
     .catch(e => { voiceLoad.state = 'failed'; voiceLoad.err = 'pocket tts failed: ' + String(e.message || e).slice(0, 60).toLowerCase() + '. the browser voice stays.'; $('voiceSt').textContent = 'browser voice'; capsRefresh(); });
 }
 // a build without the owner asset pack has no voice clip: pocket tts can only use a stock voice
-if (!voiceClip()) $('voiceNote').textContent = 'starts with the browser voice. this build has no voice clip, so pocket tts speaks in a stock voice. load it in turn things on.';
+if (!voiceClip()) $('voiceNote').textContent = 'starts with the browser voice. this build has no voice clip, so pocket tts speaks in a stock voice.';
 $('humVoiceOn').onchange = e => { Voice.on = e.target.checked; };
 $('bGood').onclick = () => { audio(); if (HUM.ready) { humSay(pick(H_LINES.praise), 2, true); HUM.mood.pleasedT = 1; } brain.reward(0.8, 'good dog'); };
 $('bNo').onclick = () => { audio(); if (HUM.ready) { humSay(pick(H_LINES.no), 2); HUM.shakeT = 1.1; HUM.mood.frusT = Math.min(1, (HUM.mood.frusT || 0) + 0.4); } brain.reward(-0.8, 'no'); };
@@ -53,13 +53,9 @@ $('bFill').onclick = () => { foodAmt = 1; toast('bowl filled'); emitSound(V3(BOW
 $('bSquirrel').onclick = () => { if (squirrel.state === 'gone') spawnSquirrel(); };
 let camMode = 0; const CAMS = ['follow', 'free', 'dog eye', 'side', 'his eyes'];
 const sideCam = new HCAM.Follow(camera, { distance: Math.hypot(2.4, 0.3, 0.25), pitch: Math.asin(0.25 / Math.hypot(2.4, 0.3, 0.25)), lookHeight: 0.3, smoothing: 8, yawSmoothing: 6 });
-function setCamMode(m) { camMode = m; document.querySelectorAll('#cams>button').forEach(b => b.setAttribute('aria-pressed', String(+b.dataset.cam === m))); controls.maxDistance = m === 1 ? 45 : 26; }
-// the camera strip: every mode named; on a phone only the current one shows until you tap it
-document.querySelectorAll('#cams>button').forEach(b => b.onclick = () => {
-  const m = +b.dataset.cam, strip = $('cams');
-  if (matchMedia('(max-width:640px)').matches && m === camMode && !strip.classList.contains('is-open')) { strip.classList.add('is-open'); return; }
-  strip.classList.remove('is-open'); setCamMode(m);
-});
+function setCamMode(m) { camMode = m; $('camLab').textContent = CAMS[m]; $('bCam').setAttribute('aria-label', 'camera: ' + CAMS[m] + '. press for the next view'); controls.maxDistance = m === 1 ? 45 : 26; }
+// one camera button on the yard, as the original: each press moves to the next view
+$('bCam').onclick = () => { audio(); setCamMode((camMode + 1) % CAMS.length); };
 // free camera: right drag pans, two fingers pan, WASD or arrows fly, Q and E lower and raise, F goes back to following the dog
 renderer.domElement.addEventListener('pointerdown', e => { if ((e.button === 2 || e.button === 1) && camMode !== 1 && camMode !== 2 && camMode !== 4) setCamMode(1); });
 renderer.domElement.addEventListener('touchstart', e => { if (e.touches.length > 1 && camMode !== 1) setCamMode(1); }, { passive: true });

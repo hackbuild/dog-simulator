@@ -21,7 +21,7 @@ async function loadNet() {
   } catch (e) { console.warn(e); setNet('failed: ' + (e.message || e).toString().slice(0, 60), 'eye net x'); }
   net.loading = false;
 }
-function setNet(s, chip, on) { net.label = s; $('netSt').textContent = s; $('chipNet').textContent = chip; $('chipNet').hidden = !on; hudTags(); if (typeof capsRefresh === 'function') capsRefresh(); }
+function setNet(s, chip, on) { net.label = s; $('netSt').textContent = s; $('chipNet').textContent = on ? chip : chip === 'loading' ? 'eye net ...' : chip === 'eye net x' ? chip : 'eye net off'; hudTags(); if (typeof capsRefresh === 'function') capsRefresh(); }
 async function detect(src, sw, sh, thr = 0.3) {
   if (!net.sess || net.busy) return null; net.busy = true;
   const t0 = performance.now();

@@ -6,9 +6,10 @@ const foldOpen = el => { const d = el.closest('details'); return !d || d.open; }
 function drawInstruments() {
   sampleMinds();
   const hh = Math.floor(CLOCK.h), mm = Math.floor((CLOCK.h - hh) * 60), ck = String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
-  $('chipClock').textContent = ON('L.day') ? ck : 'day off'; $('kClockPlay').textContent = ON('L.day') ? ck + ', day ' + (CLOCK.day + 1) : 'day off';
+  $('chipClock').textContent = ON('L.day') ? ck : 'day off';
   whyLineUI();
-  if (paneOn('pMinds')) { drawAffectAndSleep(ck); mindsUI(); }
+  if (paneOn('pBrain')) drawAffectAndSleep(ck);
+  if (paneOn('pBrain') || paneOn('pHuman') || paneOn('pSense') || paneOn('pTrain')) mindsUI();
   if (paneOn('pBody')) drawBody();
   if (paneOn('pSense')) drawSenses();
 }

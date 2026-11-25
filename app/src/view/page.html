@@ -9,566 +9,511 @@
 <style>/*@@HBUI@@*/</style>
 <style>
 /*
-The hack.build class layer (hackbuild-ui, inlined above) carries the look. This block is layout glue
-only, mobile first: a narrow phone is the base, wider layouts come from min-width queries.
-Phone: header, the stage sticky at 46 percent of the height, the tab strip under it, one pane that
-scrolls inside the rest. From 901 px: the stage left, tabs and panes in a rail at the right.
+The page of the original yard (hackle), light paper: the dog is the picture; every panel is a probe.
+Stage left (fills), a rack of seven tabs at a fixed 380 px on the right; under 900 px the rack
+stacks under a stage of 62 percent of the height, and the yard stays in view while a pane scrolls.
+The hack.build class layer (hackbuild-ui, inlined above) carries the light 52 px header, the light
+VT323 tabs, the light buttons with one pink (.hb-btn-go), the panels and the 380 px rack token.
+The stage overlays, the yard hint, the behaviour name, the verb row and the bars are this page's
+own, as in the original.
 */
 html,body{height:100%}
 [hidden]{display:none!important}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
 body.hb{overflow:hidden;overscroll-behavior:none}
 body.hb::before{display:none}
-button,input,select,textarea{font:inherit;color:inherit}
-#app{display:flex;flex-direction:column;height:100vh;height:100dvh}
-#app>.hb-header{flex:none;gap:var(--hb-s2) var(--hb-s3);flex-wrap:nowrap;padding-top:max(var(--hb-s1),env(safe-area-inset-top));padding-bottom:var(--hb-s1)}
-.hb-header h1{font-size:22px;flex:0 0 auto}
-.hb-header .hb-pill{flex:0 0 auto;white-space:nowrap}
-#bCaps{margin-left:auto;flex:0 0 auto;flex-direction:column;align-items:flex-start;gap:0;box-shadow:none;border-color:var(--hb-paper);background:transparent;color:var(--hb-paper);font-size:10px;padding:4px 8px;text-align:left;line-height:1.25}
-#bCaps .n{display:block;font-family:var(--hb-readout);font-size:16px;letter-spacing:0;text-transform:none}
-#bCaps:focus-visible{outline:3px solid var(--hb-pink);outline-offset:2px}
-@media (hover:hover) and (pointer:fine){#bCaps:hover{background:var(--hb-paper);color:var(--hb-ink)}}
-#work{flex:1;min-height:0;display:grid;grid-template-rows:minmax(180px,46dvh) minmax(0,1fr);grid-template-columns:minmax(0,1fr)}
-#stage{height:100%;border-width:0 0 var(--hb-border-hd);box-shadow:none;outline:none}
-#stage canvas.gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#app{display:grid;grid-template-rows:52px minmax(0,1fr);height:100vh;height:100dvh}
+/* the mark at the original's 26 px; the tagline sits beside it, the readout chips push right */
+#app>.hb-header{overflow:hidden}
+#app>.hb-header h1{font-size:26px;letter-spacing:.5px;flex:0 0 auto}
+#app>.hb-header .hb-tagline{margin-left:0;flex:0 1 auto}
+.chips{margin-left:auto;display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden;flex:0 1 auto;min-width:0}
+.chip{font-family:var(--hb-readout);font-size:17px;line-height:1;padding:4px 7px;border:1.5px solid var(--hb-ink);background:var(--hb-paper);white-space:nowrap}
+.chip.on{background:var(--hb-ink);color:var(--hb-paper)}
+.chip.is-ok{border-color:var(--hb-ink)}
+.chip.is-warn{border-color:var(--hb-warn);color:var(--hb-warn-ink)}
+#work{display:grid;grid-template-columns:minmax(0,1fr) var(--hb-rack,380px);min-height:0}
+/* the stage and its overlays, as the original drew them */
+#stage{position:relative;overflow:hidden;background:#eef2ef;outline:none;container-type:inline-size}
 #stage:focus-visible{box-shadow:inset 0 0 0 3px var(--hb-pink)}
-#side{display:flex;flex-direction:column;min-height:0;background:var(--hb-paper)}
-#side>.hb-tabs{flex:none;gap:0}
-#side>.hb-tabs>.hb-tab{flex:1 1 0;min-width:0;padding:var(--hb-s2) var(--hb-s1);text-align:center;opacity:.72}
-#side>.hb-tabs>.hb-tab[aria-selected="true"]{opacity:1}
-.hb-tab:focus-visible{outline:3px solid var(--hb-pink);outline-offset:-3px}
+#stage canvas.gl{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#load{position:absolute;inset:0;display:grid;place-items:center;background:var(--hb-paper);z-index:9;text-align:center}
+#load .big{font-size:34px}
+#load .big b{color:var(--hb-pink);font-weight:400}
+#load.is-err .note{color:var(--hb-err)}
+#eyecard{position:absolute;left:12px;top:12px;width:min(320px,46%);background:var(--hb-paper-raised);border:1.5px solid var(--hb-ink);box-shadow:4px 4px 0 var(--hb-ink);z-index:5}
+.bh{background:var(--hb-ink);color:var(--hb-paper);font-family:var(--hb-readout);font-size:19px;display:flex;justify-content:space-between;gap:8px}
+#eyecard .bh{font-size:17px;align-items:center;padding:0 0 0 9px}
+.eyewho{display:flex;gap:2px;flex:none}
+.eyewho button,#eyeFold{white-space:nowrap;font:inherit;font-size:15px;background:none;border:0;color:inherit;opacity:.55;padding:0 6px 0 0;cursor:pointer;min-height:28px;text-transform:uppercase}
+.eyewho button.on{opacity:1;text-decoration:underline;text-underline-offset:3px}
+#eyeFold{opacity:1;padding:0 9px;margin-left:auto}
+.eyewho button:focus-visible,#eyeFold:focus-visible{outline:2px solid var(--hb-pink);outline-offset:-2px}
+#eyeMode{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;font-size:14px;color:#ffd1e8}
+#eyewrap{position:relative;aspect-ratio:2/1}
+#eyewrap canvas{position:absolute;inset:0;width:100%;height:100%}
+#eyecard.is-folded #eyewrap{display:none}
+#eyeSal{pointer-events:none}
+#tool{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;pointer-events:none;z-index:6}
+#tool>*{pointer-events:auto}
+#tool .hb-btn svg{width:16px;height:16px;flex:none}
+#camLab,#micLab{display:inline-block}
+#camLab::first-letter,#micLab::first-letter{text-transform:uppercase}
+#bubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:var(--hb-paper-raised);border:1.5px solid var(--hb-ink);padding:4px 9px;font-family:var(--hb-note);font-size:14px;white-space:nowrap;box-shadow:3px 3px 0 var(--hb-ink);max-width:260px;overflow:hidden;text-overflow:ellipsis;z-index:4}
+#bubble:after{content:"";position:absolute;left:50%;bottom:-8px;width:10px;height:10px;background:var(--hb-paper-raised);border-right:1.5px solid var(--hb-ink);border-bottom:1.5px solid var(--hb-ink);transform:translateX(-50%) rotate(45deg)}
+#hbubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:#fff;border:1.5px solid var(--hb-pink);color:var(--hb-ink);padding:4px 9px;font-family:var(--hb-note);font-size:14px;max-width:280px;box-shadow:3px 3px 0 var(--hb-pink);white-space:normal;text-align:center;z-index:4}
+#hint{position:absolute;right:12px;top:12px;font-family:var(--hb-note);font-size:12.5px;line-height:1.4;background:rgba(255,253,247,.88);border:1px solid var(--hb-paper-edge);padding:5px 8px;max-width:280px;color:var(--hb-ink-2);z-index:5}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--hb-ink);color:var(--hb-paper);padding:6px 12px;font-family:var(--hb-readout);font-size:19px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:7;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}
+#toast.is-on{opacity:1}
+#drop{position:absolute;inset:0;border:4px dashed var(--hb-pink);display:none;place-items:center;background:rgba(245,240,230,.7);z-index:8;font-family:var(--hb-display);font-size:30px}
+#drop.is-over{display:grid}
+#padRow{position:absolute;right:12px;bottom:110px;z-index:6}
+/* the rack */
+#side{border-left:2px solid var(--hb-ink);background:var(--hb-paper);display:flex;flex-direction:column;min-height:0;min-width:0}
+/* seven tabs share the 380 px rack evenly, in caps as the original */
+#side>.hb-tabs{flex:none;border-bottom-width:2px;overflow:hidden}
+#side>.hb-tabs>.hb-tab{flex:1 1 0;min-width:0;padding:10px 0;text-transform:uppercase;text-align:center;min-height:44px}
 #panes{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
-.pane{display:none;flex-direction:column;gap:var(--hb-s4);padding:var(--hb-s3) var(--hb-s3) max(var(--hb-s6),env(safe-area-inset-bottom))}
-.pane.on{display:flex}
+.pane{display:none;padding:12px 12px max(12px,env(safe-area-inset-bottom))}
+.pane.on{display:block}
 .pane:focus{outline:none}
-.pane>.hb-panel,.mcol>.hb-panel{margin:0 5px 0 0;padding:var(--hb-s3) var(--hb-s3)}
-.hb .pane h3.hb-panel-hd-inst,.hb .mcol h3.hb-panel-hd-inst{margin:calc(-1 * var(--hb-s3)) calc(-1 * var(--hb-s3)) var(--hb-s3);padding:6px var(--hb-s3)}
-.pane .hb-fold,.mcol .hb-fold{margin:var(--hb-s2) 0 0}
-.hb-fold>summary{display:flex;align-items:center;gap:var(--hb-s2);padding:var(--hb-s2) var(--hb-s3);font-family:var(--hb-utility);font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;cursor:pointer;list-style:none}
-.hb-fold>summary .aux{margin-left:auto;font-family:var(--hb-readout);font-size:15px;text-transform:none;letter-spacing:0;color:var(--hb-ink-3)}
-.big{font-family:var(--hb-display);font-size:26px;line-height:1.05;margin:0}
-.note{font-family:var(--hb-body);font-size:13px;line-height:1.45;color:var(--hb-ink-3);margin:var(--hb-s2) 0 0}
-.why{font-family:var(--hb-body);font-size:13.5px;line-height:1.45;color:var(--hb-ink);margin:var(--hb-s1) 0 0}
-.sub{font-family:var(--hb-utility);font-size:11.5px;line-height:1.5;color:var(--hb-ink-2);margin:var(--hb-s1) 0 0;overflow-wrap:anywhere}
-.sub:empty,.why:empty{display:none}
-.btns{display:flex;flex-wrap:wrap;gap:var(--hb-s2);align-items:center}
-.btns .hb-btn{box-shadow:2px 2px 0 var(--hb-ink)}
-.stack{display:flex;flex-direction:column;gap:var(--hb-s2)}
-.hb-check{gap:var(--hb-s2);font-family:var(--hb-utility);font-size:12px;line-height:1.35;cursor:pointer}
-.hb-check input{flex:none;accent-color:var(--hb-ink)}
-.hb-check.is-disabled{cursor:not-allowed}
-.reason{font-family:var(--hb-body);font-size:12.5px;line-height:1.4;color:var(--hb-warn);margin:0}
+/* blocks: the original's raised card with an ink head */
+.pane>.hb-panel{margin:0 4px 16px 0;padding:9px 10px;box-shadow:4px 4px 0 var(--hb-ink);border-width:1.5px}
+.hb .pane h3.hb-panel-hd-inst{text-transform:uppercase;display:flex;justify-content:space-between;gap:8px;font-size:19px;letter-spacing:0;margin:-9px -10px 9px;padding:3px 9px}
+.hb .pane h3.hb-panel-hd-inst .hb-hd-aux{color:#ffd1e8;text-transform:none;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+/* the original's compact buttons: 7 px by 10 px, 3 px shadow; a pressed toggle fills ink */
+.pane .hb-btn,#tool .hb-btn{padding:7px 10px;gap:6px;box-shadow:3px 3px 0 var(--hb-ink)}
+.hb-btn[aria-pressed="true"]{background:var(--hb-ink);color:var(--hb-paper)}
+.big{font-family:var(--hb-display);font-size:28px;line-height:1.05;margin:0}
+.note{font-family:var(--hb-note);font-size:13px;line-height:1.4;color:var(--hb-ink-3);margin:6px 0 0}
+.note:first-child{margin-top:0}
+.sub{font-size:12px;line-height:1.45;color:var(--hb-ink-2);margin:4px 0 0;overflow-wrap:anywhere}
+.sub:empty,.note:empty{display:none}
+.row{display:grid;grid-template-columns:84px minmax(0,1fr) 42px;align-items:center;gap:8px;margin:4px 0;font-size:12.5px}
+.row .lab{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .v{font-family:var(--hb-readout);font-size:16px;text-align:right}
+.row.cur .lab{color:var(--hb-pink);font-weight:600}
+.row.one{grid-template-columns:84px minmax(0,1fr)}
+.bar{height:11px;background:var(--hb-paper-sunk);border:1px solid var(--hb-ink);position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;background:var(--hb-ink)}
+.bar.p i,.row.cur .bar i{background:var(--hb-pink)}
+.btns{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px}
+.tog,.hb-check{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:13px;line-height:1.35;cursor:pointer}
+.tog input,.hb-check input{flex:none;width:18px;height:18px;accent-color:var(--hb-pink)}
+.hb-check.is-disabled{cursor:not-allowed;opacity:.6}
+.reason{font-family:var(--hb-note);font-size:12.5px;line-height:1.4;color:var(--hb-warn-ink,#8a5300);margin:4px 0 0}
 .reason:empty{display:none}
+.licence{font-family:var(--hb-note);font-size:12.5px;line-height:1.4;color:var(--hb-ink-2);margin:6px 0 0;padding:4px 6px;border-left:3px solid var(--hb-ink)}
 .linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--hb-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
-.linkbtn:focus-visible{outline:2px solid var(--hb-pink);outline-offset:2px}
-.hb-kv{font-family:var(--hb-utility);font-size:12px;color:var(--hb-ink-3);padding:3px 0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:12.5px;margin-top:6px}
+.kv b{font-weight:400;color:var(--hb-ink-3)}
+.kv span{font-family:var(--hb-readout);font-size:17px;line-height:1.1;overflow-wrap:anywhere}
+.hb-kv{font-size:12.5px;color:var(--hb-ink-3);padding:2px 0}
 .hb-kv>span:last-child{font-family:var(--hb-readout);font-size:17px;line-height:1.1;color:var(--hb-ink);text-align:right;overflow-wrap:anywhere;min-width:0}
-.fieldrow{display:flex;flex-direction:column;gap:var(--hb-s1);margin:var(--hb-s2) 0 0}
-.fieldrow>label{font-family:var(--hb-utility);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--hb-ink-3)}
-.fieldrow .hb-input,.fieldrow .hb-select{width:100%;font-size:16px}
-.rangerow{display:grid;grid-template-columns:72px minmax(0,1fr) 44px;align-items:center;gap:var(--hb-s2);font-family:var(--hb-utility);font-size:12px}
-.rangerow input{width:100%;accent-color:var(--hb-ink);height:44px;margin:0}
-.rangerow output{font-family:var(--hb-readout);font-size:17px;text-align:right}
-canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raised);border:1px solid var(--hb-paper-edge)}
-.lst{display:grid;gap:2px;font-family:var(--hb-utility);font-size:12px}
-.lst>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:var(--hb-s2);border-bottom:1px dashed rgba(26,26,26,.15);padding:2px 0}
-.lst>div>span:first-child{overflow-wrap:anywhere}
-.lst .vis{font-weight:700}
-.lines{margin:0;padding:0;list-style:none;font-family:var(--hb-utility);font-size:12px;line-height:1.5}
+canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper);border:1px solid var(--hb-paper-edge)}
+.heard,.hb-heard{font-family:var(--hb-readout);font-size:19px;line-height:1.2;min-height:24px;padding:3px 6px;background:var(--hb-paper-sunk);border:1px solid var(--hb-paper-edge);margin-top:6px;white-space:pre-wrap;overflow-wrap:anywhere}
+.hb-heard:empty::before{content:attr(data-empty);color:var(--hb-ink-3)}
+.field{display:grid;grid-template-columns:84px minmax(0,1fr);align-items:center;gap:8px;margin:6px 0 0;font-size:12.5px}
+.field .hb-input,.field .hb-select,.field select,.field input{width:100%;border:1.5px solid var(--hb-ink);background:var(--hb-paper-raised);padding:6px 8px;font-size:16px;min-height:38px}
+.field input:disabled{opacity:.55}
+input[type=range]{width:100%;accent-color:var(--hb-pink)}
+.lst{font-size:12.5px;display:grid;gap:2px}
+.lst>div{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:8px}
+.lst .vis{color:var(--hb-pink)}
+.lines{margin:0;padding:0;list-style:none;font-size:12px;line-height:1.5}
 .lines>li{padding:3px 0;border-bottom:1px dashed rgba(26,26,26,.15);overflow-wrap:anywhere}
 .lines>li:last-child{border-bottom:0}
-.lines b{font-weight:700}
-.lines .k{display:inline-block;min-width:4.5em;color:var(--hb-ink-3);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.09em}
-.hb-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--hb-s2)}
-.hb-tile{color:var(--hb-ink);font:inherit;min-height:88px}
-.hb-tiles+.note,.hb-tiles+.foot{margin-top:var(--hb-s4)}
-.hb-tile .s{text-transform:none;letter-spacing:0;font-size:11px;opacity:.75}
-.hb-tile:focus-visible{outline:3px solid var(--hb-pink);outline-offset:2px}
-.chips{display:flex;flex-wrap:wrap;gap:var(--hb-s2)}
-.chips .hb-chip{box-shadow:none}
-.mono{font-family:var(--hb-utility);font-size:12px}
-.hb-heard{margin:var(--hb-s2) 0 0;white-space:pre-wrap}
-.hb-table{font-size:11.5px}
-.hb-table td,.hb-table th{padding:4px 6px}
-.hb-table tr.is-mark td:first-child{border-left:4px solid var(--hb-ink)}
-.hb-table .dim{color:var(--hb-ink-4)}
-.hb-heat caption{caption-side:top;text-align:left;font-family:var(--hb-utility);font-size:11px;color:var(--hb-ink-3);padding:0 0 var(--hb-s1)}
-.meterrow{display:grid;grid-template-columns:72px minmax(0,1fr) 44px;align-items:center;gap:var(--hb-s2);font-family:var(--hb-utility);font-size:12px;margin:var(--hb-s1) 0}
+.lines .k{display:inline-block;min-width:4.5em;color:var(--hb-ink-3)}
+.chiprow{display:flex;flex-wrap:wrap;gap:6px}
+.chiprow .hb-chip{box-shadow:none;text-transform:none;letter-spacing:0;font-size:13px}
+/* the associations table, cues by acts, as in the original */
+table.heat{border-collapse:collapse;font-size:11px;width:100%}
+table.heat caption{caption-side:top;text-align:left;color:var(--hb-ink-3);padding:0 0 4px}
+table.heat th{font-weight:400;color:var(--hb-ink-3);padding:2px;text-align:center;white-space:nowrap}
+table.heat tbody th{text-align:right;padding-right:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis}
+table.heat td{width:26px;height:20px;border:1px solid var(--hb-paper-edge);text-align:center;font-family:var(--hb-readout);font-size:14px}
+table.heat td{background:color-mix(in srgb,var(--hb-ink) calc(var(--v,0) * 55%),transparent)}
+table.heat td.is-hi{color:var(--hb-paper)}
+.scrollx{overflow-x:auto}
+.hb-fold{margin:6px 0 0;border:1px solid var(--hb-paper-edge)}
+.hb-fold>summary{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:12px;cursor:pointer;list-style:none;min-height:32px}
+.hb-fold>summary::-webkit-details-marker{display:none}
+.hb-fold>summary::before{content:"+";font-family:var(--hb-readout);font-size:17px;width:10px}
+.hb-fold[open]>summary::before{content:"-"}
+.hb-fold>summary .aux{margin-left:auto;font-family:var(--hb-readout);font-size:15px;color:var(--hb-ink-3)}
+.hb-fold>div{padding:0 8px 8px}
+.meterrow{display:grid;grid-template-columns:84px minmax(0,1fr) 42px;align-items:center;gap:8px;font-size:12.5px;margin:4px 0}
 .meterrow .hb-meter{background:var(--hb-paper-sunk);height:11px}
 .meterrow .hb-meter>i{background:var(--hb-ink)}
 .meterrow b{font-family:var(--hb-readout);font-size:16px;font-weight:400;text-align:right}
+.calls{margin:0;padding:0;list-style:none;border:1px solid var(--hb-ink);background:var(--hb-paper-raised);max-height:320px;overflow:auto}
+.calls>li{padding:6px;border-bottom:1px dashed rgba(26,26,26,.2);font-size:11.5px}
+.calls .t{font-family:var(--hb-readout);font-size:15px;color:var(--hb-ink-3);margin-right:6px}
+.calls pre{white-space:pre-wrap;font-size:11px;padding:6px;margin:4px 0 0;max-height:180px}
+.calls:empty::before{content:attr(data-empty);display:block;padding:6px;font-family:var(--hb-note);font-size:13px;color:var(--hb-ink-3)}
 .hb-console{max-height:260px;overflow:auto}
-.calls{margin:0;padding:0;list-style:none;border:var(--hb-border) solid var(--hb-ink);background:var(--hb-paper-raised);max-height:320px;overflow:auto}
-.calls>li{padding:var(--hb-s2);border-bottom:1px dashed rgba(26,26,26,.2);font-family:var(--hb-utility);font-size:11.5px}
-.calls>li:last-child{border-bottom:0}
-.calls .t{font-family:var(--hb-readout);font-size:15px;color:var(--hb-ink-3);margin-right:var(--hb-s2)}
-.calls pre{white-space:pre-wrap;font-size:11px;padding:var(--hb-s2);margin:var(--hb-s1) 0 0;box-shadow:none;max-height:180px}
-.calls details>summary{cursor:pointer;font-size:10.5px;text-transform:uppercase;letter-spacing:.09em;color:var(--hb-ink-3);min-height:32px;display:flex;align-items:center}
-.calls:empty::before{content:attr(data-empty);display:block;padding:var(--hb-s2);font-family:var(--hb-body);font-size:13px;color:var(--hb-ink-3)}
-/* minds: one agent at a time on a phone, both from 1200 px with the rail widened */
-#mindSeg{display:flex;box-shadow:none;position:sticky;top:calc(-1 * var(--hb-s3));z-index:3;margin:calc(-1 * var(--hb-s3)) calc(-1 * var(--hb-s3)) 0;border-width:0 0 var(--hb-border);background:var(--hb-paper)}
-#mindSeg>button{flex:1 1 0}
-.mcols{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--hb-s4)}
-.mcol{display:flex;flex-direction:column;gap:var(--hb-s4);min-width:0}
-.mcol.is-off{display:none}
-.mcol-hd{font-family:var(--hb-display);font-size:22px;margin:0}
-/* stage overlays */
-#eyecard{width:40cqw;max-width:320px}
-#eyecard .hb-inset-hd{padding:0;gap:0;justify-content:space-between}
-#eyecard .hb-inset-hd button{font:inherit;font-size:14px;text-transform:uppercase;background:none;border:0;color:var(--hb-lit-label);padding:0 6px;min-height:32px;cursor:pointer;white-space:nowrap}
-#eyecard .hb-inset-hd button[aria-pressed="true"]{color:var(--hb-paper);text-decoration:underline;text-underline-offset:3px}
-#eyecard .hb-inset-hd button:focus-visible{outline:2px solid var(--hb-pink);outline-offset:-2px}
-#eyeMode{display:none;font-size:13px;color:var(--hb-lit-label);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto;text-align:right;padding-right:4px}
-#eyeFold{margin-left:auto}
-#eyewrap{--hb-inset-ratio:2/1}
-#eyecard.is-folded #eyewrap{display:none}
-#eyeSal{pointer-events:none}
-@media (pointer:coarse){#eyecard .hb-inset-hd button{min-height:44px;min-width:44px}}
-#hudTR{gap:var(--hb-s1)}
-#hudTR .hb-hudstats{gap:2px}
-.hb-hudstat .hb-tag{font-size:10px}
-#cams{justify-content:flex-end;max-width:min(50cqw,360px)}
-#cams>button:not([aria-pressed="true"]){display:none}
-#cams.is-open>button{display:inline-block}
-#cams{flex-direction:column;align-items:flex-end}
-#cams.is-open{background:color-mix(in srgb,var(--hb-void) 70%,transparent);padding:2px}
-#tool .hb-btn{gap:var(--hb-s1)}
-#tool .hb-btn svg{width:14px;height:14px;flex:none}
-#tool .wide{display:none}
-#tool .wide-l{display:none}
-#tool{flex-wrap:nowrap;gap:var(--hb-s1)}
-#tool .hb-btn{padding:4px 8px;flex:0 1 auto;min-width:44px;justify-content:center}
-#bMore .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-#whyLine{position:absolute;left:var(--hb-s2);right:var(--hb-s2);bottom:60px;z-index:5;font-family:var(--hb-body);font-size:12.5px;line-height:1.3;background:color-mix(in srgb,var(--hb-void) 80%,transparent);color:var(--hb-paper);border:1px solid var(--hb-ink-border);padding:3px var(--hb-s2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
-#whyLine:empty,#whyLine[hidden]{display:none}
-#whyLine b{font-family:var(--hb-readout);font-size:16px;font-weight:400;margin-right:6px}
-#hint{position:absolute;right:var(--hb-s3);top:120px;z-index:5;max-width:280px}
-#stage .hb-bubble{white-space:normal}
-#bubble{max-width:220px}
-#stage .hb-toast{position:absolute;top:var(--hb-s3);bottom:auto;z-index:25}
-#onceNote{position:absolute;left:50%;top:var(--hb-s3);transform:translateX(-50%);z-index:24;max-width:calc(100% - 24px);font-family:var(--hb-body);font-size:13px;background:var(--hb-paper-raised);color:var(--hb-ink);border:var(--hb-border) solid var(--hb-ink);box-shadow:var(--hb-shadow);padding:var(--hb-s1) var(--hb-s2);display:flex;gap:var(--hb-s2);align-items:center}
-#onceNote[hidden]{display:none}
-#onceNote .hb-btn{min-height:44px;padding:2px 8px;box-shadow:none}
-@media (pointer:fine){#onceNote .hb-btn{min-height:32px}}
-#drop{font-size:22px}
-#photoView{display:none;margin-top:var(--hb-s2)}
+#photoView{display:none;margin-top:8px}
 #photoView canvas{width:100%;display:block;border:1px solid var(--hb-ink)}
-#cam{width:100%;display:none;border:1px solid var(--hb-ink);margin-top:var(--hb-s2);transform:scaleX(-1)}
-/* capability drawer and welcome card */
-#caps>.hb-drawer-panel{width:100vw;padding:0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
-#caps .caps-hd{display:flex;align-items:center;gap:var(--hb-s2);background:var(--hb-ink);color:var(--hb-paper);padding:var(--hb-s1) var(--hb-s1) var(--hb-s1) var(--hb-s3);padding-top:max(var(--hb-s1),env(safe-area-inset-top));position:sticky;top:0;z-index:2}
-#caps .caps-hd h2{font-family:var(--hb-readout);font-size:20px;letter-spacing:.06em;text-transform:uppercase;margin:0;flex:1}
-#caps .caps-hd .hb-btn{box-shadow:none;border-color:var(--hb-paper);background:transparent;color:var(--hb-paper)}
-#capsBody{padding:var(--hb-s3)}
-.hb-cap .hb-progress{margin-top:2px}
-.hb-cap-ask{font-family:var(--hb-body);font-size:12.5px;color:var(--hb-ink-2);margin:0}
-.hb-cap .hb-select{min-height:44px;font-size:16px}
-#welcome{position:fixed;inset:0;z-index:800;padding:var(--hb-s3)}
-#welcome[hidden]{display:none}
-#welcome .hb-welcome{max-width:min(560px,100%);max-height:100%}
-#welcome .hb-tiles{grid-template-columns:minmax(0,1fr)}
-#welcome .hb-tile{min-height:64px}
-#welcome .hb-welcome-close{min-width:44px;min-height:44px;padding:0;justify-content:center;box-shadow:none}
-.foot{font-family:var(--hb-body);font-size:12.5px;color:var(--hb-ink-3);margin:var(--hb-s3) 0 0}
-.about p{font-family:var(--hb-body);font-size:13px;line-height:1.5;color:var(--hb-ink-2);margin:0 0 var(--hb-s2)}
+#cam{width:100%;display:none;border:1px solid var(--hb-ink);margin-top:8px;transform:scaleX(-1)}
+.about p{font-family:var(--hb-note);font-size:13px;line-height:1.5;color:var(--hb-ink-2);margin:0 0 9px}
 .about code{font-size:11.5px}
-@media (min-width:600px){
-  .hb-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #welcome .hb-tiles{grid-template-columns:repeat(3,minmax(0,1fr))}
-  #welcome .hb-tile{min-height:96px}
+/* capability drawer, opened from tune */
+#caps>.hb-drawer-panel{width:100vw;padding:0;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+#caps .caps-hd{display:flex;align-items:center;gap:8px;background:var(--hb-paper-raised);border-bottom:2px solid var(--hb-ink);padding:6px 6px 6px 12px;position:sticky;top:0;z-index:2}
+#caps .caps-hd h2{font-family:var(--hb-readout);font-size:20px;text-transform:uppercase;margin:0;flex:1}
+#capsBody{padding:12px}
+.hb-cap .hb-select{min-height:44px;font-size:16px}
+@media (min-width:641px){#caps>.hb-drawer-panel{width:min(520px,92vw)}}
+@media (min-width:901px){#app>.hb-header .hb-tagline{display:block}}
+/* under 900 px: the rack stacks under the stage; the yard stays in view while a pane scrolls */
+@media (max-width:900px){
+  #work{grid-template-columns:minmax(0,1fr);grid-template-rows:62dvh minmax(0,1fr)}
+  #side{border-left:0;border-top:2px solid var(--hb-ink)}
 }
-@container (min-width:561px){
-  #tool .wide{display:inline-flex}
-  #tool .hb-btn{padding:8px 14px}
-  #tool .wide-l{display:inline}
-  #tool #bMore{display:none}
-  #eyecard{width:min(var(--hb-inset-w),40cqw)}
-  #eyeMode{display:block}
+@media (max-width:600px){
+  #eyecard{width:56%}#eyeMode{display:none}#hint{display:none}
+  .chips .chip:nth-child(n+3){display:none}
+  #tool{gap:4px;left:8px;right:8px;bottom:8px}
+  #tool .hb-btn{min-height:34px;padding:4px 7px;font-size:12px;box-shadow:2px 2px 0 var(--hb-ink)}
+  #padRow{bottom:96px}
 }
-@media (min-width:641px){
-  #caps>.hb-drawer-panel{width:min(520px,92vw)}
-  #cams{flex-direction:row;max-width:none}
-  #cams>button:not([aria-pressed="true"]){display:inline-block}
-  #cams.is-open{background:none;padding:0}
-  #whyLine{bottom:auto;top:auto;left:var(--hb-s3);right:auto;max-width:min(560px,60%);bottom:70px}
-  .pane{padding:var(--hb-s4) var(--hb-s4) var(--hb-s6)}
-}
-@media (min-width:901px){
-  #work{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr) clamp(360px,32vw,460px)}
-  #stage{border-width:0 var(--hb-border-hd) 0 0}
-  #side{border-left:0}
-  .hb-header .hb-tagline{flex:0 1 auto;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;margin-left:0}
-  #bCaps{margin-left:auto}
-}
-@media (min-width:1200px){
-  #app.is-minds #work{grid-template-columns:minmax(0,1fr) min(56vw,820px)}
-  #app.is-minds #mindSeg{display:none}
-  #app.is-minds .mcols{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
-  #app.is-minds .mcol.is-off{display:flex}
-}
-/* a phone held sideways: the stage beside the panes */
+@media (max-width:600px) and (pointer:coarse){#tool .hb-btn{min-height:44px}}
+/* a phone held sideways: the stage beside the rack */
 @media (orientation:landscape) and (max-height:560px) and (min-width:560px){
   #work{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr) 46vw}
-  #stage{border-width:0 var(--hb-border-hd) 0 0}
+  #side{border-top:0;border-left:2px solid var(--hb-ink)}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
 <body class="hb">
 <div id="app">
-<header class="hb-header">
+<header class="hb-header" data-ux="bar">
   <h1>hackle<span>.</span></h1>
-  <span class="hb-pill" id="chipGpu" title="the renderer this browser gave the yard">gpu ...</span>
-  <span class="hb-tagline is-tool">a dog and its person, running in your browser</span>
-  <button class="hb-btn" id="bCaps" type="button" aria-haspopup="dialog" aria-controls="caps">turn things on<span class="n" id="capsCount">checking</span></button>
+  <span class="hb-tagline is-tool">a dog with a brain, a body and eyes, running in your browser</span>
+  <div class="chips">
+    <span class="chip" id="chipGpu" title="the renderer this browser gave the yard">gpu ...</span>
+    <span class="chip" id="chipPhys" title="the physics engine">phys ...</span>
+    <span class="chip" id="chipNet" title="the object detector on the dog eye">eye net off</span>
+    <span class="chip" id="chipClock" title="the time of day in the yard">10:00</span>
+    <span class="chip" id="chipFps" title="frames per second">--</span>
+  </div>
   <button class="hb-iconbtn" id="bPalette" type="button" aria-haspopup="dialog" aria-controls="palette" aria-label="commands: every action by name" title="commands (ctrl k or /)"></button>
 </header>
 <main id="work">
-<section id="stage" class="hb-viewport is-fill hb-ctx-area" aria-haspopup="menu" aria-label="3d yard. tap the dog to pet it, tap the ground to point. hold, right click or the menu key for more." tabindex="0">
-  <div id="load" class="hb-vp-cover"><div class="hb-vp-cover-title">waking the dog</div><div class="hb-vp-cover-note" id="loadNote">loading model</div></div>
-  <div class="hb-ov hb-ov-tl">
-    <figure class="hb-inset" id="eyecard">
-      <div class="hb-inset-hd"><button type="button" id="eyeWhoDog" aria-pressed="true" title="what the dog sees">dog eye</button><button type="button" id="eyeWhoHis" aria-pressed="false" title="what moheeb sees">his eyes</button><span id="eyeMode">dichromat</span><button type="button" id="eyeFold" aria-expanded="true" aria-controls="eyewrap" aria-label="fold the eye view">-</button></div>
-      <div class="hb-inset-media" id="eyewrap"><canvas id="eye" width="320" height="160" role="img" aria-label="what the dog sees"></canvas><canvas id="eyeBoxes" width="320" height="160" aria-hidden="true"></canvas><canvas id="eyeSal" width="320" height="160" aria-hidden="true"></canvas></div>
-    </figure>
-  </div>
-  <div class="hb-ov hb-ov-tr" id="hudTR">
-    <div class="hb-hudstats">
-      <span class="hb-hudstat"><span class="k">time</span><b id="chipClock">10:00</b></span>
-      <span class="hb-hudstat"><b id="chipFps">--</b><span class="u">fps</span></span>
-      <span class="hb-hudstat" id="hudTags" hidden><span class="hb-tag is-lit-ok" id="chipNet" hidden>yolo</span><span class="hb-tag is-lit-ok" id="tagNn" hidden>gait net</span><span class="hb-tag is-lit-ok" id="tagCortex" hidden>cortex</span></span>
-    </div>
-    <div class="hb-cams" id="cams" role="group" aria-label="camera">
-      <button type="button" data-cam="0" aria-pressed="true">follow</button><button type="button" data-cam="1" aria-pressed="false">free</button><button type="button" data-cam="2" aria-pressed="false">dog eye</button><button type="button" data-cam="3" aria-pressed="false">side</button><button type="button" data-cam="4" aria-pressed="false">his eyes</button>
-    </div>
-  </div>
-  <div id="bubble" class="hb-bubble" aria-hidden="true">...</div>
-  <div id="hbubble" class="hb-bubble is-ink" style="display:none" aria-hidden="true"></div>
-  <div id="toast" class="hb-toast" role="status" aria-live="polite"></div>
-  <div id="onceNote" hidden><span id="onceText"></span><button class="hb-btn hb-btn-2" type="button" id="onceGo">minds</button></div>
-  <div id="drop" class="hb-dropzone is-cover">show the dog this photo</div>
-  <div id="hint" class="hb-hudnote">tap or click the dog to pet it. tap the ground to point. shift and click to throw there. drag to orbit, two fingers or right drag to move the camera.</div>
-  <p id="whyLine" aria-hidden="true"></p>
+<section id="stage" class="hb-ctx-area" data-ux="subject" aria-haspopup="menu" aria-label="3d yard. tap the dog to pet it, tap the ground to point. hold, right click or the menu key for more." tabindex="0">
+  <div id="load"><div><p class="big">waking the dog<b>...</b></p><p class="note" id="loadNote">loading model</p></div></div>
+  <figure id="eyecard" data-ux="inset" style="margin:0">
+    <div class="bh"><span class="eyewho"><button type="button" id="eyeWhoDog" class="on" title="what the dog sees">dog eye</button><button type="button" id="eyeWhoHis" title="what moheeb sees">his eyes</button></span><span id="eyeMode">dichromat</span><button type="button" id="eyeFold" aria-expanded="true" aria-controls="eyewrap" aria-label="fold the eye view">-</button></div>
+    <div id="eyewrap"><canvas id="eye" width="320" height="160" role="img" aria-label="what the dog sees"></canvas><canvas id="eyeBoxes" width="320" height="160" aria-hidden="true"></canvas><canvas id="eyeSal" width="320" height="160" aria-hidden="true"></canvas></div>
+  </figure>
+  <div id="hint">click the ground to point. shift and click: he throws there. click the dog to pet it. drag to orbit; right drag, two fingers or w a s d move the camera, q and e for height, f follows the dog again.</div>
+  <div id="bubble" aria-hidden="true">...</div>
+  <div id="hbubble" style="display:none" aria-hidden="true"></div>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <div id="drop">show the dog this photo</div>
   <div class="hb-ctx" id="yardMenu" aria-label="yard actions" hidden><div class="hb-ctx-title" id="yardMenuT" aria-hidden="true">yard</div></div>
-  <div class="hb-ov hb-ov-foot">
-  <div class="hb-ov-b" id="tool">
-    <button class="hb-btn" id="bThrow" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5c3 1 7 1 10 0M3 11c3-1 7-1 10 0" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>throw</button>
-    <button class="hb-btn hb-btn-2" id="bTreat" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5" width="10" height="6" fill="currentColor"/></svg>treat</button>
-    <button class="hb-btn hb-btn-2" id="bGood" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 9l4 4 8-10" fill="none" stroke="currentColor" stroke-width="2"/></svg>good<span class="wide-l"> dog</span></button>
-    <button class="hb-btn hb-btn-2" id="bNo" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2"/></svg>no</button>
-    <button class="hb-btn hb-btn-2 wide" id="bSquirrel" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="10" r="3" fill="currentColor"/><path d="M9 11c4 0 5-4 3-7-2-2-5 0-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>squirrel</button>
-    <button class="hb-btn hb-btn-2 wide" id="bFill" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12l-2 5H4z" fill="currentColor"/></svg>fill bowl</button>
-    <button class="hb-btn hb-btn-2" id="bMore" type="button" aria-label="more verbs, in play"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.6" fill="currentColor"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="13" cy="8" r="1.6" fill="currentColor"/></svg><span class="lbl">more</span></button>
-  </div>
   <div class="hb-ov-pad" id="padRow" hidden>
     <div class="hb-pad">
       <div class="hb-pad-base" id="pad" role="group" tabindex="0" aria-label="drive the dog: drag, or hold the arrow keys"><span class="hb-pad-arrow hb-pad-n" aria-hidden="true"></span><span class="hb-pad-arrow hb-pad-s" aria-hidden="true"></span><span class="hb-pad-arrow hb-pad-w" aria-hidden="true"></span><span class="hb-pad-arrow hb-pad-e" aria-hidden="true"></span><span class="hb-pad-knob" aria-hidden="true"></span></div>
       <button type="button" class="hb-pad-act" id="padRun" aria-pressed="false">run</button>
     </div>
   </div>
+  <div id="tool" data-ux="verbs">
+    <button class="hb-btn hb-btn-go" id="bThrow" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5c3 1 7 1 10 0M3 11c3-1 7-1 10 0" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>Throw ball</button>
+    <button class="hb-btn" id="bTreat" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5" width="10" height="6" rx="1" fill="currentColor"/></svg>Treat</button>
+    <button class="hb-btn" id="bGood" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 9l4 4 8-10" fill="none" stroke="currentColor" stroke-width="2"/></svg>Good dog</button>
+    <button class="hb-btn" id="bNo" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3l10 10M13 3L3 13" stroke="currentColor" stroke-width="2"/></svg>No</button>
+    <button class="hb-btn" id="bFill" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12l-2 5H4z" fill="currentColor"/></svg>Fill bowl</button>
+    <button class="hb-btn" id="bSquirrel" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="10" r="3" fill="currentColor"/><path d="M9 11c4 0 5-4 3-7-2-2-5 0-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>Squirrel</button>
+    <button class="hb-btn" id="bCam" type="button" aria-label="camera: follow. press for the next view" title="follow, free, dog eye, side, his eyes"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M1 5h4l1-2h4l1 2h4v8H1z" fill="none" stroke="currentColor" stroke-width="1.5"/><circle cx="8" cy="9" r="2.4" fill="currentColor"/></svg><span id="camLab">follow</span></button>
+    <button class="hb-btn" id="bMic" type="button" aria-pressed="false" aria-describedby="micNote"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="6" y="1" width="4" height="9" rx="2" fill="currentColor"/><path d="M3 8a5 5 0 0010 0M8 13v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="micLab">talk</span></button>
   </div>
 </section>
-<aside id="side">
+<aside id="side" data-ux="rack">
   <div class="hb-tabs" role="tablist" aria-label="panels" id="tabs">
-    <button class="hb-tab" role="tab" type="button" id="tab-play" aria-controls="pPlay" aria-selected="true" tabindex="0" data-p="pPlay">play</button>
-    <button class="hb-tab" role="tab" type="button" id="tab-minds" aria-controls="pMinds" aria-selected="false" tabindex="-1" data-p="pMinds">minds</button>
-    <button class="hb-tab" role="tab" type="button" id="tab-senses" aria-controls="pSense" aria-selected="false" tabindex="-1" data-p="pSense">senses</button>
+    <button class="hb-tab" role="tab" type="button" id="tab-brain" aria-controls="pBrain" aria-selected="true" tabindex="0" data-p="pBrain">brain</button>
     <button class="hb-tab" role="tab" type="button" id="tab-body" aria-controls="pBody" aria-selected="false" tabindex="-1" data-p="pBody">body</button>
-    <button class="hb-tab" role="tab" type="button" id="tab-more" aria-controls="pMore" aria-selected="false" tabindex="-1" data-p="pMore">more</button>
+    <button class="hb-tab" role="tab" type="button" id="tab-sense" aria-controls="pSense" aria-selected="false" tabindex="-1" data-p="pSense">sense</button>
+    <button class="hb-tab" role="tab" type="button" id="tab-train" aria-controls="pTrain" aria-selected="false" tabindex="-1" data-p="pTrain">train</button>
+    <button class="hb-tab" role="tab" type="button" id="tab-human" aria-controls="pHuman" aria-selected="false" tabindex="-1" data-p="pHuman">human</button>
+    <button class="hb-tab" role="tab" type="button" id="tab-tune" aria-controls="pTune" aria-selected="false" tabindex="-1" data-p="pTune">tune</button>
+    <button class="hb-tab" role="tab" type="button" id="tab-how" aria-controls="pAbout" aria-selected="false" tabindex="-1" data-p="pAbout">how</button>
   </div>
   <div id="panes">
 
-  <section class="pane on" id="pPlay" role="tabpanel" aria-labelledby="tab-play" tabindex="0">
+  <section class="pane on" id="pBrain" role="tabpanel" aria-labelledby="tab-brain" tabindex="0">
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">play <span class="hb-hd-aux">tap a tile</span></h3>
-      <div class="hb-tiles" id="playTiles">
-        <button class="hb-tile is-on" type="button" data-verb="bThrow"><span class="n">throw the ball</span><span class="s">he throws, the dog fetches</span></button>
-        <button class="hb-tile" type="button" data-verb="bTreat"><span class="n">treat</span><span class="s">toss one on the grass</span></button>
-        <button class="hb-tile" type="button" data-verb="bGood"><span class="n">good dog</span><span class="s">praise teaches what it just did</span></button>
-        <button class="hb-tile" type="button" data-verb="bNo"><span class="n">no</span><span class="s">a scolding. the dog appeases</span></button>
-        <button class="hb-tile" type="button" data-verb="bSquirrel"><span class="n">squirrel</span><span class="s">one runs along the fence</span></button>
-        <button class="hb-tile" type="button" data-verb="bFill"><span class="n">fill the bowl</span><span class="s">dinner, if it is hungry</span></button>
-      </div>
-      <p class="note" id="touchHint">tap the dog to pet it. tap the ground to point there. two fingers move the camera.</p>
+      <h3 class="hb-panel-hd-inst"><span>behaviour</span><span class="hb-hd-aux" id="behT">0.0 s</span></h3>
+      <p class="big" id="behName">idle</p>
+      <p class="note" id="behWhy">standing around</p>
+      <p class="sub" id="behKind"></p>
+      <p class="sub" id="goalNote"></p>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">cues <span class="hb-hd-aux">say, tap or type</span></h3>
-      <div class="chips" id="cueBtns"></div>
-      <div class="btns" style="margin-top:var(--hb-s3)">
-        <button class="hb-btn hb-btn-2" id="bMic" type="button" aria-pressed="false" aria-describedby="micNote"><svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><rect x="6" y="1" width="4" height="9" fill="currentColor"/><path d="M3 8a5 5 0 0010 0M8 13v2" fill="none" stroke="currentColor" stroke-width="1.5"/></svg><span id="micLab">talk</span></button>
-      </div>
-      <p class="note" id="micNote">say "sit", "spin" or any new word. in chrome your voice goes to the browser's speech service; nothing else leaves the page.</p>
-      <div class="hb-heard" id="heard" aria-live="polite" data-empty="nothing heard yet"></div>
-      <div class="fieldrow"><label for="cueIn">type a cue, then enter</label><input class="hb-input" type="text" id="cueIn" enterkeyhint="send" autocomplete="off" autocapitalize="none"></div>
-      <div class="fieldrow"><label for="dogName">dog name</label><input class="hb-input" type="text" id="dogName" value="Pixel" autocomplete="off"></div>
-      <p class="note">to teach a new word: say it, wait for whatever the dog does, then praise it. see what it knows in <button class="linkbtn hb-link" type="button" data-go="pMinds">minds</button>.</p>
+      <h3 class="hb-panel-hd-inst"><span>utility</span><span class="hb-hd-aux" id="utilMode">sampled</span></h3>
+      <div id="utilRows" aria-label="what each act is worth to the dog now"></div>
+      <p class="note" id="pendNote"></p>
+      <details class="hb-fold" data-ux="detail"><summary>how it chooses</summary><div><p class="sub" id="choiceMeta"></p><ul class="lines" id="choiceFeed"></ul>
+        <p class="note">drive reduction: each act scores by how much it would lower the dog's needs (keramati and gutkin 2011). the dog acts on the best option most of the time (softmax with a commitment bonus, temperature in tune).</p></div></details>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">what it knows <span class="hb-hd-aux" id="knownN">0 words</span></h3>
-      <ul class="lines" id="knownList"></ul>
+      <h3 class="hb-panel-hd-inst"><span>drives</span><span class="hb-hd-aux">need 0 to 1</span></h3>
+      <div id="driveRows" aria-label="the dog's drives"></div>
+      <div class="row"><label class="lab" for="tempo">tempo</label><input type="range" id="tempo" min="0.25" max="8" step="0.25" value="1"><output class="v" id="tempoV" for="tempo">1x</output></div>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">moheeb <span class="hb-hd-aux" id="humMode">runs his day</span></h3>
-      <div class="btns"><button class="hb-btn hb-btn-2" id="bCall" type="button">call the dog</button><button class="hb-btn hb-btn-2" id="bPet" type="button">pet the dog</button><button class="hb-btn hb-btn-2" id="bTrainNow" type="button">train a new word</button></div>
-      <label class="hb-check" style="margin-top:var(--hb-s2)"><input type="checkbox" id="humAI" checked>he runs his own day. off: you drive him with these buttons.</label>
+      <h3 class="hb-panel-hd-inst"><span>affect</span><span class="hb-hd-aux" id="affectAux">valence x arousal</span></h3>
+      <canvas class="inst" id="affect" width="340" height="120" role="img" aria-label="affect"></canvas>
+      <p class="sub" id="affectTxt"></p>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">temperament <span class="hb-hd-aux" id="presetNow">from the name</span></h3>
-      <div class="chips" id="presetChips"></div>
-      <p class="note">a new name draws a new temperament. every trait is under more, tune.</p>
+      <h3 class="hb-panel-hd-inst"><span>sleep and clock</span><span class="hb-hd-aux" id="slpStage">awake</span></h3>
+      <canvas class="inst" id="hyp" width="340" height="64" role="img" aria-label="sleep stages over the last 80 s"></canvas>
+      <div class="kv"><b>time</b><span id="kClock">10:00</span><b>sleep pressure</b><span id="kSp">0</span><b>body clock</b><span id="kCirc">0</span><b>bond</b><span id="kBond">0.5</span><b>wag mode</b><span id="kWag">-</span></div>
+      <p class="note">sleep pressure builds while awake and drains asleep; the body clock peaks near 7 and 19 with a midday dip. sleep runs onset, nrem, short rem with paddling paws, and often a wake after rem. pet dogs sleep about 11 hours a day.</p>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">time <span class="hb-hd-aux" id="kClockPlay">10:00</span></h3>
-      <div class="rangerow"><label for="tempo">tempo</label><input type="range" id="tempo" min="0.25" max="8" step="0.25" value="1"><output id="tempoV" for="tempo">1x</output></div>
-      <p class="note">drives grow and the day moves this many times faster. the physics stays at real speed.</p>
-    </div>
-  </section>
-
-  <section class="pane" id="pMinds" role="tabpanel" aria-labelledby="tab-minds" tabindex="0">
-    <div class="hb-seg is-toggle" id="mindSeg" role="group" aria-label="whose mind"><button type="button" class="is-on" aria-pressed="true" data-mind="dog">dog</button><button type="button" aria-pressed="false" data-mind="hum">moheeb</button></div>
-    <div class="mcols">
-    <div class="mcol" id="mindDog">
-      <h2 class="mcol-hd" id="dogNameHd">the dog</h2>
-      <p class="note" data-suite-only hidden>the same parts as tools: <a class="hb-link" data-suite="#/agents/drives">drives</a>, <a class="hb-link" data-suite="#/agents/senses">senses</a>, <a class="hb-link" data-suite="#/chat/memory">memory</a>, open in the suite.</p>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">now <span class="hb-hd-aux" id="behT">0.0 s</span></h3>
-        <p class="big" id="behName">idle</p>
-        <p class="why" id="behWhy">standing around</p>
-        <p class="sub" id="behKind"></p>
-        <p class="sub" id="pendNote"></p>
-        <p class="sub" id="goalNote"></p>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">drives <span class="hb-hd-aux">computed, 120 s</span></h3>
-        <ul class="hb-sparks" id="driveSparks" aria-label="the dog's drives"></ul>
-        <details class="hb-fold"><summary>affect and signals <span class="aux" id="affectAux"></span></summary><div>
-          <canvas class="inst" id="affect" width="340" height="120" role="img" aria-label="affect"></canvas>
-          <p class="sub" id="affectTxt"></p>
-        </div></details>
-        <details class="hb-fold"><summary>sleep and clock <span class="aux" id="slpStage">awake</span></summary><div>
-          <canvas class="inst" id="hyp" width="340" height="64" role="img" aria-label="sleep stages over the last 80 s"></canvas>
-          <div class="hb-kv"><span>time</span><span id="kClock">10:00</span></div><div class="hb-kv"><span>sleep pressure</span><span id="kSp">0</span></div><div class="hb-kv"><span>body clock</span><span id="kCirc">0</span></div><div class="hb-kv"><span>bond</span><span id="kBond">0.5</span></div><div class="hb-kv"><span>wag mode</span><span id="kWag">-</span></div>
-          <p class="note">sleep pressure builds while awake and drains asleep; the body clock peaks near 7 and 19 with a midday dip. pet dogs sleep about 11 hours a day.</p>
-        </div></details>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">choice <span class="hb-hd-aux" id="utilMode">sampled</span></h3>
-        <div class="hb-choice" id="dogChoice">
-          <p class="hb-choice-why" id="choiceWhy"></p>
-          <ol class="hb-choice-list" id="choiceTop" aria-label="the dog's top options"></ol>
-          <p class="hb-choice-key" aria-hidden="true"><span><i class="hb-opt-base"></i>score</span><span><i class="hb-opt-bonus"></i>commitment</span><span>* doing now</span><span>% chance</span></p>
-          <p class="hb-choice-meta" id="choiceMeta"></p>
+      <h3 class="hb-panel-hd-inst"><span>cortex</span><span class="hb-hd-aux" id="cortexSt">off</span></h3>
+      <p class="note">a vision language model on your gpu looks through the dog eye, reads its drives and memories, and returns what it saw, a thought and a goal. nothing leaves the browser; the weights download once and stay stored.</p>
+      <div class="field"><label for="vlmSel">model</label><select class="hb-select" id="vlmSel"><option value="lfm">lfm2-vl 450m, about 320 mb</option><option value="gemma">gemma 4 e2b, about 3.3 gb</option></select></div>
+      <p class="licence" id="vlmLic">weights lfm open license 1.0, commercial use limited.</p>
+      <div class="btns"><button class="hb-btn" id="bVlmLoad" type="button">load, about 320 mb</button><button class="hb-btn" id="bThink" type="button" hidden>look and think</button></div>
+      <p class="reason" id="cortexWhy"></p>
+      <p class="sub" id="cortexSched"></p>
+      <label class="hb-check is-disabled" id="autoThinkL" hidden><input type="checkbox" id="autoThink" disabled>think on its own when something happens, at most every 25 s</label>
+      <div class="field" id="askRow" hidden><label for="askIn">ask the dog</label><input class="hb-input" type="text" id="askIn" disabled placeholder="what do you see? enter" enterkeyhint="send" autocomplete="off"></div>
+      <div class="hb-heard" id="cortexOut" data-empty="no thoughts yet"></div>
+      <details class="hb-fold" data-ux="detail"><summary>model calls <span class="aux" id="dogCallsN">0</span></summary><div><ol class="calls" id="dogCalls" data-empty="no calls yet"></ol></div></details>
+      <details class="hb-fold" id="pinspFold" data-ux="detail"><summary>prompt inspector <span class="aux" id="pinspN">no calls</span></summary>
+        <div class="hb-pinsp" id="pinsp">
+          <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">cost <small id="pinspWho">this session</small></h3><dl class="hb-pinsp-kv" id="pinspKv" hidden></dl><p class="hb-pinsp-empty" id="pinspKvEmpty">no calls yet</p></section>
+          <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">tools it sees <small id="pinspToolsN"></small></h3><ul class="hb-pinsp-tools is-empty" id="pinspTools" aria-label="tools it sees"><li class="hb-pinsp-tool-none">none yet</li></ul></section>
+          <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">last plan</h3><pre class="hb-pinsp-pre is-empty" id="pinspPlan">none yet</pre></section>
+          <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">last prompt and reply <button type="button" class="hb-pinsp-copy" id="pinspCopy" hidden>copy</button></h3><pre class="hb-pinsp-pre is-empty" id="pinspRaw" aria-label="last prompt and reply">no language model has been asked yet</pre></section>
         </div>
-        <details class="hb-fold"><summary>all options <span class="aux" id="choiceAllN"></span></summary><div><ol class="hb-choice-list" id="choiceAll" aria-label="every option"></ol></div></details>
-        <details class="hb-fold"><summary>what feeds each option</summary><div><ul class="lines" id="choiceFeed"></ul>
-          <p class="note">drive reduction: each act scores by how much it would lower the dog's needs (keramati and gutkin 2011). the dog acts on the best option most of the time (softmax, temperature from more, tune).</p></div></details>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">senses <span class="hb-hd-aux" id="kFocusMind">-</span></h3>
-        <ul class="lines" id="dogSenses"></ul>
-        <p class="note">the eye view is in the yard corner. more in <button class="linkbtn hb-link" type="button" data-go="pSense">senses</button>.</p>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">memory and learning <span class="hb-hd-aux" id="memN">0 memories</span></h3>
-        <div class="meterrow"><span>importance</span><div class="hb-meter" role="progressbar" aria-label="importance toward the next cortex thought" aria-valuemin="0" aria-valuemax="100" id="impMeter"><i style="width:0%"></i></div><b id="impV">0</b></div>
-        <details class="hb-fold" id="memFold"><summary>memory stream <span class="aux">newest first</span></summary><div>
-          <section class="hb-mempanel" aria-label="the dog's memory">
-            <div class="hb-mempanel-sec"><p class="hb-mempanel-counts" id="memCounts">0 memories</p><div class="hb-mempanel-store"><p class="hb-mempanel-line">kept in this tab only. a reload starts a new day; export keeps a copy.</p></div></div>
-            <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memSearchH">search</h3><input class="hb-input" type="search" id="memSearch" placeholder="try ball or human" aria-labelledby="memSearchH" aria-describedby="memSearchM" autocomplete="off"><p class="hb-mempanel-line" id="memSearchM">search: keyword overlap. with no words the order is the cortex ranking.</p></div>
-            <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memAddH">add a memory</h3><textarea class="hb-textarea" id="memNote" rows="2" placeholder="the ball went over the fence" aria-labelledby="memAddH"></textarea><div class="hb-mempanel-row"><button type="button" class="hb-btn hb-btn-sm" id="memAdd" disabled>add</button></div></div>
-            <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memListH">memories (0)</h3><p class="hb-mempanel-empty" id="memEmpty">nothing remembered yet. play with the dog and it fills.</p><div class="hb-mempanel-list" id="memList" aria-labelledby="memListH"></div></div>
-            <div class="hb-mempanel-foot"><button type="button" class="hb-btn hb-btn-2 hb-btn-sm" id="memExport">export</button><button type="button" class="hb-btn hb-btn-2 hb-btn-sm hb-mempanel-wipe" id="memWipe">erase all</button></div>
-          </section>
-          <p class="note">scored as the cortex ranks them: recency 0.995 per game hour, importance over 6, plus 0.5 when it names what is in view (park 2023). marked rows went into the last thought.</p></div></details>
-        <details class="hb-fold"><summary>words it knows <span class="aux" id="knownMindN"></span></summary><div>
-          <ul class="lines" id="knownMind"></ul>
-          <p class="sub" id="lastTrial"></p>
-          <div class="hb-scroll-x" style="margin-top:var(--hb-s2)"><table class="hb-heat" id="heat"></table></div>
-          <p class="note">rows are words, columns are acts: how strongly the dog links each word to each act, excitation minus an inhibition that fades faster. attn is how much it still pays attention to that word (rescorla wagner with pearce kaye hall associability). credit fades with delay, so a slow treat can reward the wrong act.</p>
-          <div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" id="bReset" type="button">forget every word</button><button class="hb-btn hb-btn-2" id="bResetKeep" type="button" hidden>keep them</button></div>
-        </div></details>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">cortex <span class="hb-hd-aux" id="cortexSt">off</span></h3>
-        <p class="sub" id="cortexSched"></p>
-        <div class="hb-heard" id="cortexOut" data-empty="no thoughts yet"></div>
-        <div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" id="bThink" type="button" disabled aria-describedby="cortexWhy">look and think</button></div>
-        <label class="hb-check is-disabled" id="autoThinkL"><input type="checkbox" id="autoThink" disabled aria-describedby="cortexWhy">think on its own when something happens, at most every 25 s</label>
-        <div class="fieldrow"><label for="askIn">ask the dog, then enter</label><input class="hb-input" type="text" id="askIn" disabled aria-describedby="cortexWhy" enterkeyhint="send" autocomplete="off"></div>
-        <p class="reason" id="cortexWhy"></p>
-        <details class="hb-fold"><summary>model calls <span class="aux" id="dogCallsN">0</span></summary><div><ol class="calls" id="dogCalls" data-empty="no calls yet"></ol></div></details>
-        <details class="hb-fold" id="pinspFold"><summary>prompt inspector <span class="aux" id="pinspN">no calls</span></summary>
-          <div class="hb-pinsp" id="pinsp">
-            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">cost <small id="pinspWho">this session</small></h3><dl class="hb-pinsp-kv" id="pinspKv" hidden></dl><p class="hb-pinsp-empty" id="pinspKvEmpty">no calls yet</p></section>
-            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">tools it sees <small id="pinspToolsN"></small></h3><ul class="hb-pinsp-tools is-empty" id="pinspTools" aria-label="tools it sees"><li class="hb-pinsp-tool-none">none yet</li></ul></section>
-            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">last plan</h3><pre class="hb-pinsp-pre is-empty" id="pinspPlan">none yet</pre></section>
-            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">last prompt and reply <button type="button" class="hb-pinsp-copy" id="pinspCopy" hidden>copy</button></h3><pre class="hb-pinsp-pre is-empty" id="pinspRaw" aria-label="last prompt and reply">no language model has been asked yet</pre></section>
-          </div>
-        </details>
-      </div>
+      </details>
     </div>
-    <div class="mcol is-off" id="mindHum">
-      <h2 class="mcol-hd">moheeb</h2>
-      <p class="note" data-suite-only hidden>any character in any room: <a class="hb-link" data-suite="#/rooms">open the room in the suite</a>.</p>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">now <span class="hb-hd-aux" id="humT">0 s</span></h3>
-        <p class="big" id="humTask">idle</p>
-        <p class="why" id="humWhy">standing on the porch</p>
-        <p class="sub" id="humSrc"></p>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">needs <span class="hb-hd-aux">computed, 120 s</span></h3>
-        <ul class="hb-sparks" id="humSparks" aria-label="moheeb's needs"></ul>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">plan <span class="hb-hd-aux" id="humPlanAux">routine</span></h3>
-        <div class="hb-choice is-quiet" id="humChoice">
-          <p class="hb-choice-why" id="humPlanWhy"></p>
-          <ol class="hb-choice-list" id="humPlan" aria-label="moheeb's options"></ol>
-          <p class="hb-choice-key" aria-hidden="true"><span><i class="hb-opt-base"></i>score</span><span><i class="hb-opt-penalty"></i>repeat penalty</span><span>* picked</span><span>% chance</span></p>
-          <p class="hb-choice-meta" id="humPlanMeta"></p>
-        </div>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">mood and senses</h3>
-        <div id="humMood"></div>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">training <span class="hb-hd-aux">he teaches</span></h3>
-        <div id="humTrain"></div>
-        <p class="note">he says a word, waits, then praises a match or says no. those are the rewards the dog learns from, so it picks up his words too.</p>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">his mind <span class="hb-hd-aux" id="humMindSt">off</span></h3>
-        <label class="hb-check is-disabled" id="humMindOnL"><input type="checkbox" id="humMindOn" disabled aria-describedby="humMindWhy">a cortex model picks what he does, at most every 25 s</label>
-        <p class="reason" id="humMindWhy"></p>
-        <div class="hb-heard" id="humMind" data-empty="his own mind is off"></div>
-        <details class="hb-fold"><summary>model calls <span class="aux" id="humCallsN">0</span></summary><div><ol class="calls" id="humCalls" data-empty="no calls yet"></ol></div></details>
-        <details class="hb-fold"><summary>what he said <span class="aux">newest first</span></summary><div><div class="lst" id="humSaid"></div></div></details>
-      </div>
-      <div class="hb-panel">
-        <h3 class="hb-panel-hd-inst">voice <span class="hb-hd-aux" id="voiceSt">browser voice</span></h3>
-        <label class="hb-check"><input type="checkbox" id="humVoiceOn" checked>speak out loud</label>
-        <p class="note" id="voiceNote">starts with the browser voice. pocket tts, his cloned voice, is in turn things on.</p>
-      </div>
-    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>memory</span><span class="hb-hd-aux" id="memN">0 memories</span></h3>
+      <div class="meterrow"><span>importance</span><div class="hb-meter" role="progressbar" aria-label="importance toward the next cortex thought" aria-valuemin="0" aria-valuemax="100" id="impMeter"><i style="width:0%"></i></div><b id="impV">0</b></div>
+      <details class="hb-fold" id="memFold" data-ux="detail"><summary>memory stream <span class="aux">newest first</span></summary><div>
+        <section class="hb-mempanel" aria-label="the dog's memory">
+          <div class="hb-mempanel-sec"><p class="hb-mempanel-counts" id="memCounts">0 memories</p><div class="hb-mempanel-store"><p class="hb-mempanel-line">kept in this tab only. a reload starts a new day; export keeps a copy.</p></div></div>
+          <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memSearchH">search</h3><input class="hb-input" type="search" id="memSearch" placeholder="try ball or human" aria-labelledby="memSearchH" aria-describedby="memSearchM" autocomplete="off"><p class="hb-mempanel-line" id="memSearchM">search: keyword overlap. with no words the order is the cortex ranking.</p></div>
+          <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memAddH">add a memory</h3><textarea class="hb-textarea" id="memNote" rows="2" placeholder="the ball went over the fence" aria-labelledby="memAddH"></textarea><div class="hb-mempanel-row"><button type="button" class="hb-btn hb-btn-sm" id="memAdd" disabled>add</button></div></div>
+          <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memListH">memories (0)</h3><p class="hb-mempanel-empty" id="memEmpty">nothing remembered yet. play with the dog and it fills.</p><div class="hb-mempanel-list" id="memList" aria-labelledby="memListH"></div></div>
+          <div class="hb-mempanel-foot"><button type="button" class="hb-btn hb-btn-sm" id="memExport">export</button><button type="button" class="hb-btn hb-btn-sm hb-mempanel-wipe" id="memWipe">erase all</button></div>
+        </section>
+        <p class="note">scored as the cortex ranks them: recency 0.995 per game hour, importance over 6, plus 0.5 when it names what is in view (park 2023). marked rows went into the last thought.</p></div></details>
     </div>
     <div class="hb-panel" id="timelinePanel">
-      <h3 class="hb-panel-hd-inst">timeline <span class="hb-hd-aux">sense, choice, act</span></h3>
+      <h3 class="hb-panel-hd-inst"><span>timeline</span><span class="hb-hd-aux">the dog and moheeb</span></h3>
+      <details class="hb-fold" data-ux="detail"><summary>sense, choice and act, newest first</summary><div>
       <div class="hb-causal">
         <div class="hb-causal-filters" role="group" aria-label="show agents" id="tlAgents"><span class="hb-causal-flabel" aria-hidden="true">who</span><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-agent="dog">dog</button><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-agent="human">moheeb</button></div>
         <div class="hb-causal-filters" role="group" aria-label="show kinds" id="tlKinds"><span class="hb-causal-flabel" aria-hidden="true">kinds</span><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-kind="sense">sense</button><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-kind="choice">choice</button><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-kind="act">act</button><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-kind="cue">cue</button><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-kind="reward">reward</button><button class="hb-chip is-toggle is-on" type="button" aria-pressed="true" data-kind="model">model</button></div>
         <div class="hb-causal-list" role="region" aria-label="cause timeline, newest first" tabindex="0" id="tlList"><ol id="tlEvents"></ol></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="pane" id="pSense" role="tabpanel" aria-labelledby="tab-senses" tabindex="0">
-    <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">vision <span class="hb-hd-aux" id="netSt">detector off</span></h3>
-      <label class="hb-check"><input type="checkbox" id="dogColor" checked>dichromat color and 20/75 acuity</label>
-      <label class="hb-check"><input type="checkbox" id="showSal">show saliency and the current fixation on the eye</label>
-      <label class="hb-check"><input type="checkbox" id="netOn" aria-describedby="netNote">label the eye feed with the object detector</label>
-      <p class="note" id="netNote">yolov8n, 12.8 MB (vendor), weights agpl 3.0. it downloads when you turn it on. <button class="linkbtn hb-link" type="button" data-caps="yolo">details in turn things on</button></p>
-      <div class="hb-kv"><span>looking at</span><span id="kFocus">-</span></div>
-      <div class="lst" id="detList"></div>
-    </div>
-    <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">percepts <span class="hb-hd-aux">field of view 240</span></h3>
-      <div class="lst" id="perList"></div>
-    </div>
-    <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">show it <span class="hb-hd-aux">photo or webcam</span></h3>
-      <div class="btns"><label class="hb-btn hb-btn-2" for="photoIn" tabindex="0" id="photoPick">pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="hb-btn hb-btn-2" id="bWebcam" type="button" aria-pressed="false">webcam</button><button class="hb-btn hb-btn-2" id="bClap" type="button" aria-pressed="false">clap detection</button></div>
-      <p class="note">a photo is labelled only with the detector on. the webcam asks for the camera only and downloads two gesture and face models, 27.3 MB (vendor), apache 2.0. clap detection asks for the microphone. with a cortex model loaded the dog also says what it thinks of a photo.</p>
-      <div class="hb-callout is-warn" id="photoAsk" hidden role="alert"><p class="why" style="margin:0">to label photos the dog needs the object detector: 12.8 MB (vendor), weights agpl 3.0. load it?</p><div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" type="button" id="bPhotoYes">load it and label the photo</button><button class="hb-btn hb-btn-2" type="button" id="bPhotoNo">not now</button></div></div>
-      <div id="photoView"><canvas id="photo" width="320" height="240" role="img" aria-label="the photo you showed it"></canvas></div>
-      <video id="cam" playsinline muted aria-label="your webcam"></video>
-    </div>
-    <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">nose and ears <span class="hb-hd-aux" id="sniffSt">-</span></h3>
-      <label class="hb-check"><input type="checkbox" id="showPuffs">show scent puffs in the yard</label>
-      <div class="hb-kv"><span>wind</span><span id="kWind">-</span></div><div class="hb-kv"><span>puffs</span><span id="kPuffs">0</span></div><div class="hb-kv"><span>left / right nostril</span><span id="kLR">-</span></div>
-      <div class="meterrow"><span>scent</span><div class="hb-meter"><i id="scentBar"></i></div><b id="scentV">0</b></div>
-      <div class="meterrow"><span>sound</span><div class="hb-meter"><i id="hearBar"></i></div><b id="hearV">0</b></div>
+      </div></div></details>
     </div>
   </section>
 
   <section class="pane" id="pBody" role="tabpanel" aria-labelledby="tab-body" tabindex="0">
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">gait <span class="hb-hd-aux" id="gaitName">stand</span></h3>
-      <div class="hb-seg is-toggle" id="gaitSeg" role="group" aria-label="what drives the legs" style="display:flex;box-shadow:none"><button type="button" class="is-on" aria-pressed="true" data-gait="cpg" style="flex:1">pattern generator</button><button type="button" aria-pressed="false" data-gait="nn" style="flex:1" aria-describedby="nnSt">neural gait</button></div>
-      <p class="sub" id="nnSt">off</p>
-      <canvas class="inst" id="cpg" width="340" height="150" role="img" aria-label="leg phases and gait mix" style="margin-top:var(--hb-s2)"></canvas>
-      <div class="hb-kv"><span>speed</span><span id="kSpeed">0</span></div><div class="hb-kv"><span>stride frequency</span><span id="kFreq">0</span></div><div class="hb-kv"><span>duty</span><span id="kDuty">0</span></div><div class="hb-kv"><span>turn rate</span><span id="kTurn">0</span></div><div class="hb-kv"><span>posture</span><span id="kPost">stand</span></div><div class="hb-kv"><span>froude</span><span id="kFr">0</span></div><div class="hb-kv"><span>body source</span><span id="kSrc">cpg</span></div>
-      <div class="hb-kv"><span>network guidance</span><span id="kGuide">-</span></div><div class="hb-kv"><span>network inference</span><span id="kNnMs">-</span></div><div class="hb-kv"><span>network contacts</span><span id="kCont">-</span></div>
-      <p class="note">the neural gait is a codebook network trained on dog motion capture (ai4animationpy, paul and sebastian starke), 17.7 MB (vendor), model and mocap cc by-nc 4.0, no commercial use. it runs in a worker, on webgpu when there is an adapter. bows, paw lifts and shakes hand back to the pattern generator.</p>
+      <h3 class="hb-panel-hd-inst"><span>gait</span><span class="hb-hd-aux" id="gaitName">stand</span></h3>
+      <div class="hb-seg is-toggle" id="gaitSeg" role="group" aria-label="what drives the legs" style="display:flex;box-shadow:none;margin-bottom:8px"><button type="button" class="is-on" aria-pressed="true" data-gait="cpg" style="flex:1">pattern generator</button><button type="button" aria-pressed="false" data-gait="nn" style="flex:1">neural gait</button></div>
+      <canvas class="inst" id="cpg" width="340" height="150" role="img" aria-label="leg phases and gait mix"></canvas>
+      <div class="kv"><b>speed</b><span id="kSpeed">0</span><b>stride frequency</b><span id="kFreq">0</span><b>duty</b><span id="kDuty">0</span><b>turn rate</b><span id="kTurn">0</span><b>posture</b><span id="kPost">stand</span><b>froude</b><span id="kFr">0</span><b>body source</b><span id="kSrc">cpg</span></div>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">footfalls <span class="hb-hd-aux">lf rf lh rh</span></h3>
+      <h3 class="hb-panel-hd-inst"><span>neural gait</span><span class="hb-hd-aux" id="nnSt">off</span></h3>
+      <p class="note">a codebook matching network trained on real dog motion capture (ai4animationpy, paul and sebastian starke) predicts the next half second of a 27 bone dog: walk, pace, trot, canter, sit, lie. it runs in a worker, on webgpu when there is an adapter, retargeted onto this rig. bows, paw lifts and shakes hand back to the pattern generator with an inertialized blend.</p>
+      <div class="btns"><button class="hb-btn" id="bNnLoad" type="button">load neural gait, 17.7 mb</button></div>
+      <p class="licence">model and mocap cc by-nc 4.0, no commercial use. fetched when you press load from github, sweriko/ai4anim-webgpu at b539455, checked by sha-256, never bundled.</p>
+      <div class="kv"><b>guidance</b><span id="kGuide">-</span><b>inference</b><span id="kNnMs">-</span><b>contacts</b><span id="kCont">-</span></div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>footfalls</span><span class="hb-hd-aux">lf rf lh rh</span></h3>
       <canvas class="inst" id="foot" width="340" height="96" role="img" aria-label="footfall plot of the last 4 s"></canvas>
-      <p class="note">hildebrand plot of the last 4 s, dark is stance. a walk is a four beat lateral sequence, a trot pairs the diagonals, a gallop goes rotary.</p>
+      <p class="note">hildebrand plot of the last 4 s: dark is stance. a walk shows a four beat lateral sequence, a trot pairs the diagonals, a gallop goes rotary.</p>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">control <span class="hb-hd-aux">drive it</span></h3>
-      <label class="hb-check"><input type="checkbox" id="manual">manual drive: w a s d or arrows with the yard focused, shift to run</label>
-      <label class="hb-check"><input type="checkbox" id="xray">x-ray: skeleton, ik targets, contacts</label>
-      <label class="hb-check"><input type="checkbox" id="prints" checked>footprints</label>
-      <label class="hb-check"><input type="checkbox" id="ikOn" checked>leg ik and terrain adaptation</label>
-      <label class="hb-check"><input type="checkbox" id="sound" checked>sound</label>
+      <h3 class="hb-panel-hd-inst"><span>control</span><span class="hb-hd-aux">drive it</span></h3>
+      <label class="tog"><input type="checkbox" id="manual">manual drive: w a s d or arrows with the yard focused, shift to run</label>
+      <label class="tog"><input type="checkbox" id="xray">x-ray: skeleton, ik targets, contacts</label>
+      <label class="tog"><input type="checkbox" id="prints" checked>footprints</label>
+      <label class="tog"><input type="checkbox" id="ikOn" checked>leg ik and terrain adaptation</label>
+      <label class="tog"><input type="checkbox" id="sound" checked>sound</label>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">model <span class="hb-hd-aux" id="mdlName">dog.glb</span></h3>
+      <h3 class="hb-panel-hd-inst"><span>model</span><span class="hb-hd-aux" id="mdlName">dog.glb</span></h3>
       <div id="mdlInfo"></div>
       <p class="note">drop another quadruped glb on the yard to swap bodies.</p>
     </div>
   </section>
 
-  <section class="pane" id="pMore" role="tabpanel" aria-labelledby="tab-more" tabindex="0">
+  <section class="pane" id="pSense" role="tabpanel" aria-labelledby="tab-sense" tabindex="0">
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">turn things on <span class="hb-hd-aux" id="capsCount2"></span></h3>
-      <p class="note" style="margin-top:0">every optional model, download and permission in one list, with its size, licence and what it needs.</p>
-      <div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" type="button" data-caps="">open the list</button><button class="hb-btn hb-btn-2" type="button" id="bWelcome">show the welcome card</button></div>
+      <h3 class="hb-panel-hd-inst"><span>vision</span><span class="hb-hd-aux" id="netSt">detector off</span></h3>
+      <label class="tog"><input type="checkbox" id="dogColor" checked>dichromat color and 20/75 acuity</label>
+      <label class="tog"><input type="checkbox" id="netOn" aria-describedby="netNote">yolov8n on the eye feed, 12.8 mb</label>
+      <p class="licence" id="netNote">weights agpl 3.0 (ultralytics). fetched when you turn it on from github, hyuto/yolov8-onnxruntime-web at fc4a52c, checked by sha-256, never bundled.</p>
+      <label class="tog"><input type="checkbox" id="showSal">show saliency and the current fixation on the eye</label>
+      <div class="kv"><b>looking at</b><span id="kFocus">-</span></div>
+      <div class="lst" id="detList"></div>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">events <span class="hb-hd-aux">notes, loads, failures</span></h3>
+      <h3 class="hb-panel-hd-inst"><span>in mind</span><span class="hb-hd-aux" id="kFocusMind">-</span></h3>
+      <ul class="lines" id="dogSenses"></ul>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>percepts</span><span class="hb-hd-aux">field of view 240</span></h3>
+      <div class="lst" id="perList"></div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>show it</span><span class="hb-hd-aux">photo or webcam</span></h3>
+      <div class="btns"><label class="hb-btn" for="photoIn" tabindex="0" id="photoPick">pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="hb-btn" id="bWebcam" type="button" aria-pressed="false">webcam</button><button class="hb-btn" id="bClap" type="button" aria-pressed="false">clap detection</button></div>
+      <p class="note">the dog runs the same detector on whatever you show it: cats get barked at, food gets begged for, balls get a play bow. the webcam asks for the camera and downloads two gesture and face models, 27.3 mb, apache 2.0. clap detection asks for the microphone. with a cortex model loaded the dog also says what it thinks of a photo.</p>
+      <div class="hb-callout is-warn" id="photoAsk" hidden role="alert"><p class="sub" style="margin:0">to label photos the dog needs the object detector: 12.8 mb, weights agpl 3.0. load it?</p><div class="btns"><button class="hb-btn" type="button" id="bPhotoYes">load it and label the photo</button><button class="hb-btn" type="button" id="bPhotoNo">not now</button></div></div>
+      <div id="photoView"><canvas id="photo" width="320" height="240" role="img" aria-label="the photo you showed it"></canvas></div>
+      <video id="cam" playsinline muted aria-label="your webcam"></video>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>nose and ears</span><span class="hb-hd-aux" id="sniffSt">-</span></h3>
+      <label class="tog"><input type="checkbox" id="showPuffs">show scent puffs in the yard</label>
+      <div class="kv"><b>wind</b><span id="kWind">-</span><b>puffs</b><span id="kPuffs">0</span><b>left / right</b><span id="kLR">-</span></div>
+      <div class="row"><span class="lab">scent</span><div class="bar p"><i id="scentBar"></i></div><span class="v" id="scentV">0</span></div>
+      <div class="row"><span class="lab">sound</span><div class="bar"><i id="hearBar"></i></div><span class="v" id="hearV">0</span></div>
+    </div>
+  </section>
+
+  <section class="pane" id="pTrain" role="tabpanel" aria-labelledby="tab-train" tabindex="0">
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>cues</span><span class="hb-hd-aux">say or click</span></h3>
+      <div class="chiprow" id="cueBtns"></div>
+      <div class="hb-heard" id="heard" aria-live="polite" data-empty="say sit, spin or any new word"></div>
+      <div class="field"><label for="dogName">dog name</label><input class="hb-input" type="text" id="dogName" value="Pixel" autocomplete="off"></div>
+      <div class="field"><label for="cueIn">type a cue</label><input class="hb-input" type="text" id="cueIn" placeholder="then enter" enterkeyhint="send" autocomplete="off" autocapitalize="none"></div>
+      <p class="note" id="micNote">talk is on the yard. in chrome your voice goes to the browser's speech service to become text; nothing else leaves the page. to teach a new word, say it, wait for whatever the dog does, then praise it.</p>
+    </div>
+    <div class="hb-panel" id="assocPanel">
+      <h3 class="hb-panel-hd-inst"><span>associations</span><span class="hb-hd-aux">rw + pearce kaye hall</span></h3>
+      <div class="scrollx"><table class="heat" id="heat"></table></div>
+      <p class="sub" id="lastTrial"></p>
+      <p class="note">rows are cues, columns are acts. cells show net strength, excitation minus a separate inhibition that fades faster, so an extinguished cue partly comes back after a break. the attn column is each cue's associability: it rises after surprises and falls as the outcome becomes predictable. credit fades with delay, so a slow treat can reward whatever the dog is doing when it lands. if nothing is strong the dog offers tricks it was rewarded for before; teach a new word by praising whatever it does.</p>
+      <div class="btns"><button class="hb-btn" id="bReset" type="button">reset learning</button><button class="hb-btn" id="bResetKeep" type="button" hidden>keep them</button></div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>what it knows</span><span class="hb-hd-aux" id="knownN">0 words</span></h3>
+      <ul class="lines" id="knownList"></ul>
+    </div>
+  </section>
+
+  <section class="pane" id="pHuman" role="tabpanel" aria-labelledby="tab-human" tabindex="0">
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>moheeb</span><span class="hb-hd-aux" id="humMode">runs his day</span></h3>
+      <p class="big" id="humTask">idle</p>
+      <p class="note" id="humWhy">standing on the porch</p>
+      <p class="sub" id="humSrc"></p><p class="sub" id="humT"></p>
+      <label class="tog"><input type="checkbox" id="humAI" checked>he runs his own day. off: you drive him with these buttons.</label>
+      <label class="hb-check is-disabled" id="humMindOnL"><input type="checkbox" id="humMindOn" disabled>the cortex model picks what he does, at most every 25 s</label>
+      <p class="reason" id="humMindWhy"></p>
+      <div class="btns"><button class="hb-btn" id="bCall" type="button">call the dog</button><button class="hb-btn" id="bPet" type="button">pet the dog</button><button class="hb-btn" id="bTrainNow" type="button">train a new word</button></div>
+      <div class="hb-heard" id="humMind" data-empty="his own mind is off"></div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>voice</span><span class="hb-hd-aux">pocket tts</span></h3>
+      <p class="note" id="voiceNote">starts with the browser voice. load pocket tts to speak in his cloned voice, from the clip in this page; the engine downloads once from hugging face.</p>
+      <div class="btns"><button class="hb-btn" id="bVoiceLoad" type="button">load his voice</button><label class="tog"><input type="checkbox" id="humVoiceOn" checked>speak out loud</label></div>
+      <p class="licence">engine apache 2.0, models cc by-nc 4.0, no commercial use. kevinahm/pocket-tts-web on hugging face, pinned to one commit.</p>
+      <div class="hb-heard" id="voiceSt">browser voice</div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>training</span><span class="hb-hd-aux">he teaches</span></h3>
+      <div id="humTrain"></div>
+      <p class="note">he says a cue, waits for what the dog does, then praises a match (sometimes with a treat) or says no. those are the same rewards train learns from, so the dog picks up his words too, made up ones like boop included.</p>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>said</span><span class="hb-hd-aux">latest first</span></h3>
+      <div class="lst" id="humSaid"></div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>needs</span><span class="hb-hd-aux">last 2 minutes</span></h3>
+      <ul class="hb-sparks" id="humSparks" aria-label="moheeb's needs"></ul>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>plan</span><span class="hb-hd-aux" id="humPlanAux">routine</span></h3>
+      <div class="hb-choice is-quiet" id="humChoice">
+        <p class="hb-choice-why" id="humPlanWhy"></p>
+        <ol class="hb-choice-list" id="humPlan" aria-label="moheeb's options"></ol>
+        <p class="hb-choice-meta" id="humPlanMeta"></p>
+      </div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>mood and senses</span><span class="hb-hd-aux" id="humMindSt">off</span></h3>
+      <div id="humMood"></div>
+      <details class="hb-fold" data-ux="detail"><summary>model calls <span class="aux" id="humCallsN">0</span></summary><div><ol class="calls" id="humCalls" data-empty="no calls yet"></ol></div></details>
+    </div>
+  </section>
+
+  <section class="pane" id="pTune" role="tabpanel" aria-labelledby="tab-tune" tabindex="0">
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>turn on more</span><span class="hb-hd-aux" id="capsCount">checking</span></h3>
+      <p class="note">every optional model, download and permission in one list, with its size, licence and what it needs.</p>
+      <div class="btns"><button class="hb-btn" type="button" id="bCaps" data-caps="">open the list</button></div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>temperament</span><span class="hb-hd-aux" id="presetNow">from the name</span></h3>
+      <div class="chiprow" id="presetChips"></div>
+      <p class="note">a new name draws a new temperament. every trait is below.</p>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>tune</span><span class="hb-hd-aux">every number</span></h3>
+      <p class="note">turn parts of the model off to compare, or move any number. changes save in this browser.</p>
+      <div id="pTuneBody"></div>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>seeds and scenarios</span></h3>
+      <p class="note">open the yard with a fixed seed: the same seed and settings give the same day, frame for frame in lockstep.</p>
+      <div class="field"><label for="seedIn">seed</label><input class="hb-input" type="number" inputmode="numeric" id="seedIn" min="1" step="1" value="7"></div>
+      <div class="field"><label for="speedIn">sim speed</label><select class="hb-select" id="speedIn"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select></div>
+      <label class="tog"><input type="checkbox" id="seedNn">start with the neural gait on</label>
+      <div class="btns"><button class="hb-btn" type="button" id="bSeedGo">reopen with this seed</button></div>
+      <p class="sub" id="seedNow"></p>
+      <p class="note">the hash takes <code>#seed=7&amp;speed=1&amp;on=L.neural&amp;off=L.day</code>. lockstep runs use <code>#test&amp;seed=7</code>. the scenario runner: <code>node scenarios/run.mjs compare</code>, see scenarios/README.md.</p>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>events</span><span class="hb-hd-aux">notes, loads, failures</span></h3>
       <section class="hb-evlog" id="evlog">
         <div class="hb-evlog-head"><span class="hb-evlog-label">events</span><span class="hb-evlog-count" id="evlogN" aria-label="rows">0</span></div>
         <div class="hb-evlog-box"><div class="hb-evlog-rows" role="log" aria-label="events" tabindex="0" id="evlogRows"><p class="hb-evlog-empty" id="evlogEmpty">nothing logged yet</p></div></div>
       </section>
     </div>
+  </section>
+
+  <section class="pane about" id="pAbout" role="tabpanel" aria-labelledby="tab-how" tabindex="0">
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">seeds and scenarios</h3>
-      <p class="note" style="margin-top:0">open the yard with a fixed seed: the same seed and settings give the same day, frame for frame in lockstep.</p>
-      <div class="fieldrow"><label for="seedIn">seed</label><input class="hb-input" type="number" inputmode="numeric" id="seedIn" min="1" step="1" value="7"></div>
-      <div class="fieldrow"><label for="speedIn">sim speed</label><select class="hb-select" id="speedIn"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select></div>
-      <label class="hb-check"><input type="checkbox" id="seedNn">start with the neural gait on</label>
-      <div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" type="button" id="bSeedGo">reopen with this seed</button></div>
-      <p class="sub" id="seedNow"></p>
-      <p class="note">the hash takes <code>#seed=7&amp;speed=1&amp;on=L.neural&amp;off=L.day</code>. lockstep runs use <code>#test&amp;seed=7</code>. the scenario runner and its golden traces: <code>node scenarios/run.mjs compare</code>, see scenarios/README.md.</p>
-    </div>
-    <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst">tune <span class="hb-hd-aux">every number</span></h3>
-      <p class="note" style="margin-top:0">turn parts of the model off to compare, or move any number. changes save in this browser.</p>
-      <div id="pTune"></div>
-    </div>
-    <div class="hb-panel about">
-      <h3 class="hb-panel-hd-inst">how it works <span class="hb-hd-aux" id="chipPhys">physics ...</span></h3>
-      <p>packages: the gait pattern generator is <code>@hackbuild/gait</code>, the neural gait <code>@hackbuild/motion-net</code>, the saliency and sound helpers <code>@hackbuild/senses</code>, the model call scheduler <code>@hackbuild/drives</code>, the side camera <code>@hackbuild/cameras</code>, the tune registry <code>@hackbuild/tunables</code>, all mit. physics is rapier.</p>
-      <p>body: two motion sources share the rig, a central pattern generator (walk, pace, trot, canter, gallop picked by froude number, raibert foot placement, two bone ik) and the neural gait (paws pinned by predicted contacts, retargeted as paw targets). switches between them are inertialized so nothing snaps. springs drive posture, gaze, ears and a tail with eight wag modes.</p>
+      <h3 class="hb-panel-hd-inst"><span>stack</span><span class="hb-hd-aux">all local</span></h3>
+      <p>body: the owner's dog model, drawn by three.js on webgpu with a webgl2 fallback. two motion sources share the rig, a central pattern generator (walk, pace, trot, canter, gallop picked by froude number, raibert foot placement, two bone ik) and the neural gait (paws pinned by predicted contacts, retargeted as paw targets). switches between them are inertialized so nothing snaps. springs drive posture, gaze, ears and a tail with eight wag modes.</p>
       <p>brain: each act scores by how much it would reduce the dog's needs (keramati and gutkin 2011). the choice is sampled from a softmax with a commitment bonus; urgent acts start after a short heavy tailed latency while the head turns first. sleep pressure and a two peak body clock run onset, nrem, rem and wake. learning is rescorla wagner with pearce kaye hall associability, a faster fading inhibition and eligibility traces.</p>
-      <p>senses: itti koch saliency on the dog eye frame with top down drive bias and inhibition of return, looming startle from time to contact, per dog sound direction error, a scent plume sampled in sniff bouts and tracked upwind.</p>
+      <p>senses: itti koch saliency on the dog eye frame with top down drive bias and inhibition of return, looming startle from time to contact, per dog sound direction error, a scent plume sampled in sniff bouts and tracked upwind. yolov8n labels the eye feed when you turn it on.</p>
       <p>human: moheeb with retargeted quaternius clips (cc0), a gaze model, velocity springs, planted feet and a phased throw. his day runs on needs and an hourly routine; the top three options are drawn at random, weighted.</p>
       <p>cortex: gemma 4 e2b or lfm2-vl 450m on webgpu sets goals on events, from a memory stream ranked by recency, importance and relevance (park 2023). reflexes and timing stay in code.</p>
-      <p>licences: app code mit. three.js mit, rapier apache 2.0, fonts apache 2.0 and ofl 1.1, animation clips cc0. fetched only when you ask: the neural gait model and mocap cc by-nc 4.0, yolov8n agpl 3.0, pocket tts engine apache 2.0 with cc by-nc 4.0 models, the cortex and mediapipe models under their own licences. LICENCES.md in the repository has the full list.</p>
+      <p>packages: <code>@hackbuild/gait</code>, <code>@hackbuild/motion-net</code>, <code>@hackbuild/senses</code>, <code>@hackbuild/drives</code>, <code>@hackbuild/cameras</code>, <code>@hackbuild/tunables</code>, all mit. physics is rapier.</p>
     </div>
-    <div class="hb-panel about">
-      <h3 class="hb-panel-hd-inst">elsewhere <span class="hb-hd-aux">the parts on their own</span></h3>
-      <p>each package has a page with a small live stage and how it works: <a class="hb-link" href="https://hackbuild.github.io/hackbuild-motion/gait/">gait</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-motion/motion-net/">motion-net</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/senses/">senses</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/drives/">drives</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/cameras/">cameras</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/tunables/">tunables</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-browser-ai/weights/">weights</a>.</p>
-      <p data-suite-only hidden>the suite has each as a tool: <a class="hb-link" data-suite="#/motion/gait">gait</a>, <a class="hb-link" data-suite="#/motion/motion-net">motion-net</a>, <a class="hb-link" data-suite="#/agents/senses">senses</a>, <a class="hb-link" data-suite="#/agents/drives">drives</a>, <a class="hb-link" data-suite="#/voice/speak">speech</a>. a model fetched there is stored for this page too, and the other way round.</p>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>licences</span><span class="hb-hd-aux">in this page</span></h3>
+      <p>app code mit. the dog, his model and his voice clip are the owner's own. three.js mit, rapier apache 2.0, fonts apache 2.0 and ofl 1.1, animation clips cc0. fetched only when you ask: the neural gait model and mocap cc by-nc 4.0, yolov8n agpl 3.0, pocket tts engine apache 2.0 with cc by-nc 4.0 models, the cortex and mediapipe models under their own licences. LICENCES.md in the repository has the full list.</p>
     </div>
-    <div class="hb-panel about">
-      <h3 class="hb-panel-hd-inst">keys</h3>
-      <p>with the yard focused: w a s d or arrows move the free camera, q and e lower and raise it, f follows the dog again. tab moves between controls; the arrow keys move between tabs.</p>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>elsewhere</span><span class="hb-hd-aux">the parts on their own</span></h3>
+      <p>each package has a page with a small live stage: <a class="hb-link" href="https://hackbuild.github.io/hackbuild-motion/gait/">gait</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-motion/motion-net/">motion-net</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/senses/">senses</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/drives/">drives</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/cameras/">cameras</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/tunables/">tunables</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-browser-ai/weights/">weights</a>.</p>
+      <p data-suite-only hidden>the suite has each as a tool: <a class="hb-link" data-suite="#/motion/gait">gait</a>, <a class="hb-link" data-suite="#/motion/motion-net">motion-net</a>, <a class="hb-link" data-suite="#/agents/senses">senses</a>, <a class="hb-link" data-suite="#/agents/drives">drives</a>, <a class="hb-link" data-suite="#/voice/speak">speech</a>, <a class="hb-link" data-suite="#/rooms">rooms</a>. a model fetched there is stored for this page too, and the other way round.</p>
+    </div>
+    <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst"><span>keys</span></h3>
+      <p>with the yard focused: w a s d or arrows move the free camera, q and e lower and raise it, f follows the dog again. ctrl k or / opens every command by name. tab moves between controls; the arrow keys move between tabs.</p>
     </div>
   </section>
   </div>
@@ -579,23 +524,8 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
 
 <div class="hb-drawer" id="caps" hidden>
   <div class="hb-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="capsTitle">
-    <div class="caps-hd"><h2 id="capsTitle">turn things on</h2><button class="hb-btn hb-btn-sm" type="button" id="capsClose">close</button></div>
+    <div class="caps-hd"><h2 id="capsTitle">turn on more</h2><button class="hb-btn hb-btn-sm" type="button" id="capsClose">close</button></div>
     <div id="capsBody"></div>
-  </div>
-</div>
-
-<div class="hb-welcome-scrim" id="welcome" hidden>
-  <div class="hb-welcome" role="dialog" aria-modal="true" aria-labelledby="welTitle" tabindex="-1">
-    <button class="hb-btn hb-btn-2 hb-welcome-close" type="button" id="welClose" aria-label="close the welcome card">x</button>
-    <h2 id="welTitle">this is <span id="welName">pixel</span><span>.</span></h2>
-    <p class="hb-welcome-note">a dog and moheeb, its person, in a yard. everything runs in your browser; nothing downloads until you ask.</p>
-    <div class="fieldrow"><label for="welNameIn">call the dog</label><input class="hb-input" type="text" id="welNameIn" autocomplete="off"></div>
-    <div class="hb-tiles" style="margin-top:var(--hb-s3)">
-      <button class="hb-tile" type="button" data-start="play"><span class="n">play</span><span class="s">throw the ball, give treats, teach words</span></button>
-      <button class="hb-tile" type="button" data-start="minds"><span class="n">watch it think</span><span class="s">drives, choices and why, for both of them</span></button>
-      <button class="hb-tile" type="button" data-start="caps"><span class="n">turn on more</span><span class="s">models, voice, webcam, with sizes and licences</span></button>
-    </div>
-    <p class="foot" id="welFoot">tap the dog to pet it. tap the ground to point. two fingers move the camera.</p>
   </div>
 </div>
 

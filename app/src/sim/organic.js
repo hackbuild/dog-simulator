@@ -253,7 +253,7 @@ const tuneUI = {
         h += `<details class="hb-fold"><summary>${TUNE_LABEL[g] || g} <span class="aux">${keys.length}</span></summary><div>` + keys.map(k => this.row(k)).join('') + `</div></details>`;
       }
     }
-    h += `<div class="btns" style="margin-top:var(--hb-s3)"><button class="hb-btn hb-btn-2" type="button" id="bTuneExp">export settings</button><label class="hb-btn hb-btn-2" for="tuneImp" tabindex="0">import settings</label><input type="file" id="tuneImp" accept=".json,application/json" hidden><button class="hb-btn hb-btn-2" type="button" id="bTuneReset">reset every number</button></div>`;
+    h += `<div class="btns" style="margin-top:var(--hb-s3)"><button class="hb-btn" type="button" id="bTuneExp">export settings</button><label class="hb-btn" for="tuneImp" tabindex="0">import settings</label><input type="file" id="tuneImp" accept=".json,application/json" hidden><button class="hb-btn" type="button" id="bTuneReset">reset every number</button></div>`;
     el.innerHTML = uiHtml(h);
     el.querySelectorAll('input[data-tk]').forEach(inp => {
       const k = inp.dataset.tk;

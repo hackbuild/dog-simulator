@@ -52,7 +52,7 @@ function simStep(dt) {
   food.scale.set(1, Math.max(foodAmt, 0.02), 1); food.visible = foodAmt > 0.02; food.position.y = 0.02 + 0.03 * foodAmt;
 }
 function view(dt) {
-  fpsN++; fpsT += dt; if (fpsT > 0.5) { $('chipFps').textContent = String(Math.round(fpsN / fpsT)); fpsN = 0; fpsT = 0;
+  fpsN++; fpsT += dt; if (fpsT > 0.5) { $('chipFps').textContent = Math.round(fpsN / fpsT) + ' fps'; fpsN = 0; fpsT = 0;
     // hover the fps chip: average and worst main thread ms per system since the last readout, so a hitch can be traced to its source
     $('chipFps').title = Object.entries(PROF).sort((a, b) => b[1].max - a[1].max).map(([k, e]) => k + ' ' + (e.tot / Math.max(e.n, 1)).toFixed(1) + ' avg, ' + e.max.toFixed(0) + ' worst ms').join('\n') + (thinking ? '\ncortex thinking (shares the GPU)' : '');
     for (const k in PROF) { PROF[k].tot = PROF[k].n = PROF[k].max = 0; } }

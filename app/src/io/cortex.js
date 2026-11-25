@@ -9,16 +9,19 @@ const VLM = {
 };
 // the goal words the dog cortex may answer with: the only tool list it sees
 const DOG_GOALS = ['explore', 'sniff', 'eat', 'fetch', 'chase', 'greet', 'beg', 'playbow', 'zoomies', 'rest', 'sleep', 'idle'];
-// vlm.log: the last 40 model calls of both agents, newest first (read by the minds tab).
+// vlm.log: the last 40 model calls of both agents, newest first (read by the brain and human tabs).
 // vlm.last: the last call in full for the prompt inspector: prompt, reply, token counts and the tool list.
 const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'lfm'), nid: 0, wait: new Map(), ms: 0, progress: null, err: '', log: [], last: null, calls: 0 };
 function vlmLog(e) { vlm.log.unshift(e); if (vlm.log.length > 40) vlm.log.pop(); }
 function vlmPick(kind) { if (!VLM[kind] || kind === vlm.kind) return; vlm.kind = kind; if (kind !== 'stub') store.set('vlm', kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; vlm.progress = null; setVlm('off'); } }
-// the cortex controls in minds stay disabled, with the reason beside them, until a model is ready
+// the cortex controls in brain stay hidden, with the reason beside them, until a model is ready
 function setVlm(st) {
   vlm.label = st; $('cortexSt').textContent = st; const ready = vlm.state === 'ready';
+  // the think, ask and auto controls appear once a model can answer; the load button until then
   $('bThink').disabled = !ready; $('askIn').disabled = !ready; $('autoThink').disabled = !ready; $('autoThinkL').classList.toggle('is-disabled', !ready);
-  $('cortexWhy').textContent = ready ? '' : !navigator.gpu ? 'no webgpu adapter. the cortex needs it, so these stay off.' : vlm.state === 'loading' ? 'the model is still downloading.' : 'no cortex model loaded. load one in turn things on.';
+  $('bThink').hidden = !ready; $('askRow').hidden = !ready; $('autoThinkL').hidden = !ready;
+  $('bVlmLoad').hidden = ready || vlm.state === 'loading' || !navigator.gpu; $('vlmSel').disabled = vlm.state === 'loading';
+  $('cortexWhy').textContent = ready ? '' : !navigator.gpu ? 'no webgpu adapter. the cortex needs it.' : vlm.state === 'loading' ? 'the model is downloading.' : '';
   if (typeof capsRefresh === 'function') capsRefresh();
 }
 setVlm(navigator.gpu ? 'off' : 'needs webgpu');

@@ -80,7 +80,7 @@ const yardMenu = HBV.ctxPanel($('yardMenu'), {
   onPick(item) {
     audio(); const a = item.dataset.act, p = yardMenu.at;
     if (a === 'pet') pet(); else if (a === 'good') $('bGood').click(); else if (a === 'no') $('bNo').click();
-    else if (a === 'why') showTab('pMinds', true); else if (a === 'point' && p) pointAt(p); else if (a === 'throw') throwBall(p ? p.clone() : undefined);
+    else if (a === 'why') showTab('pBrain', true); else if (a === 'point' && p) pointAt(p); else if (a === 'throw') throwBall(p ? p.clone() : undefined);
     else if (a === 'treat') $('bTreat').click(); else if (a === 'call') $('bCall').click();
   }
 });
@@ -91,7 +91,7 @@ const YARD_ITEMS = {
 let yardDown = null;
 HBV.contextTrigger($('stage'), {
   onOpen(at, via, target) {
-    if (target.closest && target.closest('.hb-ov-b, .hb-ov-pad, .hb-inset, #cams, .hb-ctx')) return;
+    if (target.closest && target.closest('#tool, .hb-ov-pad, #eyecard, .hb-ctx')) return;
     const r = $('stage').getBoundingClientRect(), hit = yardAt(r.left + at.x, r.top + at.y);
     const kind = hit && hit.dog ? 'dog' : 'ground';
     yardMenu.at = hit && hit.p ? hit.p : null;
