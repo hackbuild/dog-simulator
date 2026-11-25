@@ -95,4 +95,5 @@ const palH = HBV.palette($('palette'), {
   onOpen: paletteRows,
   onRun(k) { const c = PAL_CMD.get(k); if (c) c.run(); }
 });
+$('bPalette').append(HBV.strokeIconEl('search'));
 $('bPalette').onclick = () => palH.open();

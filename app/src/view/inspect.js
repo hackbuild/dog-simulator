@@ -13,7 +13,7 @@ function pinspUI() {
   $('pinspWho').textContent = L.provider + ', ' + stamp(L.t);
   const rows = [['last prompt', L.inTokens + ' tokens, ' + L.inCount], ['last reply', L.ok ? L.outTokens + ' tokens, ' + L.outCount : 'failed'], ['reply time', L.ms != null ? HBV.msText(L.ms) + ', measured' : 'none'], ['model calls', String(vlm.calls)]];
   $('pinspKv').innerHTML = rows.map(([k, v]) => `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join(''); $('pinspKv').hidden = false; $('pinspKvEmpty').hidden = true;
-  const tools = $('pinspTools'); tools.textContent = L.tools.length ? L.tools.join(', ') : 'none in this call: it answers in free text'; tools.classList.toggle('is-empty', !L.tools.length);
+  $('pinspToolsN').textContent = String(HBV.toolList($('pinspTools'), L.tools));
   const plan = $('pinspPlan'), pt = HBV.planText(L.plan); plan.textContent = pt || 'none in this call'; plan.classList.toggle('is-empty', !pt);
   const raw = $('pinspRaw'); raw.textContent = L.prompt; raw.classList.remove('is-empty'); raw.classList.add('is-raw'); raw.tabIndex = 0;
   const rep = document.createElement('span'); rep.className = 'hb-pinsp-reply'; rep.textContent = '>>> ' + (L.text || 'no reply yet'); raw.append(rep);
