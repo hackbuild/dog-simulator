@@ -215,11 +215,12 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
 </head>
 <body class="hb">
 <div id="app">
-<header class="hb-header">
+<header class="hb-header hb-on-ink">
   <h1>hackle<span>.</span></h1>
   <span class="hb-pill" id="chipGpu" title="the renderer this browser gave the yard">gpu ...</span>
   <span class="hb-tagline is-tool">a dog and its person, running in your browser</span>
   <button class="hb-btn" id="bCaps" type="button" aria-haspopup="dialog" aria-controls="caps">turn things on<span class="n" id="capsCount">checking</span></button>
+  <button class="hb-iconbtn" id="bPalette" type="button" aria-haspopup="dialog" aria-controls="palette" aria-label="commands: every action by name" title="commands (ctrl k or /)"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M3 4l4 4-4 4M8 12h5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg></button>
 </header>
 <main id="work">
 <section id="stage" class="hb-viewport is-fill hb-ctx-area" aria-haspopup="menu" aria-label="3d yard. tap the dog to pet it, tap the ground to point. hold, right click or the menu key for more." tabindex="0">
@@ -395,6 +396,14 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
         <div class="fieldrow"><label for="askIn">ask the dog, then enter</label><input class="hb-input" type="text" id="askIn" disabled aria-describedby="cortexWhy" enterkeyhint="send" autocomplete="off"></div>
         <p class="reason" id="cortexWhy"></p>
         <details class="hb-fold"><summary>model calls <span class="aux" id="dogCallsN">0</span></summary><div><ol class="calls" id="dogCalls" data-empty="no calls yet"></ol></div></details>
+        <details class="hb-fold" id="pinspFold"><summary>prompt inspector <span class="aux" id="pinspN">no calls</span></summary>
+          <div class="hb-pinsp" id="pinsp">
+            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">cost <small id="pinspWho">this session</small></h3><dl class="hb-pinsp-kv" id="pinspKv" hidden></dl><p class="hb-pinsp-empty" id="pinspKvEmpty">no calls yet</p></section>
+            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">tools it sees</h3><pre class="hb-pinsp-pre is-empty" id="pinspTools">none yet</pre></section>
+            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">last plan</h3><pre class="hb-pinsp-pre is-empty" id="pinspPlan">none yet</pre></section>
+            <section class="hb-pinsp-card"><h3 class="hb-pinsp-hd">last prompt and reply <button type="button" class="hb-pinsp-copy" id="pinspCopy" hidden>copy</button></h3><pre class="hb-pinsp-pre is-empty" id="pinspRaw" aria-label="last prompt and reply">no language model has been asked yet</pre></section>
+          </div>
+        </details>
       </div>
     </div>
     <div class="mcol is-off" id="mindHum">
@@ -590,6 +599,15 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
   </div>
 </div>
 
+<div class="hb-modal hb-palette" id="palette" role="dialog" aria-modal="true" aria-label="commands" hidden>
+  <div class="hb-panel" tabindex="-1">
+    <div class="hb-palette-field"><span class="hb-palette-prompt" aria-hidden="true">&gt;</span><input class="hb-palette-input" type="text" placeholder="type what to do: throw, minds, camera" aria-label="commands"></div>
+    <div class="hb-palette-list" id="paletteList" role="listbox" aria-label="commands"></div>
+    <p class="hb-palette-empty" hidden>nothing matches that.</p>
+    <p class="hb-palette-foot">up and down move, enter runs, esc closes.</p>
+  </div>
+</div>
+
 <script type="module">/*@@APP@@*/</script>
 <script type="text/plain" id="vlmWorker">
 // body of the cortex runner: run inside a module worker, or on the main thread if workers fail; post() sends results back
@@ -628,7 +646,7 @@ return async m => {
       const out = await model.generate({ ...inputs, max_new_tokens: m.max || 80, do_sample: false });
       const n = inputs.input_ids.dims.at(-1);
       const text = proc.batch_decode(out.slice(null, [n, null]), { skip_special_tokens: true })[0];
-      post({ t: 'answer', id: m.id, text, ms: performance.now() - t0, tokens: out.dims.at(-1) - n });
+      post({ t: 'answer', id: m.id, text, ms: performance.now() - t0, tokens: out.dims.at(-1) - n, inTokens: n });
     }
   } catch (err) { post({ t: 'error', id: m.t === 'load' ? null : m.id, msg: String((err && err.message) || err) }); }
 };

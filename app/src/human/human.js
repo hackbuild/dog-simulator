@@ -688,6 +688,8 @@ async function humSnap() {
   ctx.putImageData(img, 0, 0);
   return humView;
 }
+// what his mind may answer with: the tool list the prompt inspector shows for his calls
+const HUM_DO = ['throw', 'train sit', 'train down', 'train spin', 'train paw', 'train speak', 'train boop', 'pet', 'feed', 'wander', 'watch'];
 async function humThink() {
   if (vlm.state !== 'ready' || HUM.thinking) return false;
   HUM.thinking = true; HUM.lastMind = now; $('humMind').textContent = 'thinking';
@@ -701,14 +703,15 @@ async function humThink() {
 ${n} is ${brain.cur === 'obey' ? 'doing a trick' : brain.cur}. Hungry ${pct2(d.hunger)}, tired ${pct2(d.fatigue)}, wants to play ${pct2(d.play)}, wants company ${pct2(d.social)}. ${ballSt}. Food bowl is ${foodAmt > 0.1 ? 'not empty' : 'empty'}. Cues it knows: ${best}.
 Reply in exactly two lines and nothing else:
 SAY: one short thing you say out loud, under 14 words
-DO: one of throw, train sit, train down, train spin, train paw, train speak, train boop, pet, feed, wander, watch`;
-    const r = await vlmAsk(view, prompt, 48);
+DO: one of ${HUM_DO.join(', ')}`;
+    const r = await vlmAsk(view, prompt, 48, HUM_DO);
     const txt = r.text.trim();
     vlmLog({ t: callT, who: 'human', kind: 'think', prompt, text: txt, ms: r.ms, tokens: r.tokens, ok: true });
     HUM.mindEv = EV.emit({ agent: 'human', kind: 'model', text: 'his mind replied in ' + (r.ms / 1000).toFixed(1) + ' s: ' + txt.replace(/\s+/g, ' ').slice(0, 90) });
     humSrcNext = 'mind';
     const say = ((txt.match(/SAY:\s*(.+)/i) || [])[1] || txt.split('\n')[0] || '').replace(/^["']|["']$/g, '').replace(new RegExp('[' + String.fromCharCode(0x2013, 0x2014) + ']', 'g'), ',').trim();
     const doL = ((txt.match(/DO:\s*(.+)/i) || [])[1] || '').toLowerCase();
+    if (vlm.last) vlm.last.plan = { say, do: doL };
     $('humMind').textContent = 'say: ' + say + '\ndo: ' + (doL || '?') + '  (' + (r.ms / 1000).toFixed(1) + ' s)';
     let started = true;
     const tm = doL.match(/train\s+(\w+)/);

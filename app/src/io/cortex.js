@@ -2,12 +2,18 @@
 // each model pinned to a Hugging Face commit; the licence line shows when it loads (vendor, model cards)
 const VLM = {
   gemma: { id: 'onnx-community/gemma-4-E2B-it-ONNX', rev: '6f21c99d7e18237f8d2ce92aadfdbfeba877f63a', name: 'gemma 4 e2b', licence: 'weights apache 2.0' },
-  lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', rev: '308cf784b35ce25274540e1bf5592c33a0433469', name: 'lfm2-vl 450m', licence: 'weights lfm open license 1.0' }
+  lfm: { id: 'onnx-community/LFM2-VL-450M-ONNX', rev: '308cf784b35ce25274540e1bf5592c33a0433469', name: 'lfm2-vl 450m', licence: 'weights lfm open license 1.0' },
+  // no weights: replies written in code from the drives, so the prompt inspector and every cortex
+  // control run on any device. Token counts are computed at four characters a token.
+  stub: { id: 'stub', rev: '', name: 'stub cortex', licence: 'no weights, replies written in code' }
 };
-// vlm.log: the last 40 model calls of both agents, newest first (read by the minds tab)
-const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'lfm'), nid: 0, wait: new Map(), ms: 0, progress: null, err: '', log: [] };
+// the goal words the dog cortex may answer with: the only tool list it sees
+const DOG_GOALS = ['explore', 'sniff', 'eat', 'fetch', 'chase', 'greet', 'beg', 'playbow', 'zoomies', 'rest', 'sleep', 'idle'];
+// vlm.log: the last 40 model calls of both agents, newest first (read by the minds tab).
+// vlm.last: the last call in full for the prompt inspector: prompt, reply, token counts and the tool list.
+const vlm = { worker: null, state: 'off', kind: store.get('vlm', 'lfm'), nid: 0, wait: new Map(), ms: 0, progress: null, err: '', log: [], last: null, calls: 0 };
 function vlmLog(e) { vlm.log.unshift(e); if (vlm.log.length > 40) vlm.log.pop(); }
-function vlmPick(kind) { if (!VLM[kind] || kind === vlm.kind) return; vlm.kind = kind; store.set('vlm', kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; vlm.progress = null; setVlm('off'); } }
+function vlmPick(kind) { if (!VLM[kind] || kind === vlm.kind) return; vlm.kind = kind; if (kind !== 'stub') store.set('vlm', kind); if (vlm.worker) { vlm.worker.terminate(); vlm.worker = null; vlm.state = 'off'; vlm.progress = null; setVlm('off'); } }
 // the cortex controls in minds stay disabled, with the reason beside them, until a model is ready
 function setVlm(st) {
   vlm.label = st; $('cortexSt').textContent = st; const ready = vlm.state === 'ready';
@@ -16,7 +22,18 @@ function setVlm(st) {
   if (typeof capsRefresh === 'function') capsRefresh();
 }
 setVlm(navigator.gpu ? 'off' : 'needs webgpu');
+// the stub answers in the same shape as the worker, a tick later, with computed counts
+function stubCortex() {
+  const top = () => { const d = brain.d, k = ['hunger', 'fatigue', 'play', 'social', 'curiosity', 'prey'].sort((a, b) => d[b] - d[a])[0]; return [k, { hunger: 'eat', fatigue: 'rest', play: 'fetch', social: 'greet', curiosity: 'sniff', prey: 'chase' }[k]]; };
+  const reply = p => {
+    if (/GOAL:/.test(p)) { const [k, g] = top(); return 'SAW: the yard from low down\nTHOUGHT: my ' + k + ' is the strongest thing right now\nGOAL: ' + g; }
+    if (/DO:/.test(p)) return 'SAY: stub mind, no model loaded\nDO: watch';
+    return 'stub cortex: no model is loaded, so this reply is written in code.';
+  };
+  return { postMessage(m) { if (m.t !== 'ask') return; const t0 = performance.now(); setTimeout(() => { const w = vlm.wait.get(m.id); vlm.wait.delete(m.id); const text = reply(m.prompt); if (w) w.res({ text, ms: performance.now() - t0, tokens: HBV.tokenEstimate(text), inTokens: HBV.tokenEstimate(m.prompt), count: 'computed' }); }, 0); }, terminate() {} };
+}
 function vlmLoad() {
+  if (vlm.kind === 'stub') { if (vlm.worker) return; vlm.worker = stubCortex(); vlm.state = 'ready'; setVlm('ready, stub cortex'); toast('cortex on: the stub. no weights; replies are written in code.'); return; }
   if (!navigator.gpu) { toast('no webgpu adapter. the cortex stays off.'); return; }
   if (vlm.worker) return;
   const BODY = document.getElementById('vlmWorker').textContent;
@@ -45,8 +62,16 @@ function vlmLoad() {
   } catch (e) { inPage(); }
 }
 let vlmChain = Promise.resolve();
-function vlmAsk(canvas, prompt, max = 80) {
-  const job = vlmChain.then(() => vlmAsk1(canvas, prompt, max)); vlmChain = job.catch(() => {}); return job;
+// tools: the words the prompt lets the model answer with, kept for the prompt inspector
+function vlmAsk(canvas, prompt, max = 80, tools = []) {
+  const job = vlmChain.then(() => vlmAsk1(canvas, prompt, max)).then(r => { vlmLast(prompt, tools, r); return r; }, e => { vlmLast(prompt, tools, null, e); throw e; });
+  vlmChain = job.catch(() => {}); return job;
+}
+function vlmLast(prompt, tools, r, err) {
+  vlm.calls++;
+  vlm.last = { t: now, provider: VLM[vlm.kind].name, prompt, tools, plan: null, ok: !!r, text: r ? r.text.trim() : String(err && err.message || err),
+    ms: r ? r.ms : null, inTokens: r && r.inTokens != null ? r.inTokens : HBV.tokenEstimate(prompt), inCount: r && r.inTokens != null ? r.count || 'measured' : 'computed',
+    outTokens: r ? r.tokens : 0, outCount: r ? r.count || 'measured' : 'computed' };
 }
 function vlmAsk1(canvas, prompt, max) {
   return new Promise((res, rej) => {
@@ -73,9 +98,9 @@ async function think() {
 Reply in exactly three lines and nothing else:
 SAW: what you see, under 10 words
 THOUGHT: your inner thought as a dog, first person, under 12 words
-GOAL: one word from explore, sniff, eat, fetch, chase, greet, beg, playbow, zoomies, rest, sleep, idle`;
+GOAL: one word from ${DOG_GOALS.join(', ')}`;
   try {
-    const r = await vlmAsk(rawEye, prompt, 72); vlm.ms = r.ms;
+    const r = await vlmAsk(rawEye, prompt, 72, DOG_GOALS); vlm.ms = r.ms;
     const txt = r.text.trim();
     vlmLog({ t: callT, who: 'dog', kind: 'think', prompt, text: txt, ms: r.ms, tokens: r.tokens, ok: true });
     const saw = (txt.match(/SAW:\s*(.+)/i) || [])[1] || '';
@@ -83,6 +108,7 @@ GOAL: one word from explore, sniff, eat, fetch, chase, greet, beg, playbow, zoom
     const gl = ((txt.match(/GOAL:\s*(.+)/i) || [])[1] || txt).toLowerCase();
     const goal = BEH.find(b => new RegExp('\\b' + b + '\\b').test(gl)) || 'idle';
     brain.cortexGoal = { b: goal, until: now + 20 };
+    if (vlm.last) vlm.last.plan = { saw: saw.trim(), thought: thought.trim(), goal };
     EV.emit({ agent: 'dog', kind: 'model', text: 'cortex in ' + (r.ms / 1000).toFixed(1) + ' s: "' + thought.trim().slice(0, 60) + '", goal ' + goal + ', +0.35 for 20 s', cause });
     brain.say(thought.slice(0, 80), 5);
     $('cortexOut').textContent = (saw ? 'saw ' + saw.trim() + '. ' : '') + '"' + thought.trim() + '" goal: ' + goal;

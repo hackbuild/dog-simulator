@@ -141,6 +141,7 @@ function dogCortex() {
   const ready = vlm.state === 'ready', st = cortexSched.state(now);
   $('cortexSched').textContent = !ready ? '' : thinking ? 'thinking now' : !$('autoThink').checked ? 'thinks only when you ask' : 'on its own: ' + (st === 'cooling down' ? 'waiting ' + Math.max(0, cortexOpts.minInterval - (now - cortexSched.lastStart)).toFixed(0) + ' s' : st) + ', importance ' + brain.imp.toFixed(1) + ' of ' + TV('Br.reflect').toFixed(0);
   callsUI($('dogCalls'), 'dog', $('dogCallsN'));
+  pinspUI();
 }
 // ---------- the human ----------
 const PLAN_RULE_WORD = { rule: 'a rule fired', routine: 'his routine: the top three, drawn at random by weight', mind: 'his mind (the cortex model)', you: 'you asked', task: 'the last task led here' };

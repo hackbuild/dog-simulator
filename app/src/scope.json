@@ -25,6 +25,8 @@
   "io/caps.js",
   "view/ui.js",
   "view/parts.js",
+  "view/palette.js",
+  "view/inspect.js",
   "sim/loop.js",
   "human/placeholder.js",
   "view/boot.js"
