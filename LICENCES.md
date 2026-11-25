@@ -21,24 +21,24 @@ not say, and nobody has checked. Hashes and sizes are in `assets.lock.json`.
 | `legacy/det/src/` | as the `legacy/pack/src/` file each one copies; `nn_gait.js` and `nn_infer.js` stay CC-BY-NC-4.0 |
 | `app/src/human/placeholder.js` | MIT; capsule humanoid on the auto rig bone layout, no likeness data |
 | `app/src/dog/neural.js` | MIT; the app side of the neural gait over @hackbuild/motion-net, rewritten on 2026-11-23 against the clean-room API by a builder who did not read the earlier file or the CC-BY-NC host. Holds no network data: the rest pose is computed at load from the Idle style pose in the fetched weights; `legacy/pack/nn/bind.json` is not read |
-| `tools/stub-dog.mjs` and the stub dog it writes | MIT; a box dog written from code, used when the build reads nothing from `assets-local/` |
+| `tools/stub-dog.mjs` and the stub dog it writes | MIT; a box dog written from code, used by the stub build (`node tools/build-html.mjs stub`) |
+| `app/assets/dog.glb`, `app/assets/human.glb`, `app/assets/voice.wav` | the owner's own (the dog model, his human model, his voice reference); committed and shipped publicly by the owner's decision of 2026-11-25. Copies of the `assets-local/` files of the same sha256 (`assets.lock.json`). Not under the MIT licence of the code: reuse outside this app asks the owner |
 | `vendor/tunables`, `vendor/senses`, `vendor/drives`, `vendor/cameras` | MIT; built packages of hackbuild/hackbuild-agents at the commit in `vendor/lock.json`, bundled into the app build |
 | `vendor/scenario` | MIT; built package of hackbuild/hackbuild-agents, used by the scenario runner only, never bundled |
 | `vendor/gait` | MIT; built package of hackbuild/hackbuild-motion at the commit in `vendor/lock.json` |
 | `vendor/motion-net` | MIT, clean room. Built package of hackbuild/hackbuild-motion at babcc9f (2026-11-23), bundled into the app build. hackbuild-motion removed the earlier CC-BY-NC package in a88ea62 and wrote the replacement from a functional specification and the published paper (a509079, engine layer babcc9f), by builders who did not read the CC-BY-NC code. The package holds no weights. |
 
-The app build embeds dog.glb, whose licence is unknown; dist/ is outside git
-and no build is published until that is settled.
+The public build embeds the three files in `app/assets/`; Pages publishes it.
 
-## Binary assets, kept out of git in `assets-local/`
+## Binary assets in `assets-local/` (gitignored; three are also committed in `app/assets/`)
 
 | file | source | licence |
 |---|---|---|
-| dog.glb | Meshy model reduced by `legacy/pack/tools/opt.mjs` | unknown (Meshy output terms not checked) |
-| moheeb.glb | the owner's likeness | not for redistribution; rig origin unknown. Never committed or uploaded. |
-| voice.wav | the owner's voice reference | not for redistribution. Never committed or uploaded. |
+| dog.glb | Meshy model reduced by `legacy/pack/tools/opt.mjs` | the owner's own; ships as `app/assets/dog.glb` (owner decision, 2026-11-25) |
+| moheeb.glb | the owner's likeness | the owner's own; ships as `app/assets/human.glb` (owner decision, 2026-11-25) |
+| voice.wav | the owner's voice reference | the owner's own; ships as `app/assets/voice.wav` (owner decision, 2026-11-25) |
 | quadruped.bin | sweriko/ai4anim-webgpu at b539455f, public/quadruped.bin | CC-BY-NC-4.0 (vendor). The app fetches it and quadruped.json from that commit at runtime, checks the sha256 and states the licence on load; never bundled |
-| yolov8n.onnx | Hyuto/yolov8-onnxruntime-web at fc4a52c4, public/model/yolov8n.onnx | AGPL-3.0 (vendor, Ultralytics YOLOv8) |
+| yolov8n.onnx | Hyuto/yolov8-onnxruntime-web at fc4a52c4, public/model/yolov8n.onnx | AGPL-3.0 (vendor, Ultralytics YOLOv8). The app fetches it from that commit at runtime when you load it, checks the sha256 and states the licence on the load row; never bundled |
 | nms-yolov8.onnx | the pack; likely the same Hyuto repository (inferred) | unknown |
 | AnimationLibrary_Godot_Standard.gltf and .bin | Quaternius Universal Animation Library | CC0-1.0 (`legacy/pack/ferrule/UAL_LICENSE.txt`) |
 | hackle.html | the pack's build output, for the parity check | mixed, embeds the owner likeness. Never committed. |
@@ -94,17 +94,18 @@ OFL-1.1), with the licence texts, written by `tools/build-app.mjs`.
 
 ## The owner persona
 
-The human in the app is the owner, Moheeb Zara: his name, his handle, his
-speech habits in the mind prompt (`app/src/human/human.js`) and the UI copy
-ship in every build, the build without the owner asset pack included. This
-is the owner's own app and the owner keeps it so (decision 2026-11-23).
-His likeness files (human model, voice reference) are never committed.
+The human in the app is the owner, Moheeb Zara: his name in the mind prompt
+(`app/src/human/human.js`) and the UI copy ships in every build. This is the
+owner's own app and the owner keeps it so (decision 2026-11-23). His human
+model and voice reference ship in `app/assets/` (decision 2026-11-25); no
+other likeness file is committed.
 
 ## Open owner decisions from the plan
 
 - Neural gait host code (CC-BY-NC): kept in `legacy/` only, replaced later by
   an MIT host written from the published architecture.
-- Provenance of dog.glb and of the human rig: unknown, to be checked before
-  either ships in a public build.
 - Character dialogue in `legacy/` keeps its exclamation marks as received;
-  `legacy/` is outside the voice lint. Copy moved into `app/src` follows RULES.md.
+  `legacy/` is outside the voice lint. The person's spoken lines in the app
+  (`app/src/human/lines.js`) may use exclamation marks as the original did
+  (owner decision, 2026-11-25); the voice lint exempts that file from the
+  exclamation rule only. All other copy in `app/src` follows RULES.md.

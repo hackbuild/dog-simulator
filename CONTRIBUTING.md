@@ -8,7 +8,7 @@
 | outside PRs | a maintainer squashes the PR and rewrites the message so it passes the hook. Your git author line is kept; that line is the credit. |
 | commit subjects | imperative, lowercase, under 60 characters, no trailing punctuation, optional lowercase scope: `memory: merge near duplicate episodes`. |
 | licence | inbound equals outbound: code is MIT (LICENSE), README, CHANGELOG and docs are CC-BY-4.0 with code samples also MIT (LICENSES/CC-BY-4.0.txt). No CLA, no DCO sign-off. |
-| weights | never commit model weights or owner likeness files. Name each model's weight licence where it is referenced. |
+| weights | never commit model weights or owner likeness files; the one exception is the owner's dog, human and voice clip in `app/assets/` (owner decision, 2026-11-25). Name each model's weight licence where it is referenced. |
 | marks | a contribution grants no right to the hack.build name or logo (TRADEMARKS.md). |
 
 Before you open a PR, run `npm test` and, when `crates/` changed,

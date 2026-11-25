@@ -6,7 +6,7 @@
 // variant cpg turns L.neural off (the golden set every build must hold);
 // variant neural runs the app build with the motion-net gait host (--nnacc f32|f64 picks the sums);
 // variant neural-legacy runs the legacy network host, legacy/det builds only.
-// --set public: the build with nothing from assets-local (node tools/build-html.mjs public: stub
+// --set public: the build with no binary asset (node tools/build-html.mjs stub: stub
 // dog, placeholder human), goldens in scenarios/golden/public-<variant>/; CI runs this set.
 // Goldens: scenarios/golden/<variant>/<name>.json. Screenshots go to
 // scenarios/shots/<variant>/, outside git: they show the human model.
@@ -26,7 +26,7 @@ if (set !== "owner" && set !== "public") { console.error("--set owner|public"); 
 const pub = set === "public";
 const goldenDir = pub ? `public-${variant}` : variant;
 // the app build holds golden/cpg; the network host is in legacy/det only
-const file = opt("file", join(ROOT, variant === "neural-legacy" ? "dist/hackle-det.html" : pub ? "dist/dog-simulator-public.html" : "dist/dog-simulator.html"));
+const file = opt("file", join(ROOT, variant === "neural-legacy" ? "dist/hackle-det.html" : pub ? "dist/dog-simulator-stub.html" : "dist/dog-simulator.html"));
 const nnacc = opt("nnacc", "");
 const only = opt("only", "") ? opt("only").split(",") : null;
 const jobs = +opt("jobs", 3);

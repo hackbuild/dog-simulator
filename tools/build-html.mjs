@@ -8,7 +8,11 @@
 //   node tools/build-html.mjs app [--out FILE]
 //     the TypeScript app (app/src) bundled with esbuild; see buildApp below.
 //   node tools/build-html.mjs public [--out FILE]
-//     the same app with nothing from assets-local: stub dog, placeholder human, no voice clip.
+//     the same app with nothing from assets-local: the owner's dog, human and voice clip from
+//     app/assets/, the page Pages publishes.
+//   node tools/build-html.mjs stub [--out FILE]
+//     the same app with no binary asset: stub dog, placeholder human, no voice clip (the public
+//     scenario goldens).
 //
 // Owner likeness (the human model and the voice reference) is read from
 // assets-local/ when present. When it is absent the legacy build embeds an
@@ -146,11 +150,11 @@ async function main(argv) {
     html = r.html;
     out = resolve(o.out ?? join(ROOT, "dist/hackle-legacy.html"));
     if (!r.likeness.human) console.log("build-html: no assets-local/moheeb.glb, the human slot is empty and the page uses its placeholder");
-  } else if (mode === "app" || mode === "public") {
+  } else if (mode === "app" || mode === "public" || mode === "stub") {
     const { buildApp } = await import("./build-app.mjs");
-    const r = await buildApp({ ...o, public: mode === "public" });
+    const r = await buildApp({ ...o, public: mode === "public", stub: mode === "stub" });
     html = r.html;
-    out = resolve(o.out ?? join(ROOT, mode === "public" ? "dist/dog-simulator-public.html" : "dist/dog-simulator.html"));
+    out = resolve(o.out ?? join(ROOT, mode === "app" ? "dist/dog-simulator.html" : `dist/dog-simulator-${mode}.html`));
   } else throw new Error(`unknown mode ${mode}`);
   mkdirSync(dirname(out), { recursive: true });
   writeFileSync(out, html);

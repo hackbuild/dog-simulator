@@ -3,7 +3,9 @@
 //   node tools/lock-assets.mjs          rewrite the lock from the files present
 //   node tools/lock-assets.mjs --check  exit 1 when a present file differs from its entry
 // Binaries live in assets-local/ (gitignored); their entries are the record of
-// what the build expects. A missing binary is reported, never invented.
+// what the build expects. A missing binary is reported, never invented. The owner's dog, human
+// and voice clip are also committed under app/assets/ (owner decision, 2026-11-25: the three files
+// are the owner's own and ship publicly); those entries say git true.
 import { createHash } from "node:crypto";
 import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, relative, resolve } from "node:path";
@@ -14,9 +16,9 @@ const PACK = "HACKLE handoff pack, received 2026-11-22";
 
 // source and licence per binary; the licence text is "unknown" where the pack does not say
 export const BINARIES = {
-  "dog.glb": { source: `${PACK}, app/assets/dog.glb; a Meshy model reduced with legacy/pack/tools/opt.mjs`, licence: "unknown (Meshy output terms not checked)", git: false },
-  "moheeb.glb": { source: `${PACK}, work/moheeb.glb; the owner's likeness`, licence: "owner likeness, not for redistribution; rig origin unknown", git: false, likeness: true },
-  "voice.wav": { source: `${PACK}, ferrule/voice.wav; the owner's voice reference`, licence: "owner likeness, not for redistribution", git: false, likeness: true },
+  "dog.glb": { source: `${PACK}, app/assets/dog.glb; a Meshy model reduced with legacy/pack/tools/opt.mjs`, licence: "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)", git: false },
+  "moheeb.glb": { source: `${PACK}, work/moheeb.glb; the owner's likeness`, licence: "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)", git: false, likeness: true },
+  "voice.wav": { source: `${PACK}, ferrule/voice.wav; the owner's voice reference`, licence: "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)", git: false, likeness: true },
   "quadruped.bin": { source: "sweriko/ai4anim-webgpu@b539455f849f284a1e814eb11ab649eb594319dc public/quadruped.bin (copy in the pack)", licence: "CC-BY-NC-4.0 (vendor, legacy/pack/nn/AI4ANIM_NOTICE.txt)", git: false },
   "yolov8n.onnx": { source: "Hyuto/yolov8-onnxruntime-web@fc4a52c466d15ad4519873a0cef22fbc935b93b6 public/model/yolov8n.onnx (copy in the pack)", licence: "AGPL-3.0 (vendor, Ultralytics YOLOv8)", git: false },
   "nms-yolov8.onnx": { source: `${PACK}, models/nms-yolov8.onnx; likely Hyuto/yolov8-onnxruntime-web (inferred)`, licence: "unknown", git: false },
@@ -24,6 +26,9 @@ export const BINARIES = {
   "AnimationLibrary_Godot_Standard.bin": { source: `${PACK}, app/_ual; Quaternius Universal Animation Library`, licence: "CC0-1.0 (legacy/pack/ferrule/UAL_LICENSE.txt)", git: false },
   "hackle.html": { source: `${PACK}, hackle.html; the pack's build output, kept for the parity check`, licence: "mixed; embeds the owner likeness, not for redistribution", git: false, likeness: true },
 };
+
+// committed copies of three assets-local files, the ones the public build embeds
+export const SHIPPED = { "dog.glb": "dog.glb", "human.glb": "moheeb.glb", "voice.wav": "voice.wav" };
 
 const NC = new Set(["src/nn_gait.js", "src/nn_infer.js", "nn/quadruped.json"]);
 function legacyLicence(rel) {
@@ -54,12 +59,16 @@ export function buildLock(prev = {}) {
     if (existsSync(p)) assets[`assets-local/${name}`] = { sha256: sha(p), bytes: statSync(p).size, ...meta };
     else if (prev.assets?.[`assets-local/${name}`]) assets[`assets-local/${name}`] = prev.assets[`assets-local/${name}`];
   }
+  for (const [name, from] of Object.entries(SHIPPED)) {
+    const p = join(ROOT, "app/assets", name);
+    if (existsSync(p)) assets[`app/assets/${name}`] = { sha256: sha(p), bytes: statSync(p).size, ...BINARIES[from], source: `copy of assets-local/${from}`, git: true };
+  }
   const legacy = {};
   for (const p of walk(join(ROOT, "legacy/pack"))) {
     const rel = relative(join(ROOT, "legacy/pack"), p);
     legacy[`legacy/pack/${rel}`] = { sha256: sha(p), bytes: statSync(p).size, source: `${PACK}, ${rel}`, licence: legacyLicence(rel), git: true };
   }
-  return { version: 1, note: "sizes measured; sha256 of the files as received. assets-local/ is gitignored and never committed.", assets, legacy };
+  return { version: 1, note: "sizes measured; sha256 of the files as received. assets-local/ is gitignored; the app/assets/ copies are committed.", assets, legacy };
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

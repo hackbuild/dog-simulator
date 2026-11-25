@@ -4,8 +4,11 @@
 // layout, kept so golden traces hold). Fonts are embedded from @fontsource. The dog model comes
 // from assets-local/dog.glb; the human model and voice reference are embedded only when
 // assets-local holds them, otherwise the page builds its placeholder human. buildApp({ public:
-// true }) reads nothing from assets-local: the dog is the generated stub (tools/stub-dog.mjs) and
-// the human the placeholder, the build CI makes and the public scenario goldens run on.
+// true }) reads nothing from assets-local: it embeds the owner's dog, human and voice clip from
+// app/assets/ (committed, the owner's own, shipped by the owner's decision of 2026-11-25), the
+// page Pages publishes. buildApp({ stub: true }) reads no binary at all: the dog is the generated
+// stub (tools/stub-dog.mjs) and the human the placeholder, the build the public scenario goldens
+// run on.
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -102,12 +105,14 @@ export async function buildApp(opts = {}) {
     minify: true, legalComments: "inline", write: false, metafile: true, plugins: [scopePlugin], logLevel: "warning",
   });
   const js = r.outputFiles[0].text.split("</script").join("<\\/script");
-  const A = (f) => join(resolve(opts.assets ?? join(ROOT, "assets-local")), f);
-  const pub = !!opts.public;
-  if (!pub && !existsSync(A("dog.glb"))) throw new Error("assets-local/dog.glb is missing; see assets.lock.json, or build the public file (node tools/build-html.mjs public)");
-  const dogGlb = pub ? stubDogGlb() : readFileSync(A("dog.glb"));
-  const human = !pub && existsSync(A("moheeb.glb")) ? readFileSync(A("moheeb.glb")).toString("base64") : "";
-  const voice = !pub && existsSync(A("voice.wav")) ? readFileSync(A("voice.wav")).toString("base64") : "";
+  const stub = !!opts.stub, pub = !stub && !!opts.public;
+  // the owner build reads assets-local/; the public build reads the committed app/assets/
+  const dir = pub ? join(ROOT, "app/assets") : resolve(opts.assets ?? join(ROOT, "assets-local"));
+  const A = (f) => join(dir, pub && f === "moheeb.glb" ? "human.glb" : f);
+  if (!stub && !existsSync(A("dog.glb"))) throw new Error(`${A("dog.glb")} is missing; see assets.lock.json, or build the stub file (node tools/build-html.mjs stub)`);
+  const dogGlb = stub ? stubDogGlb() : readFileSync(A("dog.glb"));
+  const human = !stub && existsSync(A("moheeb.glb")) ? readFileSync(A("moheeb.glb")).toString("base64") : "";
+  const voice = !stub && existsSync(A("voice.wav")) ? readFileSync(A("voice.wav")).toString("base64") : "";
   let html = readFileSync(join(SRC, "view/page.html"), "utf8");
   html = sub(html, "<!DOCTYPE html>\n", "<!DOCTYPE html>\n" + licenceComment());
   html = sub(html, "/*@@FONTS@@*/", fontCss());
@@ -120,7 +125,7 @@ export async function buildApp(opts = {}) {
   const ours = html.replace(js, "");
   if (LEGACY_DASHES.some((c) => ours.includes(c))) throw new Error("dash found outside the bundled libraries");
   if (/https:\/\/fonts\.(googleapis|gstatic)\.com/.test(html)) throw new Error("a remote font reference is left");
-  if (!human) console.log("build-app: no assets-local/moheeb.glb, the page uses its placeholder human");
-  console.log(`build-app: script ${js.length} bytes, dog model ${dogGlb.length} bytes${pub ? " (stub)" : ""}, human ${human ? "owner pack" : "placeholder"}`);
-  return { html, likeness: { human: !!human, voice: !!voice }, stubDog: pub, inputs: Object.keys(r.metafile.inputs) };
+  if (!human) console.log("build-app: no human model, the page uses its placeholder human");
+  console.log(`build-app: script ${js.length} bytes, dog model ${dogGlb.length} bytes${stub ? " (stub)" : ""}, human ${human ? (pub ? "app/assets" : "owner pack") : "placeholder"}, voice clip ${voice ? "embedded" : "none"}`);
+  return { html, likeness: { human: !!human, voice: !!voice }, stubDog: stub, inputs: Object.keys(r.metafile.inputs) };
 }

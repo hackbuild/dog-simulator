@@ -20,22 +20,28 @@ not in any build.
 ## Build
 
     npm run build:app      # dist/dog-simulator.html
-    npm run build:public   # dist/dog-simulator-public.html, nothing from assets-local
+    npm run build:public   # dist/dog-simulator-public.html, the page Pages publishes
+    npm run build:stub     # dist/dog-simulator-stub.html, no binary asset (scenario goldens)
     npm run build:legacy   # dist/hackle-legacy.html, the pack build byte for byte
     npm run build:det      # dist/hackle-det.html, the deterministic legacy build
 
-The builds read the dog model from `assets-local/` (outside git, listed in
-`assets.lock.json`). The owner's human model and voice reference are used
-when `assets-local/` holds them; otherwise the app builds a placeholder
-human. `build:public` reads nothing from `assets-local/`: the dog is a box
-dog written from code (`tools/stub-dog.mjs`), the human the placeholder,
-and there is no voice clip. CI builds that file. Licences of every asset
+`build:app` reads the dog model from `assets-local/` (outside git, listed
+in `assets.lock.json`), and the owner's human model and voice reference
+when it holds them. `build:public` reads nothing from `assets-local/`: it
+embeds the three files committed in `app/assets/` (`dog.glb`, `human.glb`,
+`voice.wav`), which are the owner's own and ship publicly by the owner's
+decision of 2026-11-25. `build:stub` embeds no binary at all: a box dog
+written from code (`tools/stub-dog.mjs`), the placeholder human and no
+voice clip, the file the public scenario goldens run on. CI builds both.
+The neural gait weights (CC-BY-NC-4.0) and YOLOv8n (AGPL-3.0) are never
+bundled; the page fetches them from their upstream sources when you load
+them, and says the licence where you press load. Licences of every asset
 and dependency: LICENCES.md.
 
-The human in the app is the owner, Moheeb Zara. His name, handle and
-speech habits are in the mind prompt and the UI copy of every build,
-the public one included; this is his own app and he keeps it so. His
-likeness files (human model, voice reference) are never committed.
+The human in the app is the owner, Moheeb Zara. His name is in the mind
+prompt and the UI copy of every build; this is his own app and he keeps
+it so. His model and voice clip ship in `app/assets/`; no other likeness
+file is committed.
 
 ## Libraries from the sibling repos
 

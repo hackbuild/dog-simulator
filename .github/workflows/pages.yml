@@ -12,7 +12,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   build:
-    # the public build only, as in the ci app job: stub dog, placeholder human, no voice, no weights
+    # the public build only, as in the ci app job: the owner's dog, human and voice clip from
+    # app/assets (owner decision, 2026-11-25), no weights
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -35,10 +36,13 @@ jobs:
           const s = require("fs").readFileSync("dist/dog-simulator-public.html", "utf8");
           const block = (id) => (s.match(new RegExp("id=\"" + id + "\">([\\s\\S]*?)</script>")) || [])[1].trim();
           const fail = (m) => { console.error(m); process.exit(1); };
-          if (block("voiceB64")) fail("voice clip present");
-          if (block("humanGLB")) fail("human model present");
+          // exactly the three files in app/assets: the dog, the human and the voice clip
+          const b64 = (f) => require("fs").readFileSync("app/assets/" + f).toString("base64");
+          if (block("dogGLB") !== b64("dog.glb")) fail("the dog is not app/assets/dog.glb");
+          if (block("humanGLB") !== b64("human.glb")) fail("the human is not app/assets/human.glb");
+          if (block("voiceB64") !== b64("voice.wav")) fail("the voice clip is not app/assets/voice.wav");
           const glb = (s.match(/Z2xURg/g) || []).length;
-          if (glb !== 1) fail("expected one GLB (the stub dog), found " + glb);
+          if (glb !== 2) fail("expected two GLBs (the dog and the human), found " + glb);
           const text = s.replace(/[A-Za-z0-9+\/]{200,}={0,2}/g, "");
           // names that must never ship come from a repository secret, never from this file
           for (const n of (process.env.BLOCKED_NAMES || "").split(",").map((x) => x.trim()).filter(Boolean)) if (text.includes(n)) fail("a blocked name is in the page");

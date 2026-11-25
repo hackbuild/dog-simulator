@@ -1,19 +1,19 @@
 {
   "version": 1,
-  "note": "sizes measured; sha256 of the files as received. assets-local/ is gitignored and never committed.",
+  "note": "sizes measured; sha256 of the files as received. assets-local/ is gitignored; the app/assets/ copies are committed.",
   "assets": {
     "assets-local/dog.glb": {
       "sha256": "6b1df348972d8cc381506d7cc4356582cde824277112c32a56ce2a29a97fafce",
       "bytes": 5455648,
       "source": "HACKLE handoff pack, received 2026-11-22, app/assets/dog.glb; a Meshy model reduced with legacy/pack/tools/opt.mjs",
-      "licence": "unknown (Meshy output terms not checked)",
+      "licence": "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)",
       "git": false
     },
     "assets-local/moheeb.glb": {
       "sha256": "0e4d5b0a2ab1d78532d788ede10433767430025c4ad90bbcab96663d2a3bbf54",
       "bytes": 636936,
       "source": "HACKLE handoff pack, received 2026-11-22, work/moheeb.glb; the owner's likeness",
-      "licence": "owner likeness, not for redistribution; rig origin unknown",
+      "licence": "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)",
       "git": false,
       "likeness": true
     },
@@ -21,7 +21,7 @@
       "sha256": "bed6f37b2a8a9da79093dd7789cff317a7412be13c532cb9ad3ca430dc2dd1ac",
       "bytes": 472364,
       "source": "HACKLE handoff pack, received 2026-11-22, ferrule/voice.wav; the owner's voice reference",
-      "licence": "owner likeness, not for redistribution",
+      "licence": "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)",
       "git": false,
       "likeness": true
     },
@@ -66,6 +66,29 @@
       "source": "HACKLE handoff pack, received 2026-11-22, hackle.html; the pack's build output, kept for the parity check",
       "licence": "mixed; embeds the owner likeness, not for redistribution",
       "git": false,
+      "likeness": true
+    },
+    "app/assets/dog.glb": {
+      "sha256": "6b1df348972d8cc381506d7cc4356582cde824277112c32a56ce2a29a97fafce",
+      "bytes": 5455648,
+      "source": "copy of assets-local/dog.glb",
+      "licence": "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)",
+      "git": true
+    },
+    "app/assets/human.glb": {
+      "sha256": "0e4d5b0a2ab1d78532d788ede10433767430025c4ad90bbcab96663d2a3bbf54",
+      "bytes": 636936,
+      "source": "copy of assets-local/moheeb.glb",
+      "licence": "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)",
+      "git": true,
+      "likeness": true
+    },
+    "app/assets/voice.wav": {
+      "sha256": "bed6f37b2a8a9da79093dd7789cff317a7412be13c532cb9ad3ca430dc2dd1ac",
+      "bytes": 472364,
+      "source": "copy of assets-local/voice.wav",
+      "licence": "the owner's own; ships publicly in this repository (owner decision, 2026-11-25)",
+      "git": true,
       "likeness": true
     }
   },

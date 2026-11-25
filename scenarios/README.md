@@ -35,11 +35,11 @@ Two golden sets:
   placeholder human the human moves differently and these goldens do
   not apply. Local runs only.
 - public set (`golden/public-cpg/`, `--set public`): the build made by
-  `node tools/build-html.mjs public`, which reads nothing from
-  `assets-local/` (box dog from `tools/stub-dog.mjs`, placeholder human).
-  CI builds it and compares this set on every push.
+  `node tools/build-html.mjs stub`, which reads no binary asset (box dog
+  from `tools/stub-dog.mjs`, placeholder human). CI builds it and
+  compares this set on every push.
 
-    node tools/build-html.mjs public
+    node tools/build-html.mjs stub
     node scenarios/run.mjs compare --set public
 
 Goldens are renderer specific. The dog's saliency reads the pixels of

@@ -50,7 +50,7 @@ test("app build without the owner pack uses the placeholder human and no voice c
   try {
     const { html, likeness, stubDog } = owner
       ? await (async () => { const { copyFileSync } = await import("node:fs"); copyFileSync(dog, join(dir, "dog.glb")); return buildApp({ assets: dir }); })()
-      : await buildApp({ public: true });
+      : await buildApp({ stub: true });
     assert.deepEqual(likeness, { human: false, voice: false });
     assert.equal(stubDog, !owner);
     assert.match(html, /<script type="application\/octet-stream" id="humanGLB">\s*<\/script>/);
@@ -60,11 +60,23 @@ test("app build without the owner pack uses the placeholder human and no voice c
   }
 });
 
-test("the public build reads nothing from assets-local", async () => {
-  const { html, likeness, stubDog } = await buildApp({ public: true });
+test("the stub build reads no binary asset", async () => {
+  const { html, likeness, stubDog } = await buildApp({ stub: true });
   assert.deepEqual(likeness, { human: false, voice: false });
   assert.ok(stubDog);
   assert.ok(!html.includes("UklGR"), "a RIFF (wav) payload");
   const glb = html.match(/id="dogGLB">\s*([A-Za-z0-9+/=]+)/)[1];
   assert.ok(Buffer.from(glb, "base64").length < 100000, "the dog is the stub");
+});
+
+// the owner's dog, human and voice clip ship in app/assets (owner decision, 2026-11-25); the public
+// build embeds exactly those three files, byte for byte, and nothing from assets-local
+test("the public build embeds the three files in app/assets", async () => {
+  const { html, likeness, stubDog } = await buildApp({ public: true });
+  assert.deepEqual(likeness, { human: true, voice: true });
+  assert.equal(stubDog, false);
+  const block = (id) => html.match(new RegExp(`id="${id}">\\s*([A-Za-z0-9+/=]*)\\s*</script>`))[1];
+  for (const [id, f] of [["dogGLB", "dog.glb"], ["humanGLB", "human.glb"], ["voiceB64", "voice.wav"]]) {
+    assert.equal(block(id), readFileSync(join(ROOT, "app/assets", f)).toString("base64"), `${f} embedded as committed`);
+  }
 });

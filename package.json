@@ -23,6 +23,7 @@
     "build:det": "node tools/build-html.mjs legacy --mods legacy/det/src --out dist/hackle-det.html",
     "build:app": "node tools/build-html.mjs app",
     "build:public": "node tools/build-html.mjs public",
+    "build:stub": "node tools/build-html.mjs stub",
     "check:boot": "node tools/runner/boot.mjs",
     "check:speed": "node tools/runner/speed.mjs",
     "check:determinism": "node tools/runner/determinism.mjs dist/hackle-det.html --seconds 600",

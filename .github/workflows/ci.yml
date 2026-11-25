@@ -40,8 +40,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
   app:
-    # the public build (stub dog, placeholder human, nothing from assets-local), the licence
-    # isolation test on it, and the public scenario goldens in lockstep on SwiftShader
+    # the public build (the owner's dog, human and voice from app/assets), the licence isolation
+    # test on it, and the public scenario goldens in lockstep on SwiftShader over the stub build
+    # (stub dog, placeholder human, no binary asset)
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     steps:
@@ -52,6 +53,7 @@ jobs:
       - run: npm install -g npm@11.21.0
       - run: npm ci
       - run: npm run build:public
+      - run: npm run build:stub
       - run: node --test tools/test/build-app.test.mjs
       - run: node scenarios/run.mjs compare --set public --jobs 2 --no-metrics --tag ci
         env:
