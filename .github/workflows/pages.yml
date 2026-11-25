@@ -24,6 +24,8 @@ jobs:
       - run: node tools/vendor/pin-ui.mjs --check
       - run: npm ci
       - run: npm run build:public
+        env:
+          SUITE_URL: https://hackbuild.github.io/hackbuild-suite/
       - run: node --test tools/test/build-app.test.mjs
       - name: check the public file
         env:

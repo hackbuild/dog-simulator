@@ -4,6 +4,8 @@ A dog and its person living in a browser tab. The dog walks, sniffs, plays fetch
 
 Play it: https://hackbuild.github.io/dog-simulator/
 
+The parts it is built from, as tools: the suite, <https://hackbuild.github.io/hackbuild-suite/>.
+
 Status: 2026-11-22, the handoff build (in `legacy/`) moved here and made
 deterministic. `app/src` holds the app; `legacy/` holds the pack as
 received and its deterministic copy; `scenarios/` holds golden traces.
