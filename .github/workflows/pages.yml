@@ -26,6 +26,8 @@ jobs:
       - run: npm run build:public
       - run: node --test tools/test/build-app.test.mjs
       - name: check the public file
+        env:
+          BLOCKED_NAMES: ${{ secrets.BLOCKED_NAMES }}
         run: |
           node -e '
           const s = require("fs").readFileSync("dist/dog-simulator-public.html", "utf8");
@@ -36,7 +38,8 @@ jobs:
           const glb = (s.match(/Z2xURg/g) || []).length;
           if (glb !== 1) fail("expected one GLB (the stub dog), found " + glb);
           const text = s.replace(/[A-Za-z0-9+\/]{200,}={0,2}/g, "");
-          for (const n of []) if (text.includes(n)) fail(n + " named in the page");
+          // names that must never ship come from a repository secret, never from this file
+          for (const n of (process.env.BLOCKED_NAMES || "").split(",").map((x) => x.trim()).filter(Boolean)) if (text.includes(n)) fail("a blocked name is in the page");
           console.log("public file clean");
           '
       - run: mkdir -p _site && cp dist/dog-simulator-public.html _site/index.html
