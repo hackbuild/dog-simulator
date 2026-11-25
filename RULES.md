@@ -28,7 +28,9 @@ this one, this one wins.
   dash. Use commas, periods, or "to" for ranges, in code too.
 - Never use the "it is not x, it is y" construction or its variants. State
   what the thing is.
-- No exclamation marks, in UI copy, docs and character dialogue alike.
+- No exclamation marks in UI copy or docs. The human's in-world dialogue may
+  use them, as the original did (owner decision 2026-11-25); only the line file
+  is exempt from lint-voice.
 - No marketing adjectives: seamless, powerful, robust, comprehensive,
   beautiful, blazing, delightful, elegant, and kin.
 - No filler vocabulary: delve, tapestry, crucial, vital, leverage,
@@ -76,8 +78,9 @@ this one, this one wins.
 
 ## Privacy
 
-- Never commit owner likeness files (human models, voice references), the
-  knowledge base `sources/` folder, or any file that names private source
+- The owner's dog.glb, human model and voice clip ship in app/assets/ (owner
+  decision 2026-11-25). No other likeness file and no persona text. Never commit
+  the knowledge base `sources/` folder, or any file that names private source
   repositories the libraries were drawn from.
 
 ## Git conventions
