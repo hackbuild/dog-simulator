@@ -43,7 +43,10 @@ jobs:
           if (block("voiceB64") !== b64("voice.wav")) fail("the voice clip is not app/assets/voice.wav");
           const glb = (s.match(/Z2xURg/g) || []).length;
           if (glb !== 2) fail("expected two GLBs (the dog and the human), found " + glb);
-          const text = s.replace(/[A-Za-z0-9+\/]{200,}={0,2}/g, "");
+          // drop base64 runs of 200 or more characters with a linear scan; a regex overflows the stack on the embedded models
+          const isB = (c) => (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c === 43 || c === 47 || c === 61;
+          let text = "", i = 0;
+          while (i < s.length) { let j = i; while (j < s.length && isB(s.charCodeAt(j))) j++; if (j - i < 200) text += s.slice(i, j); if (j === i) { text += s[i]; j++; } i = j; }
           // names that must never ship come from a repository secret, never from this file
           for (const n of (process.env.BLOCKED_NAMES || "").split(",").map((x) => x.trim()).filter(Boolean)) if (text.includes(n)) fail("a blocked name is in the page");
           console.log("public file clean");
