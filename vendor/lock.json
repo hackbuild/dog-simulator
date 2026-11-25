@@ -177,6 +177,28 @@
         "dist/single.js": "78a84adeaf68c964266c1c23eb0d4d343a7014470efe54be66485016d68ed732",
         "package.json": "7918717b458d5e690087535d992064a3870fe7d80220af40214f998b991829d1"
       }
+    },
+    "weights": {
+      "repo": "hackbuild/hackbuild-browser-ai",
+      "path": "packages/weights",
+      "commit": "4b0d305354ffb5c19be1c630a49cd4bb45f23c09",
+      "version": "0.1.0",
+      "files": {
+        "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
+        "README.md": "2818a6ef468a947fc5208b74a3b8179c9f6247774f5a8d2c4f66f2d099c8dfe9",
+        "dist/backends.d.ts": "4c9e2899d62bcdef253f1815133eb43596498f03034db30e7edc1d99cb618df8",
+        "dist/backends.js": "8705074584d70f74cf95774a751686a92501df52b9a79b7fec291cf70908d101",
+        "dist/index.d.ts": "f8da43fb7f6fd3ddd7ea23d974857898e4a29973e0a9e5d312f3b7d75595b313",
+        "dist/index.js": "cc5801986f91272b7e992e5eebf5707e8c8d6b3881a88ad6f6f62096e03e7769",
+        "dist/repo.d.ts": "84aa40a480b36f83435d821ef25c9c279e59cbeedee9335bedd2e447b54b3dff",
+        "dist/repo.js": "b6a0f5f103b51d402954576ad9eee22432edd6d9dcc2d40fbf5fd485ae7eaa84",
+        "dist/sha256.d.ts": "8b9e9034dba177242f4f6557d5de24a2a505035f9461695c69cab46644e407a9",
+        "dist/sha256.js": "04f72690604dccf56c520cc493ae46d8627c37c68fe7b3a5e830928f2412050a",
+        "dist/single/index.js": "73d8f8b6f4039875472756c8f2b0bee50c6d0a418e156cc53996418f9caa61c3",
+        "dist/store.d.ts": "fe25cd6e29d936a165d648f14dca564105a16ca03e1a415e6bdf59a71fc4f42f",
+        "dist/store.js": "d41d4af0096d67834a94dfe4a3b1c6529e7728c20d8236045438cd2fb529b47c",
+        "package.json": "f373dadac0783db890d03ceaa0f9a29e562d5118072fa7589b2d676b2b13ae14"
+      }
     }
   }
 }
