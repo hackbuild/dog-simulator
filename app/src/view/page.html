@@ -11,7 +11,7 @@
 /*
 The page of the original yard (hackle), light paper: the dog is the picture; every panel is a probe.
 Stage left (fills), a rack of seven tabs at a fixed 380 px on the right; under 900 px the rack
-stacks under a stage of 62 percent of the height, and the yard stays in view while a pane scrolls.
+stacks under a stage of 62 percent of the height and the page scrolls as one.
 The hack.build class layer (hackbuild-ui, inlined above) carries the light 52 px header, the light
 VT323 tabs, the light buttons with one pink (.hb-btn-go), the panels and the 380 px rack token.
 The stage overlays, the yard hint, the behaviour name, the verb row and the bars are this page's
@@ -28,10 +28,9 @@ body.hb::before{display:none}
 #app>.hb-header{overflow:hidden}
 #app>.hb-header h1{font-size:26px;letter-spacing:.5px;flex:0 0 auto}
 #app>.hb-header .hb-tagline{margin-left:0;flex:0 1 auto}
-.chips{margin-left:auto;display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden;flex:0 1 auto;min-width:0}
-.chip{font-family:var(--hb-readout);font-size:17px;line-height:1;padding:4px 7px;border:1.5px solid var(--hb-ink);background:var(--hb-paper);white-space:nowrap}
-.chip.on{background:var(--hb-ink);color:var(--hb-paper)}
-.chip.is-ok{border-color:var(--hb-ink)}
+.hchips{margin-left:auto;display:flex;gap:6px;flex-wrap:nowrap;overflow:hidden;flex:0 1 auto;min-width:0}
+.chip{font-family:var(--hb-readout);font-size:17px;line-height:1;padding:4px 7px;border:1.5px solid var(--hb-ink);background:var(--hb-paper);white-space:nowrap;text-transform:uppercase}
+.chip.on,.chip.is-ok{background:var(--hb-ink);color:var(--hb-paper)}
 .chip.is-warn{border-color:var(--hb-warn);color:var(--hb-warn-ink)}
 #work{display:grid;grid-template-columns:minmax(0,1fr) var(--hb-rack,380px);min-height:0}
 /* the stage and its overlays, as the original drew them */
@@ -55,16 +54,16 @@ body.hb::before{display:none}
 #eyewrap canvas{position:absolute;inset:0;width:100%;height:100%}
 #eyecard.is-folded #eyewrap{display:none}
 #eyeSal{pointer-events:none}
-#tool{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;pointer-events:none;z-index:6}
+#tool{position:absolute;left:12px;right:12px;bottom:12px;display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end;pointer-events:none;z-index:7}
 #tool>*{pointer-events:auto}
 #tool .hb-btn svg{width:16px;height:16px;flex:none}
 #camLab,#micLab{display:inline-block}
 #camLab::first-letter,#micLab::first-letter{text-transform:uppercase}
-#bubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:var(--hb-paper-raised);border:1.5px solid var(--hb-ink);padding:4px 9px;font-family:var(--hb-note);font-size:14px;white-space:nowrap;box-shadow:3px 3px 0 var(--hb-ink);max-width:260px;overflow:hidden;text-overflow:ellipsis;z-index:4}
+#bubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:var(--hb-paper-raised);border:1.5px solid var(--hb-ink);padding:4px 9px;font-family:var(--hb-note);font-size:14px;white-space:nowrap;box-shadow:3px 3px 0 var(--hb-ink);max-width:260px;overflow:hidden;text-overflow:ellipsis;z-index:6}
 #bubble:after{content:"";position:absolute;left:50%;bottom:-8px;width:10px;height:10px;background:var(--hb-paper-raised);border-right:1.5px solid var(--hb-ink);border-bottom:1.5px solid var(--hb-ink);transform:translateX(-50%) rotate(45deg)}
-#hbubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:#fff;border:1.5px solid var(--hb-pink);color:var(--hb-ink);padding:4px 9px;font-family:var(--hb-note);font-size:14px;max-width:280px;box-shadow:3px 3px 0 var(--hb-pink);white-space:normal;text-align:center;z-index:4}
+#hbubble{position:absolute;pointer-events:none;transform:translate(-50%,-100%);background:#fff;border:1.5px solid var(--hb-pink);color:var(--hb-ink);padding:4px 9px;font-family:var(--hb-note);font-size:14px;max-width:280px;box-shadow:3px 3px 0 var(--hb-pink);white-space:normal;text-align:center;z-index:6}
 #hint{position:absolute;right:12px;top:12px;font-family:var(--hb-note);font-size:12.5px;line-height:1.4;background:rgba(255,253,247,.88);border:1px solid var(--hb-paper-edge);padding:5px 8px;max-width:280px;color:var(--hb-ink-2);z-index:5}
-#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--hb-ink);color:var(--hb-paper);padding:6px 12px;font-family:var(--hb-readout);font-size:19px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:7;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}
+#toast{position:absolute;left:50%;top:14px;transform:translateX(-50%);background:var(--hb-ink);color:var(--hb-paper);padding:6px 12px;font-family:var(--hb-readout);font-size:19px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:8;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden;text-overflow:ellipsis}
 #toast.is-on{opacity:1}
 #drop{position:absolute;inset:0;border:4px dashed var(--hb-pink);display:none;place-items:center;background:rgba(245,240,230,.7);z-index:8;font-family:var(--hb-display);font-size:30px}
 #drop.is-over{display:grid}
@@ -83,7 +82,7 @@ body.hb::before{display:none}
 .hb .pane h3.hb-panel-hd-inst{text-transform:uppercase;display:flex;justify-content:space-between;gap:8px;font-size:19px;letter-spacing:0;margin:-9px -10px 9px;padding:3px 9px}
 .hb .pane h3.hb-panel-hd-inst .hb-hd-aux{color:#ffd1e8;text-transform:none;font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 /* the original's compact buttons: 7 px by 10 px, 3 px shadow; a pressed toggle fills ink */
-.pane .hb-btn,#tool .hb-btn{padding:7px 10px;gap:6px;box-shadow:3px 3px 0 var(--hb-ink)}
+.pane .hb-btn,#tool .hb-btn{padding:7px 10px;gap:6px;box-shadow:3px 3px 0 var(--hb-ink);font-size:13px;text-transform:none;letter-spacing:0}
 .hb-btn[aria-pressed="true"]{background:var(--hb-ink);color:var(--hb-paper)}
 .big{font-family:var(--hb-display);font-size:28px;line-height:1.05;margin:0}
 .note{font-family:var(--hb-note);font-size:13px;line-height:1.4;color:var(--hb-ink-3);margin:6px 0 0}
@@ -125,16 +124,18 @@ input[type=range]{width:100%;accent-color:var(--hb-pink)}
 .lines>li{padding:3px 0;border-bottom:1px dashed rgba(26,26,26,.15);overflow-wrap:anywhere}
 .lines>li:last-child{border-bottom:0}
 .lines .k{display:inline-block;min-width:4.5em;color:var(--hb-ink-3)}
-.chiprow{display:flex;flex-wrap:wrap;gap:6px}
-.chiprow .hb-chip{box-shadow:none;text-transform:none;letter-spacing:0;font-size:13px}
+.chiprow,.pane .chips{display:flex;flex-wrap:wrap;gap:6px}
+.chiprow .hb-chip,.pane .chips .hb-chip{box-shadow:none;text-transform:none;letter-spacing:0;font-size:13px;min-height:38px;padding:4px 10px}
+.rangerow{display:grid;grid-template-columns:150px minmax(0,1fr) 46px;align-items:center;gap:8px;margin:4px 0;font-size:12px}
+.rangerow output{font-family:var(--hb-readout);font-size:16px;text-align:right}
 /* the associations table, cues by acts, as in the original */
 table.heat{border-collapse:collapse;font-size:11px;width:100%}
 table.heat caption{caption-side:top;text-align:left;color:var(--hb-ink-3);padding:0 0 4px}
 table.heat th{font-weight:400;color:var(--hb-ink-3);padding:2px;text-align:center;white-space:nowrap}
 table.heat tbody th{text-align:right;padding-right:6px;max-width:90px;overflow:hidden;text-overflow:ellipsis}
 table.heat td{width:26px;height:20px;border:1px solid var(--hb-paper-edge);text-align:center;font-family:var(--hb-readout);font-size:14px}
-table.heat td{background:color-mix(in srgb,var(--hb-ink) calc(var(--v,0) * 55%),transparent)}
-table.heat td.is-hi{color:var(--hb-paper)}
+table.heat td{background:color-mix(in srgb,var(--hb-pink) calc(var(--v,0) * 100%),transparent)}
+table.heat td.is-hi{color:#fff}
 .scrollx{overflow-x:auto}
 .hb-fold{margin:6px 0 0;border:1px solid var(--hb-paper-edge)}
 .hb-fold>summary{display:flex;align-items:center;gap:8px;padding:6px 8px;font-size:12px;cursor:pointer;list-style:none;min-height:32px}
@@ -166,14 +167,17 @@ table.heat td.is-hi{color:var(--hb-paper)}
 .hb-cap .hb-select{min-height:44px;font-size:16px}
 @media (min-width:641px){#caps>.hb-drawer-panel{width:min(520px,92vw)}}
 @media (min-width:901px){#app>.hb-header .hb-tagline{display:block}}
-/* under 900 px: the rack stacks under the stage; the yard stays in view while a pane scrolls */
+/* under 900 px: the rack stacks under a 62vh stage and the page scrolls as one, as the original */
 @media (max-width:900px){
-  #work{grid-template-columns:minmax(0,1fr);grid-template-rows:62dvh minmax(0,1fr)}
+  body.hb{overflow:auto}
+  #app{height:auto;min-height:100%;grid-template-rows:52px auto}
+  #work{grid-template-columns:minmax(0,1fr);grid-template-rows:62vh auto}
   #side{border-left:0;border-top:2px solid var(--hb-ink)}
+  #panes{overflow:visible}
 }
 @media (max-width:600px){
   #eyecard{width:56%}#eyeMode{display:none}#hint{display:none}
-  .chips .chip:nth-child(n+3){display:none}
+  .hchips .chip:nth-child(n+3){display:none}
   #tool{gap:4px;left:8px;right:8px;bottom:8px}
   #tool .hb-btn{min-height:34px;padding:4px 7px;font-size:12px;box-shadow:2px 2px 0 var(--hb-ink)}
   #padRow{bottom:96px}
@@ -192,7 +196,7 @@ table.heat td.is-hi{color:var(--hb-paper)}
 <header class="hb-header" data-ux="bar">
   <h1>hackle<span>.</span></h1>
   <span class="hb-tagline is-tool">a dog with a brain, a body and eyes, running in your browser</span>
-  <div class="chips">
+  <div class="hchips">
     <span class="chip" id="chipGpu" title="the renderer this browser gave the yard">gpu ...</span>
     <span class="chip" id="chipPhys" title="the physics engine">phys ...</span>
     <span class="chip" id="chipNet" title="the object detector on the dog eye">eye net off</span>
@@ -245,7 +249,7 @@ table.heat td.is-hi{color:var(--hb-paper)}
 
   <section class="pane on" id="pBrain" role="tabpanel" aria-labelledby="tab-brain" tabindex="0">
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst"><span>behaviour</span><span class="hb-hd-aux" id="behT">0.0 s</span></h3>
+      <h3 class="hb-panel-hd-inst"><span>behavior</span><span class="hb-hd-aux" id="behT">0.0 s</span></h3>
       <p class="big" id="behName">idle</p>
       <p class="note" id="behWhy">standing around</p>
       <p class="sub" id="behKind"></p>
@@ -254,7 +258,7 @@ table.heat td.is-hi{color:var(--hb-paper)}
     <div class="hb-panel">
       <h3 class="hb-panel-hd-inst"><span>utility</span><span class="hb-hd-aux" id="utilMode">sampled</span></h3>
       <div id="utilRows" aria-label="what each act is worth to the dog now"></div>
-      <p class="note" id="pendNote"></p>
+      <p class="note" id="pendNote">each act scores by how much it would ease what the dog needs. it usually picks the best one and sticks with what it is doing.</p>
       <details class="hb-fold" data-ux="detail"><summary>how it chooses</summary><div><p class="sub" id="choiceMeta"></p><ul class="lines" id="choiceFeed"></ul>
         <p class="note">drive reduction: each act scores by how much it would lower the dog's needs (keramati and gutkin 2011). the dog acts on the best option most of the time (softmax with a commitment bonus, temperature in tune).</p></div></details>
     </div>
@@ -279,7 +283,7 @@ table.heat td.is-hi{color:var(--hb-paper)}
       <p class="note">a vision language model on your gpu looks through the dog eye, reads its drives and memories, and returns what it saw, a thought and a goal. nothing leaves the browser; the weights download once and stay stored.</p>
       <div class="field"><label for="vlmSel">model</label><select class="hb-select" id="vlmSel"><option value="lfm">lfm2-vl 450m, about 320 mb</option><option value="gemma">gemma 4 e2b, about 3.3 gb</option></select></div>
       <p class="licence" id="vlmLic">weights lfm open license 1.0, commercial use limited.</p>
-      <div class="btns"><button class="hb-btn" id="bVlmLoad" type="button">load, about 320 mb</button><button class="hb-btn" id="bThink" type="button" hidden>look and think</button></div>
+      <div class="btns"><button class="hb-btn" id="bVlmLoad" type="button">Load, about 320 MB</button><button class="hb-btn" id="bThink" type="button" hidden>Look and think</button></div>
       <p class="reason" id="cortexWhy"></p>
       <p class="sub" id="cortexSched"></p>
       <label class="hb-check is-disabled" id="autoThinkL" hidden><input type="checkbox" id="autoThink" disabled>think on its own when something happens, at most every 25 s</label>
@@ -302,9 +306,9 @@ table.heat td.is-hi{color:var(--hb-paper)}
         <section class="hb-mempanel" aria-label="the dog's memory">
           <div class="hb-mempanel-sec"><p class="hb-mempanel-counts" id="memCounts">0 memories</p><div class="hb-mempanel-store"><p class="hb-mempanel-line">kept in this tab only. a reload starts a new day; export keeps a copy.</p></div></div>
           <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memSearchH">search</h3><input class="hb-input" type="search" id="memSearch" placeholder="try ball or human" aria-labelledby="memSearchH" aria-describedby="memSearchM" autocomplete="off"><p class="hb-mempanel-line" id="memSearchM">search: keyword overlap. with no words the order is the cortex ranking.</p></div>
-          <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memAddH">add a memory</h3><textarea class="hb-textarea" id="memNote" rows="2" placeholder="the ball went over the fence" aria-labelledby="memAddH"></textarea><div class="hb-mempanel-row"><button type="button" class="hb-btn hb-btn-sm" id="memAdd" disabled>add</button></div></div>
+          <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memAddH">add a memory</h3><textarea class="hb-textarea" id="memNote" rows="2" placeholder="the ball went over the fence" aria-labelledby="memAddH"></textarea><div class="hb-mempanel-row"><button type="button" class="hb-btn hb-btn-sm" id="memAdd" disabled>Add</button></div></div>
           <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memListH">memories (0)</h3><p class="hb-mempanel-empty" id="memEmpty">nothing remembered yet. play with the dog and it fills.</p><div class="hb-mempanel-list" id="memList" aria-labelledby="memListH"></div></div>
-          <div class="hb-mempanel-foot"><button type="button" class="hb-btn hb-btn-sm" id="memExport">export</button><button type="button" class="hb-btn hb-btn-sm hb-mempanel-wipe" id="memWipe">erase all</button></div>
+          <div class="hb-mempanel-foot"><button type="button" class="hb-btn hb-btn-sm" id="memExport">Export</button><button type="button" class="hb-btn hb-btn-sm hb-mempanel-wipe" id="memWipe">Erase all</button></div>
         </section>
         <p class="note">scored as the cortex ranks them: recency 0.995 per game hour, importance over 6, plus 0.5 when it names what is in view (park 2023). marked rows went into the last thought.</p></div></details>
     </div>
@@ -329,7 +333,7 @@ table.heat td.is-hi{color:var(--hb-paper)}
     <div class="hb-panel">
       <h3 class="hb-panel-hd-inst"><span>neural gait</span><span class="hb-hd-aux" id="nnSt">off</span></h3>
       <p class="note">a codebook matching network trained on real dog motion capture (ai4animationpy, paul and sebastian starke) predicts the next half second of a 27 bone dog: walk, pace, trot, canter, sit, lie. it runs in a worker, on webgpu when there is an adapter, retargeted onto this rig. bows, paw lifts and shakes hand back to the pattern generator with an inertialized blend.</p>
-      <div class="btns"><button class="hb-btn" id="bNnLoad" type="button">load neural gait, 17.7 mb</button></div>
+      <div class="btns"><button class="hb-btn" id="bNnLoad" type="button">Load neural gait, 17.7 MB</button></div>
       <p class="licence">model and mocap cc by-nc 4.0, no commercial use. fetched when you press load from github, sweriko/ai4anim-webgpu at b539455, checked by sha-256, never bundled.</p>
       <div class="kv"><b>guidance</b><span id="kGuide">-</span><b>inference</b><span id="kNnMs">-</span><b>contacts</b><span id="kCont">-</span></div>
     </div>
@@ -373,9 +377,9 @@ table.heat td.is-hi{color:var(--hb-paper)}
     </div>
     <div class="hb-panel">
       <h3 class="hb-panel-hd-inst"><span>show it</span><span class="hb-hd-aux">photo or webcam</span></h3>
-      <div class="btns"><label class="hb-btn" for="photoIn" tabindex="0" id="photoPick">pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="hb-btn" id="bWebcam" type="button" aria-pressed="false">webcam</button><button class="hb-btn" id="bClap" type="button" aria-pressed="false">clap detection</button></div>
+      <div class="btns"><label class="hb-btn" for="photoIn" tabindex="0" id="photoPick">Pick a photo</label><input type="file" id="photoIn" accept="image/*" hidden><button class="hb-btn" id="bWebcam" type="button" aria-pressed="false">Webcam</button><button class="hb-btn" id="bClap" type="button" aria-pressed="false">Clap detection</button></div>
       <p class="note">the dog runs the same detector on whatever you show it: cats get barked at, food gets begged for, balls get a play bow. the webcam asks for the camera and downloads two gesture and face models, 27.3 mb, apache 2.0. clap detection asks for the microphone. with a cortex model loaded the dog also says what it thinks of a photo.</p>
-      <div class="hb-callout is-warn" id="photoAsk" hidden role="alert"><p class="sub" style="margin:0">to label photos the dog needs the object detector: 12.8 mb, weights agpl 3.0. load it?</p><div class="btns"><button class="hb-btn" type="button" id="bPhotoYes">load it and label the photo</button><button class="hb-btn" type="button" id="bPhotoNo">not now</button></div></div>
+      <div class="hb-callout is-warn" id="photoAsk" hidden role="alert"><p class="sub" style="margin:0">to label photos the dog needs the object detector: 12.8 mb, weights agpl 3.0. load it?</p><div class="btns"><button class="hb-btn" type="button" id="bPhotoYes">Load it and label the photo</button><button class="hb-btn" type="button" id="bPhotoNo">Not now</button></div></div>
       <div id="photoView"><canvas id="photo" width="320" height="240" role="img" aria-label="the photo you showed it"></canvas></div>
       <video id="cam" playsinline muted aria-label="your webcam"></video>
     </div>
@@ -402,7 +406,7 @@ table.heat td.is-hi{color:var(--hb-paper)}
       <div class="scrollx"><table class="heat" id="heat"></table></div>
       <p class="sub" id="lastTrial"></p>
       <p class="note">rows are cues, columns are acts. cells show net strength, excitation minus a separate inhibition that fades faster, so an extinguished cue partly comes back after a break. the attn column is each cue's associability: it rises after surprises and falls as the outcome becomes predictable. credit fades with delay, so a slow treat can reward whatever the dog is doing when it lands. if nothing is strong the dog offers tricks it was rewarded for before; teach a new word by praising whatever it does.</p>
-      <div class="btns"><button class="hb-btn" id="bReset" type="button">reset learning</button><button class="hb-btn" id="bResetKeep" type="button" hidden>keep them</button></div>
+      <div class="btns"><button class="hb-btn" id="bReset" type="button">Reset learning</button><button class="hb-btn" id="bResetKeep" type="button" hidden>Keep them</button></div>
     </div>
     <div class="hb-panel">
       <h3 class="hb-panel-hd-inst"><span>what it knows</span><span class="hb-hd-aux" id="knownN">0 words</span></h3>
@@ -419,13 +423,13 @@ table.heat td.is-hi{color:var(--hb-paper)}
       <label class="tog"><input type="checkbox" id="humAI" checked>he runs his own day. off: you drive him with these buttons.</label>
       <label class="hb-check is-disabled" id="humMindOnL"><input type="checkbox" id="humMindOn" disabled>the cortex model picks what he does, at most every 25 s</label>
       <p class="reason" id="humMindWhy"></p>
-      <div class="btns"><button class="hb-btn" id="bCall" type="button">call the dog</button><button class="hb-btn" id="bPet" type="button">pet the dog</button><button class="hb-btn" id="bTrainNow" type="button">train a new word</button></div>
+      <div class="btns"><button class="hb-btn" id="bCall" type="button">Call the dog</button><button class="hb-btn" id="bPet" type="button">Pet the dog</button><button class="hb-btn" id="bTrainNow" type="button">Train a new word</button></div>
       <div class="hb-heard" id="humMind" data-empty="his own mind is off"></div>
     </div>
     <div class="hb-panel">
       <h3 class="hb-panel-hd-inst"><span>voice</span><span class="hb-hd-aux">pocket tts</span></h3>
       <p class="note" id="voiceNote">starts with the browser voice. load pocket tts to speak in his cloned voice, from the clip in this page; the engine downloads once from hugging face.</p>
-      <div class="btns"><button class="hb-btn" id="bVoiceLoad" type="button">load his voice</button><label class="tog"><input type="checkbox" id="humVoiceOn" checked>speak out loud</label></div>
+      <div class="btns"><button class="hb-btn" id="bVoiceLoad" type="button">Load his voice</button><label class="tog"><input type="checkbox" id="humVoiceOn" checked>speak out loud</label></div>
       <p class="licence">engine apache 2.0, models cc by-nc 4.0, no commercial use. kevinahm/pocket-tts-web on hugging face, pinned to one commit.</p>
       <div class="hb-heard" id="voiceSt">browser voice</div>
     </div>
@@ -461,15 +465,10 @@ table.heat td.is-hi{color:var(--hb-paper)}
     <div class="hb-panel">
       <h3 class="hb-panel-hd-inst"><span>turn on more</span><span class="hb-hd-aux" id="capsCount">checking</span></h3>
       <p class="note">every optional model, download and permission in one list, with its size, licence and what it needs.</p>
-      <div class="btns"><button class="hb-btn" type="button" id="bCaps" data-caps="">open the list</button></div>
+      <div class="btns"><button class="hb-btn" type="button" id="bCaps" data-caps="">Open the list</button></div>
     </div>
     <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst"><span>temperament</span><span class="hb-hd-aux" id="presetNow">from the name</span></h3>
-      <div class="chiprow" id="presetChips"></div>
-      <p class="note">a new name draws a new temperament. every trait is below.</p>
-    </div>
-    <div class="hb-panel">
-      <h3 class="hb-panel-hd-inst"><span>tune</span><span class="hb-hd-aux">every number</span></h3>
+      <h3 class="hb-panel-hd-inst"><span>layers and personality</span><span class="hb-hd-aux">every number</span></h3>
       <p class="note">turn parts of the model off to compare, or move any number. changes save in this browser.</p>
       <div id="pTuneBody"></div>
     </div>
@@ -479,7 +478,7 @@ table.heat td.is-hi{color:var(--hb-paper)}
       <div class="field"><label for="seedIn">seed</label><input class="hb-input" type="number" inputmode="numeric" id="seedIn" min="1" step="1" value="7"></div>
       <div class="field"><label for="speedIn">sim speed</label><select class="hb-select" id="speedIn"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select></div>
       <label class="tog"><input type="checkbox" id="seedNn">start with the neural gait on</label>
-      <div class="btns"><button class="hb-btn" type="button" id="bSeedGo">reopen with this seed</button></div>
+      <div class="btns"><button class="hb-btn" type="button" id="bSeedGo">Reopen with this seed</button></div>
       <p class="sub" id="seedNow"></p>
       <p class="note">the hash takes <code>#seed=7&amp;speed=1&amp;on=L.neural&amp;off=L.day</code>. lockstep runs use <code>#test&amp;seed=7</code>. the scenario runner: <code>node scenarios/run.mjs compare</code>, see scenarios/README.md.</p>
     </div>

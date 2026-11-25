@@ -88,13 +88,14 @@ function dogPreview() {
   return { U, best, bv, curU, commit, bonus, T, indep, probs, sample };
 }
 const KIND_WORD = { react: 'reacted: something much better could not wait', sampled: 'took a lower scored option this time', top: 'the best score won', forced: 'forced for a moment', cue: 'answered a cue', woke: 'woke up', you: 'you drive it', cortex: 'the cortex asked for it' };
+const PEND_NOTE = 'each act scores by how much it would ease what the dog needs. it usually picks the best one and sticks with what it is doing.';
 function dogNow(P) {
   const B = brain, sub = B.sub && B.cur === 'fetch' ? ' / ' + B.sub : B.cmd && B.cur === 'obey' ? ' / ' + B.cmd.action : '';
   $('behName').textContent = B.cur + sub; $('behT').textContent = B.t.toFixed(1) + ' s';
   $('behWhy').textContent = B.why || 'nothing pressing';
   const kind = B.cortexGoal && B.cortexGoal.b === B.cur ? 'cortex' : B.whyKind;
   $('behKind').textContent = kind ? 'how: ' + (KIND_WORD[kind] || kind) : '';
-  $('pendNote').textContent = B.pending ? 'next: ' + B.pending.b + ' in ' + Math.max(0, (B.pending.at - now) * 1000).toFixed(0) + ' ms' + (B.pending.why ? ', ' + B.pending.why : '') : '';
+  $('pendNote').textContent = B.pending ? 'next: ' + B.pending.b + ' in ' + Math.max(0, (B.pending.at - now) * 1000).toFixed(0) + ' ms' + (B.pending.why ? ', ' + B.pending.why : '') : PEND_NOTE;
   $('goalNote').textContent = (B.cortexGoal ? 'the cortex asked for ' + B.cortexGoal.b + ', +0.35 for ' + Math.max(0, B.cortexGoal.until - now).toFixed(0) + ' s more. ' : '') + (B.forced && B.forced.until > now ? 'forced: ' + B.forced.b + ' for ' + (B.forced.until - now).toFixed(1) + ' s.' : '');
 }
 function dogChoice(P) {

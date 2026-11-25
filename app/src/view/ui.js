@@ -19,26 +19,20 @@ TABS.forEach((t, i) => {
 });
 document.addEventListener('click', e => { const g = e.target.closest('[data-go]'); if (g) showTab(g.dataset.go, true); });
 $('tempo').addEventListener('input', () => { $('tempoV').textContent = $('tempo').value + 'x'; });
-$('presetChips').innerHTML = Object.entries(PRESETS).map(([k, p]) => `<button class="hb-chip" type="button" data-preset2="${k}">${esc(p.label.toLowerCase())}</button>`).join('') + '<button class="hb-chip" type="button" id="bSeed2">from the name</button>';
-$('presetChips').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.id === 'bSeed2') { seedPersonality(dogName()); $('presetNow').textContent = 'from the name'; toast('temperament drawn from the name ' + dogName()); }
-  else { applyPreset(b.dataset.preset2); $('presetNow').textContent = PRESETS[b.dataset.preset2].label.toLowerCase(); toast('temperament: ' + PRESETS[b.dataset.preset2].label); }
-});
 function nameUI() {}
 // ---------- load rows: each model loads from a light button beside what it powers ----------
 $('vlmSel').value = vlm.kind === 'gemma' ? 'gemma' : 'lfm';
 function vlmSelUI() {
   const g = $('vlmSel').value === 'gemma';
-  $('bVlmLoad').textContent = wStored[$('vlmSel').value] ? 'load, stored here' : g ? 'load, about 3.3 gb' : 'load, about 320 mb';
+  $('bVlmLoad').textContent = wStored[$('vlmSel').value] ? 'Load, stored here' : g ? 'Load, about 3.3 GB' : 'Load, about 320 MB';
   $('vlmLic').textContent = g ? 'weights apache 2.0, commercial use allowed. onnx-community on hugging face, pinned to one commit.' : 'weights lfm open license 1.0, commercial use limited. onnx-community on hugging face, pinned to one commit.';
 }
 $('vlmSel').onchange = () => { vlmPick($('vlmSel').value); vlmSelUI(); };
 $('bVlmLoad').onclick = () => { audio(); vlmPick($('vlmSel').value); vlmLoad(); };
 vlmSelUI();
-function nnBtnUI() { const st = CAPS.find(c => c.id === 'gait').state(); $('bNnLoad').hidden = st === 'on' || st === 'loading'; $('bNnLoad').textContent = NG.ready ? 'turn on the neural gait' : st === 'failed' ? 'try again, 17.7 mb' : 'load neural gait, 17.7 mb'; }
+function nnBtnUI() { const st = CAPS.find(c => c.id === 'gait').state(); $('bNnLoad').hidden = st === 'on' || st === 'loading'; $('bNnLoad').textContent = NG.ready ? 'Turn on the neural gait' : st === 'failed' ? 'Try again, 17.7 MB' : 'Load neural gait, 17.7 MB'; }
 $('bNnLoad').onclick = () => { audio(); const c = CAPS.find(x => x.id === 'gait'); c.run(c.state()); nnBtnUI(); capsRefresh(); };
-function voiceBtnUI() { $('bVoiceLoad').hidden = voiceLoad.state === 'on' || voiceLoad.state === 'loading'; $('bVoiceLoad').textContent = voiceLoad.state === 'failed' ? 'try again' : 'load his voice'; }
+function voiceBtnUI() { $('bVoiceLoad').hidden = voiceLoad.state === 'on' || voiceLoad.state === 'loading'; $('bVoiceLoad').textContent = voiceLoad.state === 'failed' ? 'Try again' : 'Load his voice'; }
 $('bVoiceLoad').onclick = () => { loadVoice(); voiceBtnUI(); };
 // ---------- seeds ----------
 {

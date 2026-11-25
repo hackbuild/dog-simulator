@@ -1,7 +1,7 @@
 // UX walk: the page on phones and desktops, headful system Chrome on the machine GPU.
 //   node tools/runner/ux-walk.mjs shots    [file] [--out .local/ux-after]   screenshots per profile and tab, sideways scroll, small targets
 //   node tools/runner/ux-walk.mjs personas [file]                           the persona goals of the UX design, pass or fail each
-//   node tools/runner/ux-walk.mjs frames   [file] [--tab minds] [--seconds 20] [--size 1440x900]   rAF frame times with one tab open
+//   node tools/runner/ux-walk.mjs frames   [file] [--tab brain] [--seconds 20] [--size 1440x900]   rAF frame times with one tab open
 // Profiles: iPhone 13 and Pixel 7 emulation with touch, and 320, 390, 768, 1024 and 1440 px wide.
 // Nothing here changes the sim; the page runs in real time mode with a fixed seed (#seed=7).
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -52,6 +52,8 @@ const smallTargets = (page) => page.evaluate(() => {
   return bad;
 });
 
+// the rack's seven tabs, as the original
+const TABS = ["brain", "body", "sense", "train", "human", "tune", "how"];
 async function shots() {
   mkdirSync(out, { recursive: true });
   const report = [];
@@ -59,26 +61,19 @@ async function shots() {
     const { browser, page, log } = await launch(p);
     const rec = { profile: p.name, hscroll: {}, small: {}, errors: [] };
     try {
-      await page.screenshot({ path: join(out, `${p.name}-0-welcome.png`) });
-      rec.hscroll.welcome = await hscroll(page);
-      await tap(page, "#welClose"); await sleep(300);
       await tap(page, "#bThrow"); await sleep(3500);
-      await page.screenshot({ path: join(out, `${p.name}-1-play.png`) });
-      rec.hscroll.play = await hscroll(page); rec.small.play = await smallTargets(page);
-      for (const [i, t] of ["minds", "senses", "body", "more"].entries()) {
-        await tap(page, `#tab-${t}`); await sleep(t === "minds" ? 6000 : 1200);
-        await page.screenshot({ path: join(out, `${p.name}-${i + 2}-${t}.png`) });
+      await page.screenshot({ path: join(out, `${p.name}-0-yard.png`) });
+      rec.hscroll.yard = await hscroll(page); rec.small.yard = await smallTargets(page);
+      for (const [i, t] of TABS.entries()) {
+        await tap(page, `#tab-${t}`); await sleep(t === "brain" ? 6000 : 1200);
+        await page.screenshot({ path: join(out, `${p.name}-${i + 1}-${t}.png`) });
         rec.hscroll[t] = await hscroll(page); rec.small[t] = await smallTargets(page);
       }
-      await tap(page, "#tab-minds"); await sleep(400);
-      if (await page.evaluate(() => getComputedStyle(document.getElementById("mindSeg")).display !== "none")) {
-        await tap(page, '#mindSeg [data-mind="hum"]'); await sleep(1500);
-        await page.screenshot({ path: join(out, `${p.name}-6-minds-human.png`) });
-      }
+      await tap(page, "#tab-brain"); await sleep(400);
       await page.evaluate(() => document.getElementById("timelinePanel").scrollIntoView());
       await sleep(600);
       await page.screenshot({ path: join(out, `${p.name}-7-timeline.png`) });
-      await tap(page, "#bCaps"); await sleep(800);
+      await tap(page, "#tab-tune"); await tap(page, "#bCaps"); await sleep(800);
       await page.screenshot({ path: join(out, `${p.name}-8-caps.png`) });
       rec.hscroll.caps = await hscroll(page); rec.small.caps = await smallTargets(page);
     } catch (e) { rec.errors.push(String(e.message)); }
@@ -96,66 +91,63 @@ async function personas() {
   // P1, P3 on a phone
   {
     const { browser, page, log } = await launch(PROFILES[0]);
-    const g = await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); return { welcome: !document.getElementById("welcome").hidden, foot: document.getElementById("welFoot").textContent, tabsBottom: r("tabs").bottom, h: innerHeight, stageH: r("stage").height }; });
-    say("P1 phone first visit", "a welcome card says how to touch the yard", g.welcome && /tap the dog/.test(g.foot), g.foot);
-    await tap(page, "#welClose"); await sleep(300);
+    const g = await page.evaluate(() => { const r = (id) => document.getElementById(id).getBoundingClientRect(); return { tabsBottom: r("tabs").bottom, h: innerHeight, stageH: r("stage").height }; });
     say("P1 phone first visit", "tabs sit above the fold with the yard", g.tabsBottom <= g.h, `tabs end at ${Math.round(g.tabsBottom)} of ${g.h} px, stage ${Math.round(g.stageH)} px`);
     const before = log.served.length;
     await tap(page, "#bThrow");
     const fetched = await waitFor(page, () => window.__hackle && (window.__hackle.brain.cur === "fetch" || window.__hackle.brain.pending?.b === "fetch"), null, 15000);
     say("P1 phone first visit", "throw the ball and the dog fetches", fetched);
-    const why = await page.evaluate(() => document.getElementById("whyLine").textContent);
-    say("P1 phone first visit", "the reason shows on the yard without leaving play", why.length > 3, why);
-    await tap(page, "#tab-minds"); await sleep(4000);
-    const m = await page.evaluate(() => { const s = document.getElementById("stage").getBoundingClientRect(); document.getElementById("timelinePanel").scrollIntoView(); const s2 = document.getElementById("stage").getBoundingClientRect(); return { stageTop: s.top, stageTop2: s2.top, why: document.getElementById("behWhy").textContent }; });
-    say("P1 phone first visit", "reading minds keeps the dog on screen", m.stageTop2 === m.stageTop && m.stageTop >= 0, `stage top ${Math.round(m.stageTop)} before and ${Math.round(m.stageTop2)} after scrolling the pane`);
+    await tap(page, "#tab-brain"); await sleep(4000);
+    const m = await page.evaluate(() => ({ why: document.getElementById("behWhy").textContent, name: document.getElementById("behName").textContent }));
+    say("P1 phone first visit", "the brain tab names what the dog does and why", m.name.length > 1 && m.why.length > 3, m.name + ": " + m.why);
     const ns = await page.evaluate(() => [...document.querySelectorAll("#tool .hb-btn")].filter((b) => b.offsetParent).map((b) => Math.round(b.getBoundingClientRect().height)));
     say("P3 parent and kid", "stage verbs are 44 px or taller", ns.every((h) => h >= 44), ns.join(", ") + " px");
-    await tap(page, "#tab-play"); await sleep(300);
-    const tiles = await page.evaluate(() => [...document.querySelectorAll("#playTiles .hb-tile")].map((b) => Math.round(b.getBoundingClientRect().height)));
-    say("P3 parent and kid", "play tiles are big", tiles.every((h) => h >= 88), tiles.join(", ") + " px");
-    for (const id of ["#playTiles [data-verb=bTreat]", "#playTiles [data-verb=bSquirrel]", "#playTiles [data-verb=bGood]", "#playTiles [data-verb=bFill]"]) { await tap(page, id); await sleep(400); }
-    say("P3 parent and kid", "no download from any play tile", log.served.length === before && log.blocked.length === 0, `${log.served.length - before} requests`);
+    for (const id of ["#bTreat", "#bSquirrel", "#bGood", "#bFill"]) { await tap(page, id); await sleep(400); }
+    say("P3 parent and kid", "no download from any yard verb", log.served.length === before && log.blocked.length === 0, `${log.served.length - before} requests`);
     const sm = await smallTargets(page);
-    say("P3 parent and kid", "no touch target under 44 px in play", sm.length === 0, sm.slice(0, 6).join("; "));
+    say("P3 parent and kid", "no touch target under 44 px on the yard", sm.length === 0, sm.slice(0, 6).join("; "));
     await browser.close();
   }
   // P2, P4, P5, P6, P8 on a desktop
   {
     const { browser, page, log } = await launch(PROFILES[6]);
-    await tap(page, "#welClose");
+    await tap(page, "#tab-train"); await sleep(300);
     await page.type("#cueIn", "boop"); await page.keyboard.press("Enter"); await sleep(1800);
     await tap(page, "#bGood"); await sleep(600);
     for (let i = 0; i < 4; i++) { await page.type("#cueIn", "boop"); await page.keyboard.press("Enter"); await sleep(1800); await tap(page, "#bGood"); await sleep(500); }
     const p2 = await page.evaluate(() => ({ chip: !!document.querySelector('#cueBtns [data-cue="boop"]'), trial: document.getElementById("lastTrial").textContent, known: document.getElementById("knownList").textContent, heat: !!document.querySelector("#heat th[scope=row]") }));
     say("P2 dog owner", "a new word appears as a cue and in the heat table", p2.chip && p2.heat);
-    await tap(page, "#tab-minds"); await sleep(1500);
+    await sleep(1500);
     const p2b = await page.evaluate(() => document.getElementById("lastTrial").textContent);
     say("P2 dog owner", "the last credit says what was learned and by how much", /boop|credit|cue/.test(p2b), p2b.slice(0, 120));
     say("P2 dog owner", "what it knows is a plain list", p2.known.length > 10, p2.known.slice(0, 90));
     await tap(page, "#tab-body"); await sleep(500);
-    const p4 = await page.evaluate(() => ({ seg: document.querySelectorAll("#gaitSeg button").length, pk: /@hackbuild\/motion-net/.test(document.getElementById("pMore").textContent), seed: !!document.getElementById("bSeedGo") }));
+    const p4 = await page.evaluate(() => ({ seg: document.querySelectorAll("#gaitSeg button").length, pk: /@hackbuild\/motion-net/.test(document.getElementById("pAbout").textContent), seed: !!document.getElementById("bSeedGo") }));
     say("P4 animation developer", "pattern generator and neural gait side by side in body", p4.seg === 2);
     say("P4 animation developer", "package names and seeds are in the page", p4.pk && p4.seed);
-    await tap(page, "#bCaps"); await sleep(600);
+    await tap(page, "#tab-tune"); await tap(page, "#bCaps"); await sleep(600);
     const p5 = await page.evaluate(() => [...document.querySelectorAll(".hb-cap")].filter((c) => /dog cortex/i.test(c.querySelector(".hb-cap-name").textContent)).map((c) => c.textContent));
     say("P5 ai tinkerer", "every model row names size and licence before the download", p5.filter((t) => /dog cortex/i.test(t)).every((t) => /MB|GB/.test(t) && /licen|Apache|LFM/i.test(t)), `${p5.length} rows`);
     await page.keyboard.press("Escape"); await sleep(300);
-    await tap(page, "#tab-minds"); await sleep(600);
-    const p5b = await page.evaluate(() => ({ dis: document.getElementById("bThink").disabled, why: document.getElementById("cortexWhy").textContent, desc: document.getElementById("bThink").getAttribute("aria-describedby"), calls: !!document.getElementById("dogCalls"), hum: document.getElementById("humMindWhy").textContent }));
-    say("P5 ai tinkerer", "cortex controls are disabled with the reason beside them", p5b.dis && p5b.why.length > 10 && p5b.desc === "cortexWhy", p5b.why);
-    say("P5 ai tinkerer", "his mind says it needs a model and where to get it", /turn things on|webgpu/.test(p5b.hum), p5b.hum);
+    await tap(page, "#tab-brain"); await sleep(600);
+    const p5b = await page.evaluate(() => ({ think: document.getElementById("bThink").hidden, load: document.getElementById("bVlmLoad").textContent, lic: document.getElementById("vlmLic").textContent, hum: document.getElementById("humMindWhy").textContent }));
+    say("P5 ai tinkerer", "the cortex load button names its size, the licence sits beside it, think waits for a model", p5b.think && /MB|GB/.test(p5b.load) && /licen|apache/i.test(p5b.lic), p5b.load + " / " + p5b.lic);
+    say("P5 ai tinkerer", "his mind says it needs a model", /cortex|webgpu/.test(p5b.hum), p5b.hum);
     await sleep(20000);
-    const p6 = await page.evaluate(() => ({ pts: document.querySelector("#driveSparks .hb-spark-trace")?.getAttribute("points").split(" ").length ?? 0, probs: [...document.querySelectorAll("#choiceTop .hb-opt-prob")].map((e) => e.textContent), meta: document.getElementById("choiceMeta").textContent, ev: document.querySelectorAll("#tlEvents .hb-cev").length, chains: document.querySelectorAll("#tlEvents .hb-cev-chain").length, plan: document.getElementById("humPlanWhy").textContent, needs: document.querySelectorAll("#humSparks .hb-spark").length }));
-    say("P6 researcher", "drives show history as sparklines", p6.pts >= 40, `${p6.pts} samples`);
-    say("P6 researcher", "choice bars show scores and chances", p6.probs.length === 3 && p6.probs.every((x) => /%/.test(x)), p6.probs.join(" "));
+    await page.evaluate(() => document.querySelectorAll("#pBrain details").forEach((d) => { d.open = true; }));
+    await sleep(1000);
+    const p6a = await page.evaluate(() => ({ drives: document.querySelectorAll("#driveRows .row").length, util: document.querySelectorAll("#utilRows .row").length, cur: document.querySelectorAll("#utilRows .row.cur").length, meta: document.getElementById("choiceMeta").textContent, ev: document.querySelectorAll("#tlEvents .hb-cev").length, chains: document.querySelectorAll("#tlEvents .hb-cev-chain").length }));
+    await tap(page, "#tab-human"); await sleep(1500);
+    const p6 = { ...p6a, ...(await page.evaluate(() => ({ plan: document.getElementById("humPlanWhy").textContent, needs: document.querySelectorAll("#humSparks .hb-spark").length }))) };
+    say("P6 researcher", "drives show as bars", p6.drives >= 6, `${p6.drives} drives`);
+    say("P6 researcher", "every option has a utility bar, the current one marked", p6.util >= 20 && p6.cur === 1, `${p6.util} options`);
     say("P6 researcher", "temperature, commitment and next look are stated", /temperature/.test(p6.meta) && /commitment/.test(p6.meta), p6.meta);
     say("P6 researcher", "the timeline links sense to choice to act", p6.ev > 3 && p6.chains > 0, `${p6.ev} events, ${p6.chains} with a cause chain`);
     say("P6 researcher", "the human's plan and needs show", p6.plan.length > 5 && p6.needs === 5, p6.plan.slice(0, 80));
     // P8: keyboard tabs, names, live region
-    await page.focus("#tab-minds"); await page.keyboard.press("ArrowRight"); await sleep(200);
+    await page.focus("#tab-body"); await page.keyboard.press("ArrowRight"); await sleep(200);
     const k = await page.evaluate(() => ({ sel: document.querySelector("[role=tab][aria-selected=true]").id, focus: document.activeElement.id, ctl: [...document.querySelectorAll("[role=tab]")].every((t) => document.getElementById(t.getAttribute("aria-controls"))?.getAttribute("role") === "tabpanel") }));
-    say("P8 screen reader", "tabs move with the arrow keys and control their panels", k.sel === "tab-senses" && k.focus === "tab-senses" && k.ctl);
+    say("P8 screen reader", "tabs move with the arrow keys and control their panels", k.sel === "tab-sense" && k.focus === "tab-sense" && k.ctl);
     const ax = await page.accessibility.snapshot({ interestingOnly: true });
     const unnamed = []; (function walk(n) { if (["textbox", "button", "checkbox", "slider", "combobox", "tab"].includes(n.role) && !String(n.name || "").trim()) unnamed.push(n.role); for (const c of n.children ?? []) walk(c); })(ax);
     say("P8 screen reader", "every control has an accessible name", unnamed.length === 0, unnamed.join(", "));
@@ -163,19 +155,18 @@ async function personas() {
     say("P8 screen reader", "the dog's act is announced in a polite live region", live.length > 3, live);
     const canv = await page.evaluate(() => [...document.querySelectorAll("canvas.inst, #eye")].every((c) => c.getAttribute("role") === "img" && c.getAttribute("aria-label")));
     say("P8 screen reader", "instrument canvases have text", canv);
-    await page.focus("#tab-senses"); await page.keyboard.press("d"); await sleep(300);
-    const cam = await page.evaluate(() => document.querySelector('#cams [aria-pressed="true"]').dataset.cam);
-    say("P8 screen reader", "w a s d do not move the camera while a tab has focus", cam === "0");
+    await page.focus("#tab-sense"); await page.keyboard.press("d"); await sleep(300);
+    const cam = await page.evaluate(() => document.getElementById("camLab").textContent);
+    say("P8 screen reader", "w a s d do not move the camera while a tab has focus", cam === "follow", cam);
     R.push({ errors: log.errors, blocked: log.blocked });
     await browser.close();
   }
   // P7 without webgpu
   {
     const { browser, page } = await launch(PROFILES[5], { noGpu: true });
-    await tap(page, "#welClose");
     const pill = await page.evaluate(() => document.getElementById("chipGpu").textContent + " / " + document.getElementById("chipGpu").title);
     say("P7 no webgpu", "the header says webgl2 and what it costs", /webgl2/.test(pill), pill);
-    await tap(page, "#bCaps"); await sleep(600);
+    await tap(page, "#tab-tune"); await tap(page, "#bCaps"); await sleep(600);
     const c = await page.evaluate(() => [...document.querySelectorAll(".hb-cap")].filter((r) => /dog cortex/i.test(r.querySelector(".hb-cap-name").textContent)).map((r) => ({ dis: r.querySelector("button")?.disabled, why: r.querySelector(".hb-cap-why")?.textContent ?? "" })));
     say("P7 no webgpu", "cortex rows stay listed, disabled, with the reason", c.length === 2 && c.every((x) => x.dis && /webgpu/.test(x.why)), c.map((x) => x.why).join(" | "));
     await browser.close();
@@ -185,10 +176,9 @@ async function personas() {
 }
 
 async function frames() {
-  const [w, h] = opt("size", "1440x900").split("x").map(Number), tab = opt("tab", "minds"), seconds = +opt("seconds", 20);
+  const [w, h] = opt("size", "1440x900").split("x").map(Number), tab = opt("tab", "brain"), seconds = +opt("seconds", 20);
   const { browser, page, log } = await launch({ width: w, height: h }, { fresh: true });
   await page.evaluate((tab) => {
-    const wel = document.getElementById("welcome"); if (wel) wel.hidden = true;
     const t = document.getElementById("tab-" + tab) || document.querySelector(`[data-p="p${tab[0].toUpperCase() + tab.slice(1)}"]`); if (t) t.click();
   }, tab);
   await sleep(8000);

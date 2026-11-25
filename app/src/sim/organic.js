@@ -248,12 +248,12 @@ const tuneUI = {
           `<button class="hb-chip" type="button" id="bSeed">from the name</button></div>` + keys.map(k => this.row(k)).join('') +
           `<p class="note">seven temperament dimensions from the jones and gosling review, as z scores. each feeds startle thresholds, latencies, drive growth, learning rate and how far the dog roams. traits drift a little over days, since real temperament test retest reliability is only about .45.</p></div></details>`;
       } else if (g === 'layers') {
-        h += `<details class="hb-fold"><summary>turn parts of the model off <span class="aux">${keys.length} layers</span></summary><div>` + keys.map(k => `<label class="hb-check"><input type="checkbox" data-tk="${k}"${TUNE.v[k] ? ' checked' : ''}>${TUNE.defs[k].label}</label>`).join('') + `</div></details>`;
+        h += `<details class="hb-fold" open><summary>turn parts of the model off <span class="aux">${keys.length} layers</span></summary><div>` + keys.map(k => `<label class="hb-check"><input type="checkbox" data-tk="${k}"${TUNE.v[k] ? ' checked' : ''}>${TUNE.defs[k].label}</label>`).join('') + `</div></details>`;
       } else {
         h += `<details class="hb-fold"><summary>${TUNE_LABEL[g] || g} <span class="aux">${keys.length}</span></summary><div>` + keys.map(k => this.row(k)).join('') + `</div></details>`;
       }
     }
-    h += `<div class="btns" style="margin-top:var(--hb-s3)"><button class="hb-btn" type="button" id="bTuneExp">export settings</button><label class="hb-btn" for="tuneImp" tabindex="0">import settings</label><input type="file" id="tuneImp" accept=".json,application/json" hidden><button class="hb-btn" type="button" id="bTuneReset">reset every number</button></div>`;
+    h += `<div class="btns" style="margin-top:var(--hb-s3)"><button class="hb-btn" type="button" id="bTuneExp">Export settings</button><label class="hb-btn" for="tuneImp" tabindex="0">Import settings</label><input type="file" id="tuneImp" accept=".json,application/json" hidden><button class="hb-btn" type="button" id="bTuneReset">Reset every number</button></div>`;
     el.innerHTML = uiHtml(h);
     el.querySelectorAll('input[data-tk]').forEach(inp => {
       const k = inp.dataset.tk;
