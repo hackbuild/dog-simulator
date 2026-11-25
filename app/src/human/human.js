@@ -191,16 +191,7 @@ function aimBone(bone, child, target, k) {
 function swingBone(bone, axisW, ang) { if (!bone || !ang) return; rotateBoneWorld(bone, hq[2].setFromAxisAngle(axisW, ang)); }
 
 // voice and words
-const H_LINES = {
-  throw: ['Go get it.', 'Yoooo, fetch.', 'Ok one more. Go.', 'Bruh. Go.', 'Get it get it get it'],
-  praise: ['Good boy.', 'Yes! Good dog.', 'Hell yeah, that is it.', 'Word. Good boy.', 'Yesss. Smart dog.', 'Who is a good boy? You are.', 'Yes! Yes! Good job buddy.', 'What a good boy.'],
-  no: ['Nope.', 'Ah ah. Not that one.', 'Ope, no.', 'Close. Not really though haha'],
-  pet: ['Who is a good boy. You are.', 'Love you buddy.', 'Ok ok, scratches.', 'Dude. Look at this dog.'],
-  feed: ['Dinner time buddy.', 'Bowl is full, go eat.'],
-  chat: ['Running on no sleep and a dog. Good though.', 'This yard needs a projection mapping install honestly.', 'I should make a PCB for this dog.', 'Lowkey better at fetch than my CI is at passing.', 'Ok who taught you that haha', 'Aye. Nice out today.'],
-  trainStart: ['Alright, training time.', 'Ok, school. Focus up.', 'Let us learn something new.'],
-  trainDone: ['Ok that is enough school.', 'Nice. Class dismissed.', 'Good session buddy.']
-};
+// the fixed lines he says live in human/lines.js (H_LINES)
 const NEW_WORDS = [['boop', 'paw'], ['twirl', 'spin'], ['chill', 'down'], ['woof', 'speak'], ['park it', 'sit']];
 function humHead(out = V3()) { return HUM.map && HUM.map.head ? HUM.map.head.getWorldPosition(out) : out.copy(HUM.pos).setY(H(HUM.pos.x, HUM.pos.z) + 1.6); }
 function humSay(text, dur = 3.5, toDog = false, think = false) {
@@ -536,9 +527,9 @@ function humTask(dt) {
     }
     case 'errand': {
       // out through the gate for a while: the dog waits, then greets him harder the longer he was gone (Rehn and Keeling 2011)
-      if (!T.s) { T.s = 'out'; humSay(pick(['Be right back buddy.', 'Ok, I gotta run. Back soon.', 'Watch the yard, I will be back.']), 2.2, true); }
+      if (!T.s) { T.s = 'out'; humSay(pick(H_LINES.leave), 2.2, true); }
       if (T.s === 'out') { m.mode = 'goto'; m.target.copy(GATE); m.speed = 1.35; m.stopDist = 0.4; HUM.look = null; if (m.done || T.t > 25) { T.s = 'away'; HUM.away = true; HUM.root.visible = false; HUM.awayT0 = now; HUM.awayDur = T.args.hours * TV('W.dayMin') * 60 / 24 / Math.max(+$('tempo').value, 0.25); } }
-      if (T.s === 'away') { m.mode = 'stop'; if (now - HUM.awayT0 > HUM.awayDur) { T.s = 'back'; HUM.away = false; HUM.root.visible = true; brain.reunion(T.args.hours); humSay(pick(['I am back.', 'Hey buddy, I am home.', 'Yooo, missed you dude.']), 2.2, true); emitSound(humHead(V3()), 0.6, 'voice'); } }
+      if (T.s === 'away') { m.mode = 'stop'; if (now - HUM.awayT0 > HUM.awayDur) { T.s = 'back'; HUM.away = false; HUM.root.visible = true; brain.reunion(T.args.hours); humSay(pick(H_LINES.back), 2.2, true); emitSound(humHead(V3()), 0.6, 'voice'); } }
       if (T.s === 'back') { m.mode = 'goto'; m.target.copy(SEAT); m.speed = 1.2; m.stopDist = 1.2; HUM.look = dogFace; if (dist2(HUM.pos, dog.pos) < 1.4 && !T.k) { T.k = 1; m.mode = 'stop'; haAct('crouch'); HUM.reach = dogBack; humLater(2.5, () => { if (HUM.task === T) { haRelease(); HUM.reach = null; end(); } }); } if (T.t > 120) end(); }
       break;
     }
@@ -557,12 +548,12 @@ function humTask(dt) {
       else if (T.s === 'turn') { m.mode = 'face'; m.face = V3(SEAT.x, 0, SEAT.z - 5); const e = Math.abs(wrapA(Math.PI - HUM.yaw)), ke = Math.min(1, dt * 5); HUM.pos.x += (SEAT.x - HUM.pos.x) * ke; HUM.pos.z += (SEAT.z - HUM.pos.z) * ke; if (e < 0.12 && Math.abs(HUM.w) < 0.4) { T.s = 'down'; T.k = 0; haSit(true); } if (T.t > 30) { T.s = 'down'; T.k = 0; haSit(true); } }
       if (T.s === 'down') { m.mode = 'stop'; T.k += dt; HUM.look = dist2(HUM.pos, dog.pos) < 8 ? dogFace : null; if (T.k > 3 && RNG() < dt * 0.04) humSay(pick(H_LINES.chat), 3.5); if (T.k > T.args.dur) { haSit(false); T.s = 'up'; T.k = 0; }
         // the dog bringing the ball does not stand him up: he stays seated, says so once, and the ball waits at his feet for after
-        else if (brain.cur === 'fetch' && ball && ball.held && dist2(dog.pos, HUM.pos) < 2 && !T.ballSaid) { T.ballSaid = 1; humSay(pick(['Later, bud. I am sitting.', 'Leave it there, I will get it in a bit.']), 2.5); } }
+        else if (brain.cur === 'fetch' && ball && ball.held && dist2(dog.pos, HUM.pos) < 2 && !T.ballSaid) { T.ballSaid = 1; humSay(pick(H_LINES.sitBall), 2.5); } }
       if (T.s === 'up') { m.mode = 'stop'; T.k += dt; if (!HA.sit) end(); }
       if (T.t > 400) { haSit(false); end(); }
       break;
     }
-    case 'point': { m.mode = 'face'; m.face = T.args.p; if (!T.s) { T.s = 'pointed'; humPoint(T.args.p); } if (T.s === 'pointed' && T.t > 1.36) { T.s = 'said'; humSay(pick(['Over there.', 'Look. There.', 'It is right there bud']), 2, true); } HUM.look = T.t < 1.9 ? T.args.p : T.t < 2.6 ? dogFace : T.args.p; if (T.t > 3.4) end(); break; }
+    case 'point': { m.mode = 'face'; m.face = T.args.p; if (!T.s) { T.s = 'pointed'; humPoint(T.args.p); } if (T.s === 'pointed' && T.t > 1.36) { T.s = 'said'; humSay(pick(H_LINES.point), 2, true); } HUM.look = T.t < 1.9 ? T.args.p : T.t < 2.6 ? dogFace : T.args.p; if (T.t > 3.4) end(); break; }
     case 'call': { m.mode = 'face'; m.face = dogP; HUM.look = dogFace; if (!T.s) { T.s = 'called'; humCue('come', true); haAct('interact'); } if (T.t > 2) end(); break; }
     case 'train': {
       const tr = HUM.train, A = T.args;
@@ -583,7 +574,7 @@ function humTask(dt) {
           // praise lands about 0.62 s after the response and food about 0.98 s (Browne), later when he is tired or distracted
           if (ok) { tr.ok++; HUM.mood.pleasedT = 1; humLater(humLat(0.47, 0.11, 0.15), () => { humSay(pick(H_LINES.praise), 2.2, true); brain.reward(0.8, 'praise'); }); if (RNG() < 0.5) humLater(humLat(0.73, 0.15, 0.25), () => tossTreat(true)); if (RNG() < 0.3) haAct('celebrate'); }
           else if (trial && trial.action !== 'none' && trial.action !== 'ignored') { HUM.mood.frusT = Math.min(1, (HUM.mood.frusT || 0) + 0.35); humLater(humLat(0.5, 0.1, 0.2), () => { humSay(pick(H_LINES.no), 2); brain.reward(-0.5, 'no'); HUM.shakeT = 1.1; }); }
-          else humSay(A.word + '. Come on buddy', 2);
+          else humSay(A.word + '. ' + H_LINES.missed, 2);
           tr.hist.unshift({ word: A.word, trick: A.trick, got: trial ? trial.action : 'none', ok }); tr.hist.length = Math.min(tr.hist.length, 8);
           renderHumTrain(); T.s = 'rest'; T.k = 0;
         }
@@ -629,7 +620,7 @@ function humPlan() {
   if (ballFree && dist2(bp, HUM.pos) < 1.8 && bodyVel(ball).length() < 0.4) {
     const keep = !org || RNG() < clamp(0.95 - 0.05 * HUM.fetchN - 0.4 * (1 - N.fun) * (HUM.fetchN > 3 ? 1 : 0), 0.1, 0.95);
     if (keep) return startTask('get_ball', { delay: org ? ORG.exg(0.9, 0.3, 1.2) : 0 }, 'the dog dropped the ball at his feet');
-    HUM.fetchN = 0; N.fun = Math.max(0, N.fun - 0.3); return startTask('chat', { line: pick(['Ok buddy, break time.', 'That is enough fetch for now.', 'My arm is done haha']) }, 'fetch got old, ending the session');
+    HUM.fetchN = 0; N.fun = Math.max(0, N.fun - 0.3); return startTask('chat', { line: pick(H_LINES.fetchDone) }, 'fetch got old, ending the session');
   }
   if (org && ON('L.day')) {
     // feeding times anchor the day
@@ -699,7 +690,7 @@ async function humThink() {
     const d = brain.d, n = $('dogName').value.trim() || 'the dog';
     const best = Object.entries(brain.W).map(([c, row]) => { const [a, w] = Object.entries(row).sort((x, y) => y[1] - x[1])[0]; return [c, a, w]; }).filter(x => x[2] > 0.45).map(x => x[0] + '=' + x[1]).slice(0, 5).join(', ') || 'not much yet';
     const ballSt = ball.held ? n + ' has the ball in its mouth' : ball.humanHeld ? 'you are holding the ball' : 'the ball is on the ground ' + dist2(bodyPos(ball), HUM.pos).toFixed(0) + ' m away';
-    const prompt = `You are Moheeb Zara (virgilvox), a hardware hacker from Mesa, Arizona, out in your backyard with your dog ${n}. The picture is what you see right now. You talk like you do in Slack: short, casual, contractions, openers like Yoooo, Bruh, Word, Ope, deadpan and warm. No emoji, no dashes.
+    const prompt = `You are Moheeb, out in your backyard with your dog ${n}. The picture is what you see right now. You talk to your dog the way people do: a few plain, warm words, like Good boy, Come here, You hungry, Easy. No jokes, no slang, no emoji, no dashes.
 ${n} is ${brain.cur === 'obey' ? 'doing a trick' : brain.cur}. Hungry ${pct2(d.hunger)}, tired ${pct2(d.fatigue)}, wants to play ${pct2(d.play)}, wants company ${pct2(d.social)}. ${ballSt}. Food bowl is ${foodAmt > 0.1 ? 'not empty' : 'empty'}. Cues it knows: ${best}.
 Reply in exactly two lines and nothing else:
 SAY: one short thing you say out loud, under 14 words
@@ -732,7 +723,7 @@ function humTick(dt, t) {
   for (let i = HUM.later.length - 1; i >= 0; i--) if (now >= HUM.later[i].at) { const f = HUM.later[i].fn; HUM.later.splice(i, 1); f(); }
   if (ON('L.organic')) humNeeds(dt);
   // a bark gets a reply after about a conversational turn gap (Stivers 2009), when he is not busy
-  if (brain.barkT > now - dt * 1.5 && !HUM.away && !Voice.speaking && RNG() < 0.25 && (!HUM.task || ['watch', 'sit', 'wander', 'phone'].includes(HUM.task.name))) humLater(ORG.exg(0.2, 0.05, 0.25), () => humSay(pick(['What?', 'Yeah yeah.', 'I hear you.', 'What is it buddy?']), 1.6, true));
+  if (brain.barkT > now - dt * 1.5 && !HUM.away && !Voice.speaking && RNG() < 0.25 && (!HUM.task || ['watch', 'sit', 'wander', 'phone'].includes(HUM.task.name))) humLater(ORG.exg(0.2, 0.05, 0.25), () => humSay(pick(H_LINES.bark), 1.6, true));
   if (ball) { const moving = ball.held || ball.humanHeld || bodyVel(ball).length() > 0.3; HUM.ballIdle = moving ? 0 : HUM.ballIdle + dt; }
   if ($('humAI').checked) {
     if (!HUM.task) { if ($('humMindOn').checked && vlm.state === 'ready' && !HUM.thinking && humMindSched.state(now) === 'ready') { HUM.lastMind = now; humMindSched.run(now, true, humThink).then(ok => { if (!ok && !HUM.task) humPlan(); }); } else if (!HUM.thinking) humPlan(); }

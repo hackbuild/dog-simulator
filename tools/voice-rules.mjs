@@ -114,6 +114,10 @@ function extOf(path) {
   return dot <= 0 ? "" : b.slice(dot + 1).toLowerCase();
 }
 
+// the person's spoken lines may use exclamation marks as the original did (owner decision,
+// 2026-11-25): that one file skips the exclamation rule, every other rule still applies
+const EXCLAIM_OK = /(^|\/)app\/src\/human\/lines\.js$/;
+
 // kind is null for a file, or one of KINDS for stdin text.
 export function lintText(path, text, kind = null) {
   const ext = extOf(path);
@@ -144,7 +148,7 @@ export function lintText(path, text, kind = null) {
     add("exclaim", words, RX.exclaimProse);
   } else if (ext === "json" || ext === "jsonl") {
     add("exclaim", text, RX.exclaimJson);
-  } else {
+  } else if (!EXCLAIM_OK.test(path)) {
     add("exclaim", text, RX.exclaimCode);
   }
   found.sort((a, b) => a.line - b.line || a.col - b.col);

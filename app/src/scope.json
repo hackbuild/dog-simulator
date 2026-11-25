@@ -15,6 +15,7 @@
   "dog/brain.js",
   "world/squirrel.js",
   "io/voice.js",
+  "human/lines.js",
   "human/human.js",
   "human/throwing.js",
   "io/input.js",
