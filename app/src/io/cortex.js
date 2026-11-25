@@ -89,7 +89,7 @@ const cortexOpts = { minInterval: 60 }, cortexSched = new HDRIVE.InferenceSchedu
 // memory stream retrieval: recency (0.995 per game hour) plus importance plus relevance to what is in view (Park et al. 2023)
 function memRank(vis) { const hNow = CLOCK.day * 24 + CLOCK.h; return brain.mem.map(m => ({ m, s: Math.pow(0.995, hNow - m.h) + m.imp / 6 + (vis.some(v => m.txt.includes(v)) ? 0.5 : 0) })).sort((a, b) => b.s - a.s); }
 async function think() {
-  if (vlm.state !== 'ready' || thinking) return; thinking = true; $('cortexSt').textContent = 'thinking';
+  if (vlm.state !== 'ready' || thinking || !ball) return; thinking = true; $('cortexSt').textContent = 'thinking';
   const d = brain.d, vis = Object.values(percepts).filter(p => p.vis).map(p => p.id.replace(/\d+$/, ''));
   const ranked = memRank(vis).slice(0, 4), mems = ranked.map(x => x.m.txt);
   brain.lastRecall = { t: now, items: ranked.map(x => ({ m: x.m, s: x.s })) };
