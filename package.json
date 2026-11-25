@@ -26,6 +26,7 @@
     "build:stub": "node tools/build-html.mjs stub",
     "check:boot": "node tools/runner/boot.mjs",
     "check:train": "node tools/runner/train.mjs",
+    "check:setup": "node tools/runner/setup.mjs",
     "check:speed": "node tools/runner/speed.mjs",
     "check:determinism": "node tools/runner/determinism.mjs dist/hackle-det.html --seconds 600",
     "scenarios": "node scenarios/run.mjs",

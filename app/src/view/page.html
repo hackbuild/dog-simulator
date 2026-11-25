@@ -188,6 +188,64 @@ table.heat td.is-hi{color:#fff}
   #work{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr) 46vw}
   #side{border-top:0;border-left:2px solid var(--hb-ink)}
 }
+/* the setup panel: ferrule's gate card over the live yard */
+.setup-scrim{position:fixed;inset:0;z-index:900;display:grid;place-items:center;padding:16px;background:rgba(245,240,230,.55)}
+.setup-card{width:min(640px,100%);max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);display:flex;flex-direction:column;border:2px solid var(--hb-ink);background:var(--hb-paper-raised);box-shadow:8px 8px 0 var(--hb-pink);outline:none}
+.setup-head{flex:none;display:flex;justify-content:space-between;align-items:center;background:var(--hb-ink);color:var(--hb-paper);padding:0 0 0 14px;font-family:var(--hb-readout);font-size:22px;line-height:1}
+.setup-head button{background:none;border:0;color:inherit;font:inherit;min-width:44px;min-height:40px;cursor:pointer}
+.setup-head button:focus-visible{outline:2px solid var(--hb-pink);outline-offset:-2px}
+.setup-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;padding:14px 16px 10px}
+.setup-body h2{font-family:var(--hb-display);font-size:40px;line-height:1;margin:0;font-weight:400}
+.setup-body h2 b{color:var(--hb-pink);font-weight:400}
+.setup-body .field{margin:0}
+.setup-line{margin:0;font-family:var(--hb-note);font-size:14px;line-height:1.45;color:var(--hb-ink-2)}
+.setup-modes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.setup-modes button{display:flex;flex-direction:column;gap:4px;text-align:left;padding:8px 10px;border:1.5px solid var(--hb-ink);background:var(--hb-paper);box-shadow:3px 3px 0 var(--hb-ink);cursor:pointer;min-height:44px}
+.setup-modes button b{font-family:var(--hb-readout);font-size:20px;font-weight:400;line-height:1;text-transform:uppercase}
+.setup-modes button span{font-size:12px;line-height:1.35;color:var(--hb-ink-2)}
+.setup-modes button em{font-style:normal;font-family:var(--hb-readout);font-size:16px;color:var(--hb-ink-3)}
+.setup-modes button[aria-checked="true"]{background:var(--hb-ink);color:var(--hb-paper)}
+.setup-modes button[aria-checked="true"] span,.setup-modes button[aria-checked="true"] em{color:#ffd1e8}
+.setup-modes button:focus-visible{outline:3px solid var(--hb-pink);outline-offset:2px}
+.setup-list{flex:1 1 auto;min-height:96px;overflow:auto;margin:0;padding:0 8px;list-style:none;border:1.5px solid var(--hb-ink);background:var(--hb-paper);overscroll-behavior:contain}
+.sgroup>h3{position:sticky;top:0;z-index:1;margin:0 -8px;padding:4px 8px;background:var(--hb-paper-sunk);border-bottom:1px solid var(--hb-paper-edge);font-family:var(--hb-readout);font-size:17px;font-weight:400;text-transform:uppercase}
+.sgroup>ul{list-style:none;margin:0;padding:0}
+.srow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 8px;align-items:center;padding:6px 0;border-bottom:1px dashed rgba(26,26,26,.18)}
+.srow:last-child{border-bottom:0}
+.srow-main{display:grid;grid-template-columns:22px minmax(0,1fr) auto;gap:8px;align-items:center;font-size:13px;cursor:pointer;min-height:32px}
+.srow-main input{width:18px;height:18px;margin:0;accent-color:var(--hb-pink)}
+.srow-fixed{width:18px;height:18px}
+.srow-name{overflow-wrap:anywhere}
+.srow-size{font-family:var(--hb-readout);font-size:16px;color:var(--hb-ink-2);white-space:nowrap}
+.srow-mark{font-family:var(--hb-readout);font-size:14px;border:1px solid var(--hb-ink);padding:1px 5px;white-space:nowrap}
+.srow .bar2{grid-column:1/-1;height:10px;border:1.5px solid var(--hb-ink);background:var(--hb-paper-sunk);position:relative}
+.srow .bar2 i{position:absolute;inset:0 auto 0 0;background:var(--hb-pink)}
+.srow .bar2.ok i{background:var(--hb-ok)}
+.srow .bar2.err i{background:var(--hb-err)}
+.srow-note{grid-column:1/-1;margin:0 0 0 30px;font-family:var(--hb-note);font-size:12px;line-height:1.35;color:var(--hb-ink-3)}
+.srow-more{grid-column:1/-1;margin-left:30px;font-size:11.5px}
+.srow-more>summary{cursor:pointer;color:var(--hb-ink-3);min-height:24px}
+.srow-more>p{margin:2px 0 4px;font-family:var(--hb-note);color:var(--hb-ink-2)}
+.srow.is-off{opacity:.55}
+.srow.is-off .srow-main{cursor:not-allowed}
+.setup-foot{flex:none;display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:10px 16px 14px;border-top:1.5px solid var(--hb-ink)}
+.setup-foot .hb-btn{font-size:14px;padding:9px 14px;box-shadow:3px 3px 0 var(--hb-ink)}
+.setup-foot .hb-btn-go{font-family:var(--hb-readout);font-size:22px;line-height:1;padding:8px 16px}
+#bSetup{min-height:32px;padding:4px 10px;font-size:13px;box-shadow:2px 2px 0 var(--hb-ink);flex:none}
+@media (max-width:600px){
+  .setup-scrim{padding:8px;align-items:start}
+  .setup-card{max-height:calc(100vh - 16px);max-height:calc(100dvh - 16px);box-shadow:4px 4px 0 var(--hb-pink)}
+  .setup-body{padding:10px 12px 8px;gap:8px}
+  .setup-body h2{font-size:30px}
+  .setup-line{font-size:13px}
+  .setup-modes{grid-template-columns:minmax(0,1fr)}
+  .setup-modes button{display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 10px;align-items:baseline;padding:6px 10px}
+  .setup-modes button b{grid-row:1;grid-column:1}
+  .setup-modes button em{grid-row:1;grid-column:2;text-align:right}
+  .setup-modes button span{grid-row:2;grid-column:1/-1;font-size:11.5px}
+  .setup-foot{padding:8px 12px 10px}
+  .hchips .chip:nth-child(n+2){display:none}
+}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 </head>
@@ -203,6 +261,7 @@ table.heat td.is-hi{color:#fff}
     <span class="chip" id="chipClock" title="the time of day in the yard">10:00</span>
     <span class="chip" id="chipFps" title="frames per second">--</span>
   </div>
+  <button class="hb-btn" id="bSetup" type="button" aria-haspopup="dialog" aria-controls="setup">setup</button>
   <button class="hb-iconbtn" id="bPalette" type="button" aria-haspopup="dialog" aria-controls="palette" aria-label="commands: every action by name" title="commands (ctrl k or /)"></button>
 </header>
 <main id="work">
@@ -525,6 +584,25 @@ table.heat td.is-hi{color:#fff}
   <div class="hb-drawer-panel" role="dialog" aria-modal="true" aria-labelledby="capsTitle">
     <div class="caps-hd"><h2 id="capsTitle">turn on more</h2><button class="hb-btn hb-btn-sm" type="button" id="capsClose">close</button></div>
     <div id="capsBody"></div>
+  </div>
+</div>
+
+<div class="setup-scrim" id="setup" hidden>
+  <div class="setup-card" role="dialog" aria-modal="true" aria-labelledby="setupH" data-ux="setup" tabindex="-1">
+    <div class="setup-head"><span>HACKLE // setup</span><button type="button" id="setupClose" aria-label="close setup">x</button></div>
+    <div class="setup-body">
+      <h2 id="setupH">this is <span id="setupName">pixel</span><b>.</b></h2>
+      <div class="field"><label for="setupNameIn">name</label><input class="hb-input" type="text" id="setupNameIn" autocomplete="off"></div>
+      <p class="setup-line">a dog and its person in a yard. everything runs in this tab; nothing downloads until you pick it.</p>
+      <div class="setup-modes" id="setupModes" role="radiogroup" aria-label="how to start">
+        <button type="button" role="radio" aria-checked="true" data-mode="play"><b>just play</b><span>yard, ball, treats, training, both minds by rule</span><em>nothing to download</em></button>
+        <button type="button" role="radio" aria-checked="false" data-mode="eyes"><b>eyes and legs</b><span>a neural gait from dog motion capture, and an object detector on the dog eye</span><em></em></button>
+        <button type="button" role="radio" aria-checked="false" data-mode="think"><b>thinking dog</b><span>both, plus a cortex model that looks and sets goals, and his voice</span><em></em></button>
+      </div>
+      <div class="field" id="setupCortexRow" hidden><label for="setupCortex">cortex</label><select class="hb-select" id="setupCortex"><option value="lfm">small, lfm2-vl 450m, about 320 MB</option><option value="gemma">large, gemma 4 e2b, about 3.3 GB</option></select></div>
+      <ul class="setup-list" id="setupList" data-ux="detail" aria-label="everything you can turn on"></ul>
+    </div>
+    <div class="setup-foot"><button class="hb-btn hb-btn-go" type="button" id="setupStart">start, nothing to download</button><button class="hb-btn" type="button" id="setupLook">just look around</button></div>
   </div>
 </div>
 

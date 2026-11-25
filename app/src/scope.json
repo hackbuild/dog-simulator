@@ -25,6 +25,7 @@
   "view/minds.js",
   "io/caps.js",
   "view/ui.js",
+  "view/setup.js",
   "view/parts.js",
   "view/palette.js",
   "view/inspect.js",

@@ -48,4 +48,6 @@ function uiStart() {
   if (matchMedia('(pointer:coarse)').matches) $('hint').textContent = 'tap the dog to pet it. tap the ground to point. two fingers move the camera.';
   const tab = store.get('tab', 'pBrain'); if (tab !== 'pBrain' && $(tab) && $(tab).classList.contains('pane')) showTab(tab);
   setTimeout(() => { $('hint').hidden = true; }, 12000);
+  // the setup panel on a first visit; the setup button in the bar opens it again
+  if (!SEEDED && !TEST && !store.get('setup', 0)) setupOpen();
 }

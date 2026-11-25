@@ -102,6 +102,16 @@ const CAPS = [
     action: st => st === 'on' ? 'turn off' : 'turn on', run(st) { $('sound').checked = st !== 'on'; } }
 ];
 const capsWant = { autoThink: false, humMind: false };
+// the setup panel's view of the same rows: which group each sits in, its download in bytes (the
+// vendor's figure, as the row's needs say; null when unknown) and the permission it asks for
+const CAP_META = {
+  renderer: { group: 'see' }, yolo: { group: 'see', bytes: 12.8e6 },
+  gait: { group: 'move', bytes: 17.7e6 },
+  'cortex-lfm': { group: 'think', bytes: 320e6, about: true }, 'cortex-gemma': { group: 'think', bytes: 3.3e9, about: true },
+  autoThink: { group: 'think' }, humMind: { group: 'think' },
+  voice: { group: 'voice', bytes: null }, sound: { group: 'voice' },
+  talk: { group: 'your input', perm: 'the microphone' }, webcam: { group: 'your input', bytes: 27.3e6, perm: 'the camera' }, clap: { group: 'your input', perm: 'the microphone' }
+};
 const CAP_ICON = { eye: 'M1 8c2-4 5-6 7-6s5 2 7 6c-2 4-5 6-7 6S3 12 1 8zm7 3a3 3 0 100-6 3 3 0 000 6z', paw: 'M5 3a1.5 2 0 103 0 1.5 2 0 10-3 0M9 4a1.5 2 0 103 0 1.5 2 0 10-3 0M3 7a1.4 1.8 0 103 0 1.4 1.8 0 10-3 0M11 8a1.4 1.8 0 103 0 1.4 1.8 0 10-3 0M5 11c1-2 5-2 6 0 1 2-1 3-3 3s-4-1-3-3z', brain: 'M5 2a3 3 0 00-3 3v1a3 3 0 000 5v1a3 3 0 006 1V3a2 2 0 00-3-1zm6 0a3 3 0 013 3v1a3 3 0 010 5v1a3 3 0 01-6 1V3a2 2 0 013-1z', voice: 'M2 6h3l4-3v10l-4-3H2zM11 5c1 1 1 5 0 6M13 3c2 2 2 8 0 10', mic: 'M6 1h4v9H6zM3 8a5 5 0 0010 0M8 13v2', cam: 'M1 5h4l1-2h4l1 2h4v8H1zm7 6a2.4 2.4 0 100-4.8A2.4 2.4 0 008 11z' };
 const capIcon = k => `<svg class="hb-icon" width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><path d="${CAP_ICON[k] || ''}" fill="${k === 'voice' || k === 'mic' ? 'none' : 'currentColor'}" stroke="${k === 'voice' || k === 'mic' ? 'currentColor' : 'none'}" stroke-width="1.6"/></svg>`;
 const VERDICT = { on: ['on', 'is-pass'], off: ['off', 'is-skip'], loading: ['loading', 'is-run'], failed: ['failed', 'is-fail'], unavailable: ['cannot run here', 'is-warn'] };

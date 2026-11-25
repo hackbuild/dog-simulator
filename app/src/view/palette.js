@@ -37,6 +37,7 @@ const PAL_COMMANDS = [
     { k: 'thuman', label: 'human', hint: 'tab: moheeb', run: () => showTab('pHuman', true) },
     { k: 'ttune', label: 'tune', hint: 'tab: every number, seeds', run: () => showTab('pTune', true) },
     { k: 'thow', label: 'how', hint: 'tab: how it works, licences', run: () => showTab('pAbout', true) },
+    { k: 'setup', label: 'setup', hint: 'ways to start, every model and permission', run: palPress('bSetup') },
     { k: 'caps', label: 'turn on more', hint: 'models, voice, detector', run: () => capsOpen() },
     { k: 'vlmload', label: 'load the cortex model', hint: 'the size shows on the button', run: () => { showTab('pBrain'); $('bVlmLoad').click(); } },
     { k: 'nnload', label: 'load the neural gait', hint: '17.7 mb, cc by-nc 4.0', run: palPress('bNnLoad') },
