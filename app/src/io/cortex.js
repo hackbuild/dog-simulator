@@ -22,9 +22,11 @@ function vlmLoad() {
   const BODY = document.getElementById('vlmWorker').textContent;
   const onmsg = e => {
     const m = e.data;
-    if (m.t === 'progress') { vlm.alive = true; vlm.progress = { loaded: m.loaded, total: m.total }; $('cortexSt').textContent = (m.loaded / 1e6).toFixed(0) + ' / ' + (m.total / 1e6).toFixed(0) + ' MB' + (vlm.inPage ? ' (in page)' : ''); if (typeof capsRefresh === 'function') capsRefresh(true); }
-    else if (m.t === 'ready') { vlm.state = 'ready'; vlm.progress = null; setVlm('ready, ' + VLM[vlm.kind].name); console.info(VLM[vlm.kind].id + ' at ' + VLM[vlm.kind].rev + ': ' + VLM[vlm.kind].licence); toast('cortex on: ' + VLM[vlm.kind].name + '. ' + VLM[vlm.kind].licence + '.'); }
-    else if (m.t === 'answer' || m.t === 'error') { if (m.t === 'error' && m.id == null) { vlm.state = 'failed'; vlm.err = m.msg.slice(0, 80).toLowerCase(); vlm.progress = null; setVlm('failed'); if (vlm.worker) vlm.worker.terminate(); vlm.worker = null; return; } const w = vlm.wait.get(m.id); vlm.wait.delete(m.id); if (w) (m.t === 'answer' ? w.res(m) : w.rej(new Error(m.msg))); }
+    if (m.t === 'progress') { vlm.alive = true; vlm.progress = { loaded: m.loaded, total: m.total }; logLive('cortex', 'cortex ' + VLM[vlm.kind].name + ', ' + (m.loaded / 1e6).toFixed(0) + ' of ' + (m.total / 1e6).toFixed(0) + ' MB', m.total ? m.loaded / m.total : null); $('cortexSt').textContent = (m.loaded / 1e6).toFixed(0) + ' / ' + (m.total / 1e6).toFixed(0) + ' MB' + (vlm.inPage ? ' (in page)' : ''); if (typeof capsRefresh === 'function') capsRefresh(true); }
+    else if (m.t === 'ready') { vlm.state = 'ready'; vlm.progress = null; logLive('cortex', null); wStored[vlm.kind] = true; setVlm('ready, ' + VLM[vlm.kind].name); console.info(VLM[vlm.kind].id + ' at ' + VLM[vlm.kind].rev + ': ' + VLM[vlm.kind].licence); toast('cortex on: ' + VLM[vlm.kind].name + '. ' + VLM[vlm.kind].licence + '.'); }
+    else if (m.t === 'cache-match') { wMatch(m.url).then(blob => { if (vlm.worker) vlm.worker.postMessage({ t: 'cache', cid: m.cid, blob }); }); }
+    else if (m.t === 'cache-put') { wPut(m.url, m.blob); }
+    else if (m.t === 'answer' || m.t === 'error') { if (m.t === 'error' && m.id == null) { vlm.state = 'failed'; vlm.err = m.msg.slice(0, 80).toLowerCase(); vlm.progress = null; logLive('cortex', null); logEvent('fail', 'the cortex did not load: ' + vlm.err); setVlm('failed'); if (vlm.worker) vlm.worker.terminate(); vlm.worker = null; return; } const w = vlm.wait.get(m.id); vlm.wait.delete(m.id); if (w) (m.t === 'answer' ? w.res(m) : w.rej(new Error(m.msg))); }
   };
   const inPage = () => { // fallback when module workers from blob URLs are refused
     vlm.inPage = true;

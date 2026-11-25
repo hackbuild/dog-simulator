@@ -2,22 +2,30 @@
 const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
 let downAt = null;
 renderer.domElement.addEventListener('pointerdown', e => { downAt = { x: e.clientX, y: e.clientY, t: performance.now() }; audio(); });
-renderer.domElement.addEventListener('pointerup', e => {
-  if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6 || performance.now() - downAt.t > 450) return;
-  const r = renderer.domElement.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -(e.clientY - r.top) / r.height * 2 + 1);
+// what is under a screen point: the dog, a spot on the ground, or nothing (taps and the context menu share it)
+function yardAt(cx, cy) {
+  const r = renderer.domElement.getBoundingClientRect(); ndc.set((cx - r.left) / r.width * 2 - 1, -(cy - r.top) / r.height * 2 + 1);
   ray.setFromCamera(ndc, camera);
   // dog hit: ray vs body segment
   if (dog.ready) {
     const a = dog.root.localToWorld(V3(0, 0.33, -0.25)), b = dog.root.localToWorld(V3(0, 0.38, 0.35));
-    const dd = ray.ray.distanceSqToSegment(a, b);
-    if (dd < 0.2 * 0.2) { pet(); return; }
+    if (ray.ray.distanceSqToSegment(a, b) < 0.2 * 0.2) return { dog: true };
   }
-  const hit = ray.intersectObject(ground)[0]; if (!hit) return;
-  if (e.shiftKey) { throwBall(hit.point.clone()); return; }
-  marker.position.copy(hit.point).add(V3(0, 0.015, 0)); marker.material.opacity = 1;
-  if (HUM.ready && ON('L.social')) { startTask('point', { p: hit.point.clone(), user: true }, 'you asked him to point there'); return; }
+  const hit = ray.intersectObject(ground)[0];
+  return hit ? { p: hit.point.clone() } : null;
+}
+function pointAt(p) {
+  marker.position.copy(p).add(V3(0, 0.015, 0)); marker.material.opacity = 1;
+  if (HUM.ready && ON('L.social')) { startTask('point', { p: p.clone(), user: true }, 'you asked him to point there'); return; }
   emitSound(V3(YOU.x, 1.4, YOU.z), 0.25, 'point');
   if (brain.cur !== 'sleep' && brain.cur !== 'obey') { brain.pointT = now; }
+}
+renderer.domElement.addEventListener('pointerup', e => {
+  if (!downAt || Math.hypot(e.clientX - downAt.x, e.clientY - downAt.y) > 6 || performance.now() - downAt.t > 450) return;
+  const at = yardAt(e.clientX, e.clientY); if (!at) return;
+  if (at.dog) { pet(); return; }
+  if (e.shiftKey) { throwBall(at.p); return; }
+  pointAt(at.p);
 });
 function pet() { brain.d.social = clamp(brain.d.social - 0.12, 0, 1); brain.v = clamp(brain.v + 0.12, -1, 1); brain.a = clamp(brain.a - 0.05, 0, 1); brain.say(pick(['mmm', 'yes there', 'happy', 'more pets']), 1.6); dog.head.tRoll = 0.25; if (brain.trial && !brain.trial.rewarded) brain.reward(0.4, 'pet'); }
 // keys drive the dog or the camera only while the yard has focus (or nothing does), never while you tab through panels
@@ -80,7 +88,6 @@ $('eyeFold').onclick = () => { const c = $('eyecard'), f = !c.classList.contains
 $('tempo').oninput = e => $('tempoV').textContent = e.target.value + 'x';
 $('dogColor').onchange = drawEyeDisplay;
 $('netOn').onchange = e => { if (e.target.checked) loadNet(); else { boxCtx.clearRect(0, 0, EW, EH); } };
-$('bReset').onclick = () => { brain.seed(); store.set('W', brain.W); renderCueButtons(); renderHeat(); toast('every word forgotten'); };
 $('cueIn').addEventListener('keydown', e => { if (e.key === 'Enter') { handleSpeech(e.target.value); e.target.value = ''; } });
 $('dogName').addEventListener('change', e => { store.set('name', e.target.value); seedPersonality(e.target.value || 'Pixel'); toast('a new name is a new dog: temperament redrawn'); nameUI(); });
 $('dogName').value = store.get('name', 'Pixel');

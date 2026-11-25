@@ -18,11 +18,13 @@
   "human/human.js",
   "human/throwing.js",
   "io/input.js",
+  "io/weights.js",
   "io/cortex.js",
   "view/instruments.js",
   "view/minds.js",
   "io/caps.js",
   "view/ui.js",
+  "view/parts.js",
   "sim/loop.js",
   "human/placeholder.js",
   "view/boot.js"

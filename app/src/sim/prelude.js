@@ -59,4 +59,4 @@ let toastT = 0;
 // ui copy is lowercase (RULES.md); unit symbols keep their case
 const uiText = s => String(s).toLowerCase().replace(/\bhz\b/g, 'Hz');
 const uiHtml = h => h.replace(/>([^<>]*)</g, (m, t) => '>' + uiText(t) + '<').replace(/\btitle="([^"]*)"/g, (m, v) => 'title="' + uiText(v) + '"');
-function toast(msg) { const t = $('toast'); t.textContent = uiText(msg); t.classList.add('is-on'); toastT = 3.2; }
+function toast(msg) { if (typeof logEvent === 'function') logEvent('note', msg); const t = $('toast'); t.textContent = uiText(msg); t.classList.add('is-on'); toastT = 3.2; }

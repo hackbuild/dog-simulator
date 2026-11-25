@@ -128,13 +128,7 @@ function knownUI() {
 function dogMemory() {
   const R = TV('Br.reflect'); $('impMeter').firstChild.style.width = clamp(brain.imp / R * 100, 0, 100).toFixed(0) + '%'; $('impMeter').setAttribute('aria-valuenow', Math.round(clamp(brain.imp / R, 0, 1) * 100));
   $('impV').textContent = brain.imp.toFixed(1); $('memN').textContent = brain.mem.length + ' memories';
-  const t = $('memTable');
-  if (foldOpen(t)) {
-    const vis = Object.values(percepts).filter(p => p.vis).map(p => p.id.replace(/\d+$/, '')), sc = new Map(memRank(vis).map(x => [x.m, x.s]));
-    const used = new Set(brain.lastRecall ? brain.lastRecall.items.map(x => x.m) : []);
-    t.innerHTML = '<thead><tr><th scope="col">memory</th><th scope="col" class="num">age s</th><th scope="col" class="num">importance</th><th scope="col" class="num">score</th></tr></thead><tbody>' +
-      (brain.mem.slice(0, 30).map(m => `<tr${used.has(m) ? ' class="is-mark"' : ''}><td>${esc(m.txt)}${used.has(m) ? '<span class="hb-sr">, in the last thought</span>' : ''}</td><td class="num">${Math.round(now - m.t)}</td><td class="num">${m.imp.toFixed(1)}</td><td class="num">${f2(sc.get(m))}</td></tr>`).join('') || '<tr><td colspan="4">nothing remembered yet</td></tr>') + '</tbody>';
-  }
+  if (foldOpen($('memList'))) memRender();
   const L = brain.lastLearn, T = brain.trial;
   $('lastTrial').textContent = (L ? `last credit: "${L.cue}" with ${L.action}, ${L.src} ${L.age.toFixed(1)} s later, credit ${Math.round(L.credit * 100)} percent, ${f2(L.before)} to ${f2(L.after)} (${L.after >= L.before ? '+' : ''}${(L.after - L.before).toFixed(2)}). ` : '') + (T ? `last cue: "${T.cue}", it ${T.action === 'ignored' ? 'ignored it' : T.action === 'none' ? 'did not understand' : 'did ' + T.action}${T.rewarded ? ', rewarded' : ''}.` : 'no cue yet.');
 }

@@ -58,7 +58,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .hb-check.is-disabled{cursor:not-allowed}
 .reason{font-family:var(--hb-body);font-size:12.5px;line-height:1.4;color:var(--hb-warn);margin:0}
 .reason:empty{display:none}
-.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--hb-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;min-height:0}
+.linkbtn{background:none;border:0;padding:0;font:inherit;color:var(--hb-ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .linkbtn:focus-visible{outline:2px solid var(--hb-pink);outline-offset:2px}
 .hb-kv{font-family:var(--hb-utility);font-size:12px;color:var(--hb-ink-3);padding:3px 0}
 .hb-kv>span:last-child{font-family:var(--hb-readout);font-size:17px;line-height:1.1;color:var(--hb-ink);text-align:right;overflow-wrap:anywhere;min-width:0}
@@ -136,7 +136,7 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
 #tool .wide{display:none}
 #tool .wide-l{display:none}
 #tool{flex-wrap:nowrap;gap:var(--hb-s1)}
-#tool .hb-btn{padding:4px 8px;flex:0 1 auto;min-width:0}
+#tool .hb-btn{padding:4px 8px;flex:0 1 auto;min-width:44px;justify-content:center}
 #bMore .lbl{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 #whyLine{position:absolute;left:var(--hb-s2);right:var(--hb-s2);bottom:60px;z-index:5;font-family:var(--hb-body);font-size:12.5px;line-height:1.3;background:color-mix(in srgb,var(--hb-void) 80%,transparent);color:var(--hb-paper);border:1px solid var(--hb-ink-border);padding:3px var(--hb-s2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 #whyLine:empty,#whyLine[hidden]{display:none}
@@ -222,7 +222,7 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
   <button class="hb-btn" id="bCaps" type="button" aria-haspopup="dialog" aria-controls="caps">turn things on<span class="n" id="capsCount">checking</span></button>
 </header>
 <main id="work">
-<section id="stage" class="hb-viewport is-fill" aria-label="3d yard. tap the dog to pet it, tap the ground to point." tabindex="0">
+<section id="stage" class="hb-viewport is-fill hb-ctx-area" aria-haspopup="menu" aria-label="3d yard. tap the dog to pet it, tap the ground to point. hold, right click or the menu key for more." tabindex="0">
   <div id="load" class="hb-vp-cover"><div class="hb-vp-cover-title">waking the dog</div><div class="hb-vp-cover-note" id="loadNote">loading model</div></div>
   <div class="hb-ov hb-ov-tl">
     <figure class="hb-inset" id="eyecard">
@@ -247,7 +247,9 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
   <div id="drop" class="hb-dropzone is-cover">show the dog this photo</div>
   <div id="hint" class="hb-hudnote">tap or click the dog to pet it. tap the ground to point. shift and click to throw there. drag to orbit, two fingers or right drag to move the camera.</div>
   <p id="whyLine" aria-hidden="true"></p>
-  <div class="hb-ov hb-ov-b" id="tool">
+  <div class="hb-ctx" id="yardMenu" aria-label="yard actions" hidden><div class="hb-ctx-title" id="yardMenuT" aria-hidden="true">yard</div></div>
+  <div class="hb-ov hb-ov-foot">
+  <div class="hb-ov-b" id="tool">
     <button class="hb-btn" id="bThrow" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M3 5c3 1 7 1 10 0M3 11c3-1 7-1 10 0" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>throw</button>
     <button class="hb-btn hb-btn-2" id="bTreat" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><rect x="3" y="5" width="10" height="6" fill="currentColor"/></svg>treat</button>
     <button class="hb-btn hb-btn-2" id="bGood" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 9l4 4 8-10" fill="none" stroke="currentColor" stroke-width="2"/></svg>good<span class="wide-l"> dog</span></button>
@@ -255,6 +257,13 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
     <button class="hb-btn hb-btn-2 wide" id="bSquirrel" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="6" cy="10" r="3" fill="currentColor"/><path d="M9 11c4 0 5-4 3-7-2-2-5 0-3 3" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>squirrel</button>
     <button class="hb-btn hb-btn-2 wide" id="bFill" type="button"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M2 8h12l-2 5H4z" fill="currentColor"/></svg>fill bowl</button>
     <button class="hb-btn hb-btn-2" id="bMore" type="button" aria-label="more verbs, in play"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3" cy="8" r="1.6" fill="currentColor"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="13" cy="8" r="1.6" fill="currentColor"/></svg><span class="lbl">more</span></button>
+  </div>
+  <div class="hb-ov-pad" id="padRow" hidden>
+    <div class="hb-pad">
+      <div class="hb-pad-base" id="pad" role="group" tabindex="0" aria-label="drive the dog: drag, or hold the arrow keys"><span class="hb-pad-arrow hb-pad-n" aria-hidden="true"></span><span class="hb-pad-arrow hb-pad-s" aria-hidden="true"></span><span class="hb-pad-arrow hb-pad-w" aria-hidden="true"></span><span class="hb-pad-arrow hb-pad-e" aria-hidden="true"></span><span class="hb-pad-knob" aria-hidden="true"></span></div>
+      <button type="button" class="hb-pad-act" id="padRun" aria-pressed="false">run</button>
+    </div>
+  </div>
   </div>
 </section>
 <aside id="side">
@@ -290,7 +299,7 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
       <div class="hb-heard" id="heard" aria-live="polite" data-empty="nothing heard yet"></div>
       <div class="fieldrow"><label for="cueIn">type a cue, then enter</label><input class="hb-input" type="text" id="cueIn" enterkeyhint="send" autocomplete="off" autocapitalize="none"></div>
       <div class="fieldrow"><label for="dogName">dog name</label><input class="hb-input" type="text" id="dogName" value="Pixel" autocomplete="off"></div>
-      <p class="note">to teach a new word: say it, wait for whatever the dog does, then praise it. see what it knows in <button class="linkbtn" type="button" data-go="pMinds">minds</button>.</p>
+      <p class="note">to teach a new word: say it, wait for whatever the dog does, then praise it. see what it knows in <button class="linkbtn hb-link" type="button" data-go="pMinds">minds</button>.</p>
     </div>
     <div class="hb-panel">
       <h3 class="hb-panel-hd-inst">what it knows <span class="hb-hd-aux" id="knownN">0 words</span></h3>
@@ -318,6 +327,7 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
     <div class="mcols">
     <div class="mcol" id="mindDog">
       <h2 class="mcol-hd" id="dogNameHd">the dog</h2>
+      <p class="note" data-suite-only hidden>the same parts as tools: <a class="hb-link" data-suite="#/agents/drives">drives</a>, <a class="hb-link" data-suite="#/agents/senses">senses</a>, <a class="hb-link" data-suite="#/chat/memory">memory</a>, open in the suite.</p>
       <div class="hb-panel">
         <h3 class="hb-panel-hd-inst">now <span class="hb-hd-aux" id="behT">0.0 s</span></h3>
         <p class="big" id="behName">idle</p>
@@ -354,19 +364,26 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
       <div class="hb-panel">
         <h3 class="hb-panel-hd-inst">senses <span class="hb-hd-aux" id="kFocusMind">-</span></h3>
         <ul class="lines" id="dogSenses"></ul>
-        <p class="note">the eye view is in the yard corner. more in <button class="linkbtn" type="button" data-go="pSense">senses</button>.</p>
+        <p class="note">the eye view is in the yard corner. more in <button class="linkbtn hb-link" type="button" data-go="pSense">senses</button>.</p>
       </div>
       <div class="hb-panel">
         <h3 class="hb-panel-hd-inst">memory and learning <span class="hb-hd-aux" id="memN">0 memories</span></h3>
         <div class="meterrow"><span>importance</span><div class="hb-meter" role="progressbar" aria-label="importance toward the next cortex thought" aria-valuemin="0" aria-valuemax="100" id="impMeter"><i style="width:0%"></i></div><b id="impV">0</b></div>
-        <details class="hb-fold"><summary>memory stream <span class="aux">newest first</span></summary><div><div class="hb-scroll-x"><table class="hb-table" id="memTable"></table></div>
+        <details class="hb-fold" id="memFold"><summary>memory stream <span class="aux">newest first</span></summary><div>
+          <section class="hb-mempanel" aria-label="the dog's memory">
+            <div class="hb-mempanel-sec"><p class="hb-mempanel-counts" id="memCounts">0 memories</p><div class="hb-mempanel-store"><p class="hb-mempanel-line">kept in this tab only. a reload starts a new day; export keeps a copy.</p></div></div>
+            <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memSearchH">search</h3><input class="hb-input" type="search" id="memSearch" placeholder="try ball or human" aria-labelledby="memSearchH" aria-describedby="memSearchM" autocomplete="off"><p class="hb-mempanel-line" id="memSearchM">search: keyword overlap. with no words the order is the cortex ranking.</p></div>
+            <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memAddH">add a memory</h3><textarea class="hb-textarea" id="memNote" rows="2" placeholder="the ball went over the fence" aria-labelledby="memAddH"></textarea><div class="hb-mempanel-row"><button type="button" class="hb-btn hb-btn-sm" id="memAdd" disabled>add</button></div></div>
+            <div class="hb-mempanel-sec"><h3 class="hb-mempanel-hd" id="memListH">memories (0)</h3><p class="hb-mempanel-empty" id="memEmpty">nothing remembered yet. play with the dog and it fills.</p><div class="hb-mempanel-list" id="memList" aria-labelledby="memListH"></div></div>
+            <div class="hb-mempanel-foot"><button type="button" class="hb-btn hb-btn-2 hb-btn-sm" id="memExport">export</button><button type="button" class="hb-btn hb-btn-2 hb-btn-sm hb-mempanel-wipe" id="memWipe">erase all</button></div>
+          </section>
           <p class="note">scored as the cortex ranks them: recency 0.995 per game hour, importance over 6, plus 0.5 when it names what is in view (park 2023). marked rows went into the last thought.</p></div></details>
         <details class="hb-fold"><summary>words it knows <span class="aux" id="knownMindN"></span></summary><div>
           <ul class="lines" id="knownMind"></ul>
           <p class="sub" id="lastTrial"></p>
           <div class="hb-scroll-x" style="margin-top:var(--hb-s2)"><table class="hb-heat" id="heat"></table></div>
           <p class="note">rows are words, columns are acts: how strongly the dog links each word to each act, excitation minus an inhibition that fades faster. attn is how much it still pays attention to that word (rescorla wagner with pearce kaye hall associability). credit fades with delay, so a slow treat can reward the wrong act.</p>
-          <div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" id="bReset" type="button">forget every word</button></div>
+          <div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" id="bReset" type="button">forget every word</button><button class="hb-btn hb-btn-2" id="bResetKeep" type="button" hidden>keep them</button></div>
         </div></details>
       </div>
       <div class="hb-panel">
@@ -382,6 +399,7 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
     </div>
     <div class="mcol is-off" id="mindHum">
       <h2 class="mcol-hd">moheeb</h2>
+      <p class="note" data-suite-only hidden>any character in any room: <a class="hb-link" data-suite="#/rooms">open the room in the suite</a>.</p>
       <div class="hb-panel">
         <h3 class="hb-panel-hd-inst">now <span class="hb-hd-aux" id="humT">0 s</span></h3>
         <p class="big" id="humTask">idle</p>
@@ -441,7 +459,7 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
       <label class="hb-check"><input type="checkbox" id="dogColor" checked>dichromat color and 20/75 acuity</label>
       <label class="hb-check"><input type="checkbox" id="showSal">show saliency and the current fixation on the eye</label>
       <label class="hb-check"><input type="checkbox" id="netOn" aria-describedby="netNote">label the eye feed with the object detector</label>
-      <p class="note" id="netNote">yolov8n, 12.8 MB (vendor), weights agpl 3.0. it downloads when you turn it on. <button class="linkbtn" type="button" data-caps="yolo">details in turn things on</button></p>
+      <p class="note" id="netNote">yolov8n, 12.8 MB (vendor), weights agpl 3.0. it downloads when you turn it on. <button class="linkbtn hb-link" type="button" data-caps="yolo">details in turn things on</button></p>
       <div class="hb-kv"><span>looking at</span><span id="kFocus">-</span></div>
       <div class="lst" id="detList"></div>
     </div>
@@ -503,6 +521,13 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
       <div class="btns" style="margin-top:var(--hb-s2)"><button class="hb-btn hb-btn-2" type="button" data-caps="">open the list</button><button class="hb-btn hb-btn-2" type="button" id="bWelcome">show the welcome card</button></div>
     </div>
     <div class="hb-panel">
+      <h3 class="hb-panel-hd-inst">events <span class="hb-hd-aux">notes, loads, failures</span></h3>
+      <section class="hb-evlog" id="evlog">
+        <div class="hb-evlog-head"><span class="hb-evlog-label">events</span><span class="hb-evlog-count" id="evlogN" aria-label="rows">0</span></div>
+        <div class="hb-evlog-box"><div class="hb-evlog-rows" role="log" aria-label="events" tabindex="0" id="evlogRows"><p class="hb-evlog-empty" id="evlogEmpty">nothing logged yet</p></div></div>
+      </section>
+    </div>
+    <div class="hb-panel">
       <h3 class="hb-panel-hd-inst">seeds and scenarios</h3>
       <p class="note" style="margin-top:0">open the yard with a fixed seed: the same seed and settings give the same day, frame for frame in lockstep.</p>
       <div class="fieldrow"><label for="seedIn">seed</label><input class="hb-input" type="number" inputmode="numeric" id="seedIn" min="1" step="1" value="7"></div>
@@ -526,6 +551,11 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
       <p>human: moheeb with retargeted quaternius clips (cc0), a gaze model, velocity springs, planted feet and a phased throw. his day runs on needs and an hourly routine; the top three options are drawn at random, weighted.</p>
       <p>cortex: gemma 4 e2b or lfm2-vl 450m on webgpu sets goals on events, from a memory stream ranked by recency, importance and relevance (park 2023). reflexes and timing stay in code.</p>
       <p>licences: app code mit. three.js mit, rapier apache 2.0, fonts apache 2.0 and ofl 1.1, animation clips cc0. fetched only when you ask: the neural gait model and mocap cc by-nc 4.0, yolov8n agpl 3.0, pocket tts engine apache 2.0 with cc by-nc 4.0 models, the cortex and mediapipe models under their own licences. LICENCES.md in the repository has the full list.</p>
+    </div>
+    <div class="hb-panel about">
+      <h3 class="hb-panel-hd-inst">elsewhere <span class="hb-hd-aux">the parts on their own</span></h3>
+      <p>each package has a page with a small live stage and how it works: <a class="hb-link" href="https://hackbuild.github.io/hackbuild-motion/gait/">gait</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-motion/motion-net/">motion-net</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/senses/">senses</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/drives/">drives</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/cameras/">cameras</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-agents/tunables/">tunables</a>, <a class="hb-link" href="https://hackbuild.github.io/hackbuild-browser-ai/weights/">weights</a>.</p>
+      <p data-suite-only hidden>the suite has each as a tool: <a class="hb-link" data-suite="#/motion/gait">gait</a>, <a class="hb-link" data-suite="#/motion/motion-net">motion-net</a>, <a class="hb-link" data-suite="#/agents/senses">senses</a>, <a class="hb-link" data-suite="#/agents/drives">drives</a>, <a class="hb-link" data-suite="#/voice/speak">speech</a>. a model fetched there is stored for this page too, and the other way round.</p>
     </div>
     <div class="hb-panel about">
       <h3 class="hb-panel-hd-inst">keys</h3>
@@ -564,7 +594,8 @@ canvas.inst{width:100%;height:auto;display:block;background:var(--hb-paper-raise
 <script type="text/plain" id="vlmWorker">
 // body of the cortex runner: run inside a module worker, or on the main thread if workers fail; post() sends results back
 const TJS = 'https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.3.2/dist/transformers.min.js';
-let T = null, proc = null, model = null, kind = null;
+let T = null, proc = null, model = null, kind = null, cid = 0;
+const pend = new Map();
 const files = {};
 function prog(p) {
   if (p.status !== 'progress' || !p.total) return;
@@ -574,8 +605,16 @@ function prog(p) {
 }
 return async m => {
   try {
+    if (m.t === 'cache') { const r = pend.get(m.cid); pend.delete(m.cid); if (r) r(m.blob ? new Response(m.blob) : undefined); return; }
     if (m.t === 'load') {
       T = await import(TJS); kind = m.kind;
+      // files are looked up in and saved to the page's shared weight store, so a model fetched
+      // by another hack.build page on this origin is not fetched again
+      T.env.useBrowserCache = false; T.env.useCustomCache = true;
+      T.env.customCache = {
+        match: r => new Promise(res => { const id = ++cid; pend.set(id, res); post({ t: 'cache-match', cid: id, url: String(r && r.url || r) }); }),
+        put: async (r, resp) => { post({ t: 'cache-put', url: String(r && r.url || r), blob: await resp.blob() }); }
+      };
       const Cls = kind === 'gemma' ? T.Gemma4ForConditionalGeneration : T.Lfm2VlForConditionalGeneration;
       proc = await T.AutoProcessor.from_pretrained(m.id, { revision: m.rev, progress_callback: prog });
       model = await Cls.from_pretrained(m.id, { revision: m.rev, dtype: 'q4f16', device: 'webgpu', progress_callback: prog });

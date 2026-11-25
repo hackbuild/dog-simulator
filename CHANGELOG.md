@@ -4,6 +4,16 @@ Versions follow semver per package. Nothing is published to npm yet.
 
 ## 0.1.0 (unreleased)
 
+- app: the cortex reads and saves model files through the shared weight
+  store (@hackbuild/weights, store name hackbuild-weights), so a model
+  fetched by the suite or a package page on the same origin is not
+  fetched again; the capability row says when files are stored.
+- app: hackbuild-ui vanilla entry parts: memory panel with search, add,
+  forget, export and erase; confirm in place on forget and erase; an
+  events log in more; a yard menu on right click, long press or the menu
+  key; a drive pad on touch while manual drive is on.
+- app: links to the package pages in more; links into the suite appear
+  when the build sets SUITE_URL (empty by default).
 - ui: hackbuild-ui 0.5.0 repinned from commit fb95d7c to 5211c3a by
   hackbuild-ui `tools/pin-ui.mjs` (the class layer is unchanged, the
   readme in the tarball moved); `npm run ui:check`, run in CI before

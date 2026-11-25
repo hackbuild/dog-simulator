@@ -10,7 +10,7 @@ const cortexRow = kind => ({
   id: 'cortex-' + kind, icon: 'brain',
   name: kind === 'lfm' ? 'dog cortex, small (lfm2-vl 450m)' : 'dog cortex, large (gemma 4 e2b)',
   what: 'a vision language model looks through the dog eye, reads its drives and memories, and sets a goal. nothing leaves the browser; the weights download once and stay cached.',
-  needs: () => [['webgpu', !!navigator.gpu], [kind === 'lfm' ? 'about 320 MB (vendor)' : 'about 3.3 GB (vendor)', true]],
+  needs: () => [['webgpu', !!navigator.gpu], [wStored[kind] ? 'stored in this browser, shared with the other hack.build pages' : kind === 'lfm' ? 'about 320 MB (vendor)' : 'about 3.3 GB (vendor)', true]],
   licence: kind === 'lfm' ? ['weights', 'LFM Open License 1.0', 'commercial use limited, read it first.', true] : ['weights', 'Apache-2.0', 'commercial use allowed.', false],
   state() {
     if (!navigator.gpu) return 'unavailable';
@@ -24,7 +24,7 @@ const cortexRow = kind => ({
     return '';
   },
   ask: () => isPhone() && kind === 'gemma' ? 'this model needs about 3.3 GB. phones usually cannot hold it; the small one fits.' : '',
-  action(st) { return st === 'on' ? null : st === 'loading' ? null : st === 'failed' ? 'try again' : 'download and turn on'; },
+  action(st) { return st === 'on' ? null : st === 'loading' ? null : st === 'failed' ? 'try again' : wStored[kind] ? 'turn on' : 'download and turn on'; },
   run() { vlmPick(kind); vlmLoad(); },
   progress() { return vlm.kind === kind && vlm.state === 'loading' && vlm.progress ? vlm.progress : null; }
 });
@@ -141,7 +141,7 @@ function capsRefresh(light) {
 $('capsBody').addEventListener('click', e => { const b = e.target.closest('button[data-cap]'); if (!b) return; const c = CAPS.find(x => x.id === b.dataset.cap); if (!c) return; audio(); c.run(c.state()); announce(c.name + ': ' + c.state(), 3000); capsRefresh(); setTimeout(capsRefresh, 400); });
 let capsReturn = null;
 function capsOpen(id) {
-  capsReturn = document.activeElement; $('caps').hidden = false; capsRefresh();
+  capsReturn = document.activeElement; $('caps').hidden = false; capsRefresh(); wScan();
   const row = id ? $('capsBody').querySelector(`[data-cap="${id}"]`) : null;
   (row || $('capsClose')).focus(); if (row) row.closest('.hb-cap').scrollIntoView({ block: 'center' });
 }
