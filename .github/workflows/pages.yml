@@ -52,6 +52,10 @@ jobs:
           console.log("public file clean");
           '
       - run: mkdir -p _site && cp dist/dog-simulator-public.html _site/index.html
+      # the human as a plain file for the suite's character and room explorers; pages sends
+      # access-control-allow-origin: * on every file, so a cors fetch from a cross origin
+      # isolated page loads it (coep credentialless or require-corp)
+      - run: mkdir -p _site/assets && cp app/assets/human.glb _site/assets/human.glb
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
