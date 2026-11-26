@@ -56,6 +56,9 @@ jobs:
       # access-control-allow-origin: * on every file, so a cors fetch from a cross origin
       # isolated page loads it (coep credentialless or require-corp)
       - run: mkdir -p _site/assets && cp app/assets/human.glb _site/assets/human.glb
+      # the isolation worker: the suite's home registers it for this scope before its yard frame
+      # loads, so the frame gets coop and coep under the suite's own policy (same origin on pages)
+      - run: cp app/pages/coi-sw.js _site/coi-sw.js
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
