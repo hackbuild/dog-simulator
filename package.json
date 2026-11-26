@@ -31,7 +31,8 @@
     "check:determinism": "node tools/runner/determinism.mjs dist/hackle-det.html --seconds 600",
     "scenarios": "node scenarios/run.mjs",
     "vendor:check": "node tools/vendor-libs.mjs --check",
-    "ui:check": "node tools/vendor/pin-ui.mjs --check"
+    "ui:check": "node tools/vendor/pin-ui.mjs --check",
+    "build:site": "node tools/build-site.mjs"
   },
   "devDependencies": {
     "@dimforge/rapier3d-compat": "0.21.0",

@@ -24,7 +24,8 @@ jobs:
       # the hackbuild-ui pin: tarball, sha-256, SHA256SUMS, package.json and lockfile agree
       - run: node tools/vendor/pin-ui.mjs --check
       - run: npm ci
-      - run: npm run build:public
+      # the public page and the plain files beside it (tools/build-site.mjs)
+      - run: npm run build:site
         env:
           SUITE_URL: https://hackbuild.github.io/hackbuild-suite/
       - run: node --test tools/test/build-app.test.mjs
@@ -33,7 +34,7 @@ jobs:
           BLOCKED_NAMES: ${{ secrets.BLOCKED_NAMES }}
         run: |
           node -e '
-          const s = require("fs").readFileSync("dist/dog-simulator-public.html", "utf8");
+          const s = require("fs").readFileSync("dist/site/index.html", "utf8");
           const block = (id) => (s.match(new RegExp("id=\"" + id + "\">([\\s\\S]*?)</script>")) || [])[1].trim();
           const fail = (m) => { console.error(m); process.exit(1); };
           // exactly the three files in app/assets: the dog, the human and the voice clip
@@ -51,14 +52,15 @@ jobs:
           for (const n of (process.env.BLOCKED_NAMES || "").split(",").map((x) => x.trim()).filter(Boolean)) if (text.includes(n)) fail("a blocked name is in the page");
           console.log("public file clean");
           '
-      - run: mkdir -p _site && cp dist/dog-simulator-public.html _site/index.html
-      # the human as a plain file for the suite's character and room explorers; pages sends
-      # access-control-allow-origin: * on every file, so a cors fetch from a cross origin
-      # isolated page loads it (coep credentialless or require-corp)
-      - run: mkdir -p _site/assets && cp app/assets/human.glb _site/assets/human.glb
-      # the isolation worker: the suite's home registers it for this scope before its yard frame
-      # loads, so the frame gets coop and coep under the suite's own policy (same origin on pages)
-      - run: cp app/pages/coi-sw.js _site/coi-sw.js
+      # dist/site: index.html, coi-sw.js (the isolation worker), and assets/ with the owner's dog,
+      # human and voice clip, the clip pack and the physics core as plain files for the suite's yard,
+      # character and room; pages sends access-control-allow-origin: * on every file, so a cors fetch
+      # from a cross origin isolated page loads them (coep credentialless or require-corp)
+      - name: check the plain files
+        run: |
+          for f in dog.glb human.glb voice.wav; do cmp app/assets/$f dist/site/assets/$f; done
+          test "$(ls dist/site/assets | sort | tr '\n' ' ')" = "anims.json dog.glb human.glb rapier.LICENSE.txt rapier.mjs voice.wav "
+      - run: cp -R dist/site _site
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
         with:
