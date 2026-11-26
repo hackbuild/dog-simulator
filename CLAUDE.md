@@ -22,7 +22,8 @@ How an agent works in dog-simulator. RULES.md is absolute and wins over this fil
 
 ## What lives here
 
-    app/src/     sim, dog, human, world, view, io, main.ts
+    app/src/     the page: main.ts mounts Yard (@hackbuild/agents-views/yard), page.html
+                 holds the bar; the yard's modules live in hackbuild-agents
     packages/    app-only workspace packages; libraries come from the sibling repos
     legacy/      the handoff pack as received, byte identical, for parity
     vendor/      built library packages from the sibling repos, pinned in vendor/lock.json

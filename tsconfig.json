@@ -5,6 +5,7 @@
     "declaration": false,
     "noEmit": true,
     "allowImportingTsExtensions": true,
+    "skipLibCheck": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"]
   },
   "include": ["app/src/**/*.ts"]

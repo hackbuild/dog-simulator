@@ -1,7 +1,6 @@
 // build-app: the app as one self contained HTML file.
-// esbuild bundles app/src/main.ts with three.js, the glTF loader, orbit controls and Rapier;
-// the scope modules listed in app/src/scope.json are joined into one module scope (the legacy
-// layout, kept so golden traces hold). Fonts are embedded from @fontsource. The dog model comes
+// esbuild bundles app/src/main.ts, the shell, with the yard (@hackbuild/agents-views/yard, vendored),
+// three.js, the glTF loader, orbit controls and Rapier. Fonts are embedded from @fontsource. The dog model comes
 // from assets-local/dog.glb; the human model and voice reference are embedded only when
 // assets-local holds them, otherwise the page builds its placeholder human. buildApp({ public:
 // true }) reads nothing from assets-local: it embeds the owner's dog, human and voice clip from
@@ -39,36 +38,11 @@ export function hbuiCss() {
   return sub(css, '@import "./tokens.css";', readFileSync(join(HBUI, "tokens.css"), "utf8")).replace(/^.*https:\/\/fonts\.googleapis\.com.*$/m, "");
 }
 
-export function scopeSource() {
-  const order = JSON.parse(readFileSync(join(SRC, "scope.json"), "utf8"));
-  const parts = order.map((f) => `// ---- app/src/${f}\n` + readFileSync(join(SRC, f), "utf8"));
-  return [
-    "import * as THREE from 'three/webgpu';",
-    "import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';",
-    "import { OrbitControls } from 'three/addons/controls/OrbitControls.js';",
-    "import * as RAPIER_MODULE from '@dimforge/rapier3d-compat';",
-    "import * as HMN from '@hackbuild/motion-net';",
-    "import * as HGAIT from '@hackbuild/gait';",
-    "import * as HTUNE from '@hackbuild/tunables';",
-    "import * as HSENSE from '@hackbuild/senses';",
-    "import * as HDRIVE from '@hackbuild/drives';",
-    "import * as HCAM from '@hackbuild/cameras';",
-    "import * as HWEIGHT from '@hackbuild/weights';",
-    "import * as HBV from '@virgilvox/hackbuild-ui/vanilla';",
-    // the suite link base; empty hides every suite link (set SUITE_URL at publish)
-    `const SUITE_URL = ${JSON.stringify(process.env.SUITE_URL ?? "")};`,
-    "{",
-    ...parts,
-    "}",
-  ].join("\n");
-}
-
-const scopePlugin = {
-  name: "hackle-scope",
+// the yard (@hackbuild/agents-views/yard) and the libraries under it import bare 'three'; point it
+// at the WebGPU build, as the legacy import map did, so one three.js runs the page
+const threePlugin = {
+  name: "three-webgpu",
   setup(b) {
-    b.onResolve({ filter: /^virtual:hackle-scope$/ }, () => ({ path: "hackle-scope", namespace: "hackle" }));
-    b.onLoad({ filter: /.*/, namespace: "hackle" }, () => ({ contents: scopeSource(), loader: "js", resolveDir: SRC }));
-    // the addons import bare 'three'; point it at the WebGPU build as the legacy import map did
     b.onResolve({ filter: /^three$/ }, () => ({ path: join(NM, "three/build/three.webgpu.js") }));
   },
 };
@@ -102,7 +76,9 @@ export function licenceComment() {
 export async function buildApp(opts = {}) {
   const r = await build({
     entryPoints: [join(SRC, "main.ts")], bundle: true, format: "esm", platform: "browser", target: "es2023",
-    minify: true, legalComments: "inline", write: false, metafile: true, plugins: [scopePlugin], logLevel: "warning",
+    minify: true, legalComments: "inline", write: false, metafile: true, plugins: [threePlugin], logLevel: "warning",
+    // the suite link base; empty hides every suite link (set SUITE_URL at publish)
+    define: { SUITE_URL: JSON.stringify(process.env.SUITE_URL ?? "") },
   });
   const js = r.outputFiles[0].text.split("</script").join("<\\/script");
   const stub = !!opts.stub, pub = !stub && !!opts.public;

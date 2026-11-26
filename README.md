@@ -7,20 +7,26 @@ Play it: https://hackbuild.github.io/dog-simulator/
 The parts it is built from, as tools: the suite, <https://hackbuild.github.io/hackbuild-suite/>.
 
 Status: 2026-11-22, the handoff build (in `legacy/`) moved here and made
-deterministic. `app/src` holds the app; `legacy/` holds the pack as
+deterministic. Since 2026-11-26 the yard itself, its stage, rack, setup
+panel and command palette, is `Yard` in `@hackbuild/agents-views`
+(hackbuild-agents, `packages/agents-views/yard`, vendored in `vendor/`);
+`app/src` is the thin page over it: the bar, the owner's models and voice
+clip, and the bundled physics core. `legacy/` holds the pack as
 received and its deterministic copy; `scenarios/` holds golden traces.
 Licence status, 2026-11-23: the app build is MIT throughout again. The
 vendored `@hackbuild/motion-net` is the clean-room MIT rewrite
 (hackbuild-motion a509079 to babcc9f, written from a functional
 specification and the published paper by builders who did not read the
-CC-BY-NC code), and `app/src/dog/neural.js` was rewritten against it.
+CC-BY-NC code), and the yard's `dog/neural.js` was rewritten against it.
 The network weights stay CC-BY-NC-4.0, are fetched at run time and are
 not in any build.
 
 ## Build
 
     npm run build:app      # dist/dog-simulator.html
-    npm run build:public   # dist/dog-simulator-public.html, the page Pages publishes
+    npm run build:public   # dist/dog-simulator-public.html, the public page
+    npm run build:site     # dist/site, what Pages publishes: the public page, coi-sw.js and
+                           # assets/ (dog.glb, human.glb, voice.wav, anims.json, rapier.mjs)
     npm run build:stub     # dist/dog-simulator-stub.html, no binary asset (scenario goldens)
     npm run build:legacy   # dist/hackle-legacy.html, the pack build byte for byte
     npm run build:det      # dist/hackle-det.html, the deterministic legacy build
@@ -33,6 +39,10 @@ embeds the three files committed in `app/assets/` (`dog.glb`, `human.glb`,
 decision of 2026-11-25. `build:stub` embeds no binary at all: a box dog
 written from code (`tools/stub-dog.mjs`), the placeholder human and no
 voice clip, the file the public scenario goldens run on. CI builds both.
+`build:site` adds the plain files the suite's yard fetches (Pages sends
+`access-control-allow-origin: *`): of the owner's files only the three in
+`app/assets/`, plus the clip pack (CC0-1.0) and the Rapier core
+(Apache-2.0, its licence beside it).
 The neural gait weights (CC-BY-NC-4.0) and YOLOv8n (AGPL-3.0) are never
 bundled; the page fetches them from their upstream sources when you load
 them, and says the licence where you press load. Licences of every asset
@@ -69,7 +79,7 @@ runtime from the pinned upstream commit with a SHA-256 check; the page
 states the licence when they load. The code that runs them is MIT:
 `@hackbuild/motion-net` (the network on wasm SIMD128 in a worker, and its
 `QuadrupedHost`, a `@hackbuild/gait` LocomotionBackend) and
-`app/src/dog/neural.js` (rest pose computed from the Idle style pose in the
+the yard's `dog/neural.js` (rest pose computed from the Idle style pose in the
 weights, paw targets and body height, pitch and roll onto this dog, the
 switch rules). The layer `L.neural` starts off and loads the network when
 you turn it on, so the file opens offline.

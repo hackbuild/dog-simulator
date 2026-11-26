@@ -14,7 +14,7 @@ Lockstep scenarios on a built file. `list.mjs` holds the scenarios,
   the app build is held to them.
 - `golden/neural/`: the scenarios for handoff issues 1 and 3 with the
   neural gait on, app build: `@hackbuild/motion-net` (MIT, clean room)
-  runs the network and its `QuadrupedHost`, `app/src/dog/neural.js` maps
+  runs the network and its `QuadrupedHost`, the yard's `dog/neural.js` (hackbuild-agents) maps
   it onto the dog. Needs `assets-local/quadruped.bin` (CC-BY-NC-4.0),
   served by the runner in place of the pinned upstream URL. `--nnacc` is
   ignored since 2026-11-23: the engine has one fixed order of sums.

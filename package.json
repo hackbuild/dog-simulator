@@ -50,6 +50,7 @@
     "vitest": "5.0.3"
   },
   "dependencies": {
+    "@hackbuild/agents-views": "0.2.0",
     "@hackbuild/cameras": "0.1.0",
     "@hackbuild/drives": "0.1.0",
     "@hackbuild/gait": "0.1.0",
