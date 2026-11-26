@@ -6,6 +6,7 @@
 //   node tools/vendor-libs.mjs              copy the packages listed in vendor/lock.json
 //   node tools/vendor-libs.mjs --check      check vendor/ against the hashes in vendor/lock.json
 //   node tools/vendor-libs.mjs --add hackbuild-agents tunables
+//   --unpushed pins a commit not pushed yet (a builder's local landing; push before CI)
 //
 // The package and its crate must be clean, HEAD pushed and the dist built at HEAD; the commit and
 // the sha256 of every copied file go into vendor/lock.json.
@@ -18,6 +19,8 @@ const ROOT = resolve(import.meta.dirname, "..");
 const VENDOR = join(ROOT, "vendor");
 const LOCK = join(VENDOR, "lock.json");
 const SIBLINGS = resolve(ROOT, "..");
+const argv = process.argv.slice(2).filter((a) => a !== "--unpushed");
+const UNPUSHED = process.argv.includes("--unpushed");
 
 const sha = (p) => createHash("sha256").update(readFileSync(p)).digest("hex");
 const walk = (d) => readdirSync(d).flatMap((f) => (statSync(join(d, f)).isDirectory() ? walk(join(d, f)) : [join(d, f)]));
@@ -35,7 +38,8 @@ function copy(repo, name) {
   const git = (...a) => execFileSync("git", ["-C", src, ...a], { encoding: "utf8" }).trim();
   // only the package and its crate need to match the commit; other work in the repo is not copied
   if (git("status", "--porcelain", "--untracked-files=no", "--", `packages/${name}`, `crates/${name}`) || git("status", "--porcelain", "--", `packages/${name}/src`, `crates/${name}/src`)) throw new Error(`${repo} has uncommitted changes in ${name}`);
-  if (git("rev-list", "--count", "@{u}..HEAD") !== "0") throw new Error(`${repo} has commits not pushed; push them first so the pin resolves`);
+  // --unpushed: a builder pins a local commit; the coordinator pushes it before CI resolves the pin
+  if (!UNPUSHED && git("rev-list", "--count", "@{u}..HEAD") !== "0") throw new Error(`${repo} has commits not pushed; push them first so the pin resolves`);
   const commit = git("rev-parse", "HEAD");
   const pkgDir = join(src, "packages", name);
   if (!existsSync(join(pkgDir, "dist"))) throw new Error(`${repo}/packages/${name}/dist is missing; build it there first`);
@@ -59,7 +63,6 @@ function copy(repo, name) {
   console.log(`vendor-libs: ${pj.name} ${pj.version} from ${repo} at ${commit.slice(0, 12)}`);
 }
 
-const argv = process.argv.slice(2);
 if (argv[0] === "--check") {
   let bad = 0;
   for (const [name, e] of Object.entries(lock.packages)) {

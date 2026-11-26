@@ -199,6 +199,41 @@
         "dist/store.js": "d41d4af0096d67834a94dfe4a3b1c6529e7728c20d8236045438cd2fb529b47c",
         "package.json": "f373dadac0783db890d03ceaa0f9a29e562d5118072fa7589b2d676b2b13ae14"
       }
+    },
+    "agents-views": {
+      "repo": "hackbuild/hackbuild-agents",
+      "path": "packages/agents-views",
+      "commit": "f8fa06e7b2ef5e5b09cb9a254f3345fd9505f6ff",
+      "version": "0.2.0",
+      "files": {
+        "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
+        "README.md": "f8a4d822d31fb7198f6cf58b41e5f53071861c26ed36a14f3480562a1cd11d6d",
+        "dist/associations-table.d.ts": "8d233dcad15fb561ad13f0dc586e6ffbb8299ea43af5dd4058bcbb5f931e5751",
+        "dist/associations-table.js": "347117d4e50a317d4d8aca00f284e5721522f505243608d08c2c705d0139d4a8",
+        "dist/dom.d.ts": "bad68566eb806e4611e1cd7c74fd914573abe500baabb4615583e22494002601",
+        "dist/dom.js": "494162c04f61e78f0ce3da06925f067df0cc5e197db3c9a627fa2ec1379ddd43",
+        "dist/drives-bars.d.ts": "c84741e3eb052b7e53471f69993abd71eac46320472cbd0bcd4a797492e1a75c",
+        "dist/drives-bars.js": "6724938baa81884424a853e891874afaf362f20caf243d4fe3c017e897435f8c",
+        "dist/elements.d.ts": "7afbd3af2f1885855dcc8fbea3fd7d31694561998c74732d5602148beb664eec",
+        "dist/elements.js": "64cfbd79f816740dd074e4953ae08c29ca25578d5f75a55d68f74ca01dc08a9a",
+        "dist/eye-inset.d.ts": "0fa6d73bc44fb9341d04bf5128932da8e20ce2fb792aeee54c0b33166f527caf",
+        "dist/eye-inset.js": "13943577de35dda2ada0218a7912d3fd0c2da2938e2443f927af6b3f9971edb5",
+        "dist/index.d.ts": "e8518889b380f6e3779bba632b7fad595348adbd17cdbe1661ee70479240913f",
+        "dist/index.js": "40ca84a49e0ba6c497be629d94cee3d62a51cf4fbe46bb14eac196754fb7376e",
+        "dist/map-inset.d.ts": "437ecb3d46c321a579b09029852b725a6865fcbbd26fad6f41059f0b85c48e5c",
+        "dist/map-inset.js": "3f4cd886490d3d1ad84fcfb8a77115ed4e6ab9e89357fa69392a4a9961dcb139",
+        "dist/plan-log.d.ts": "a8bf72ec6fe217a6565f85346a9ce3ec9c8c5b71dc7ea173c21afcb40dd60c74",
+        "dist/plan-log.js": "ded9b018076b515c52e2c3e075e178e76d11129d4695f96a0828aee5834d0e49",
+        "dist/single.d.ts": "97e1818573679b5d3d697406abd3e5f1e9cd00da1f2783ab236912180462f5be",
+        "dist/single.js": "24fe09dec325ee4495255eba879358487b86a4d92721c0a01c52d65acddaa81c",
+        "dist/vue.d.ts": "60ce51e9d31d49f339fd850d2dce865e1867622221fcc4922d54039ad30d037a",
+        "dist/vue.js": "97b7073ca28663a12ca97070d4362b260a6715867f6e27bf7c957b8470a38316",
+        "dist/yard.d.ts": "9ca6793867c89e949c87fd6c7246db65a2d70e44117f678b99982d37f9f939e7",
+        "dist/yard.js": "d4c716abacd43ddca433cb21db5a695c7422e218c508aa0812caffa834b090a6",
+        "dist/yard/scope.d.ts": "7629e911f937176b76570d67358d6836b546fbf632f7a837eb94435c42258bd8",
+        "dist/yard/scope.js": "b31bcdd99d3d0773057723e8bde12bc4875fca45798fb5fc7710f5c082258d80",
+        "package.json": "f4d0b0e0c4e86f4720de1bd01823408ade088e360bd77ffe70ddeaacfd742bb9"
+      }
     }
   }
 }
