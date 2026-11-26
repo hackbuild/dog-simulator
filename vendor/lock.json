@@ -203,11 +203,11 @@
     "agents-views": {
       "repo": "hackbuild/hackbuild-agents",
       "path": "packages/agents-views",
-      "commit": "f8fa06e7b2ef5e5b09cb9a254f3345fd9505f6ff",
-      "version": "0.2.0",
+      "commit": "9a22c04ab9cff932fe39d4b7189880b628077aeb",
+      "version": "0.2.1",
       "files": {
         "LICENSE": "23d0dbb979a14bf6224315a5ad18e04b1f8e6079d14c8c2e5d7902f353ec8ecb",
-        "README.md": "f8a4d822d31fb7198f6cf58b41e5f53071861c26ed36a14f3480562a1cd11d6d",
+        "README.md": "ad0eef932818fa95bf52248e1616a15fb67f06aa5ed5d4b2f898d81422af83da",
         "dist/associations-table.d.ts": "8d233dcad15fb561ad13f0dc586e6ffbb8299ea43af5dd4058bcbb5f931e5751",
         "dist/associations-table.js": "347117d4e50a317d4d8aca00f284e5721522f505243608d08c2c705d0139d4a8",
         "dist/dom.d.ts": "bad68566eb806e4611e1cd7c74fd914573abe500baabb4615583e22494002601",
@@ -228,11 +228,11 @@
         "dist/single.js": "24fe09dec325ee4495255eba879358487b86a4d92721c0a01c52d65acddaa81c",
         "dist/vue.d.ts": "60ce51e9d31d49f339fd850d2dce865e1867622221fcc4922d54039ad30d037a",
         "dist/vue.js": "97b7073ca28663a12ca97070d4362b260a6715867f6e27bf7c957b8470a38316",
-        "dist/yard.d.ts": "9ca6793867c89e949c87fd6c7246db65a2d70e44117f678b99982d37f9f939e7",
-        "dist/yard.js": "d4c716abacd43ddca433cb21db5a695c7422e218c508aa0812caffa834b090a6",
+        "dist/yard.d.ts": "7508534c95be9bb6802ea847bc3d2ee075febf1d14a5cdecfd0cff94723b462b",
+        "dist/yard.js": "2a3698de4753c7a0885f78daa4f228ca9a59f204d261267001156922ad296118",
         "dist/yard/scope.d.ts": "7629e911f937176b76570d67358d6836b546fbf632f7a837eb94435c42258bd8",
-        "dist/yard/scope.js": "b31bcdd99d3d0773057723e8bde12bc4875fca45798fb5fc7710f5c082258d80",
-        "package.json": "f4d0b0e0c4e86f4720de1bd01823408ade088e360bd77ffe70ddeaacfd742bb9"
+        "dist/yard/scope.js": "2b516f286d70917669921f67a6cf0f442961725517f93fa075aeaf34fc4ef64a",
+        "package.json": "a36f511b27ea5b33af4e31e139f147f1c041c9fe9599a9c0d8f0a84873967f4a"
       }
     }
   }

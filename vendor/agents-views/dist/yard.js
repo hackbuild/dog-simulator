@@ -58,11 +58,15 @@ export async function mountYard(host, o) {
         o.bar.append(...barParts);
     }
     else {
-        // no bar: setup and commands sit at the end of the verb row; the chips stay off the page
-        const tool = root.querySelector("#tool");
+        // no bar: setup and commands float in the stage corner, apart from the verbs; no chips
+        const corner = doc.createElement("div");
+        corner.id = "corner";
+        corner.setAttribute("aria-label", "setup and commands");
+        corner.setAttribute("role", "group");
         for (const p of barParts)
             if (p.tagName === "BUTTON")
-                tool?.append(p);
+                corner.append(p);
+        root.querySelector("#stage")?.prepend(corner);
     }
     host.replaceChildren(root);
     const cleanups = [];

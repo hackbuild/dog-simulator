@@ -23,7 +23,8 @@ export interface YardOptions {
     hub?: string;
     /**
      * Where the readout chips, the setup button and the command button go, such as the host's
-     * header. Left out, the two buttons join the verb row and the chips are not shown.
+     * header. Left out, the two buttons float in the stage's top right corner, apart from the verbs,
+     * and the chips are not shown.
      */
     bar?: HTMLElement | null;
     /**
