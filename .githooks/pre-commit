@@ -1,5 +1,6 @@
 #!/bin/sh
-# RULES.md Language on the staged text files. CI runs the same linter over the repo.
-files=$(git diff --cached --name-only --diff-filter=ACM | grep -Ev '\.(png|jpe?g|gif|webp|glb|gltf|bin|wasm|onnx|gguf|wav|mp3|ogg|ico|woff2?|ttf|lock)$' | grep -Ev "^(LICENSES/|RULES.md|CLAUDE.md|tools/|legacy/)" | grep -v 'package-lock.json')
+# RULES.md Language on the staged text files. CI runs the same linter over the repo, with the
+# same paths left out (vendor/ is built output copied from the sibling repos).
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -Ev '\.(png|jpe?g|gif|webp|glb|gltf|bin|wasm|onnx|gguf|wav|mp3|ogg|ico|woff2?|ttf|lock)$' | grep -Ev "^(vendor/|LICENSES/|RULES.md|CLAUDE.md|tools/|legacy/)" | grep -v 'package-lock.json')
 [ -z "$files" ] && exit 0
 exec node tools/lint-voice.mjs $files
