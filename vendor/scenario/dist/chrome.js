@@ -6,6 +6,7 @@ import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import puppeteer, {} from "puppeteer-core";
 import { serve } from "./routes.js";
+/** Where Chrome lives on macOS. */
 export const CHROME_MAC = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const CANDIDATES = [CHROME_MAC, "/usr/bin/google-chrome", "/usr/bin/google-chrome-stable", "/usr/bin/chromium", "/usr/bin/chromium-browser"];
 /** The first Chrome found, or null. `HB_CHROME` overrides. */
@@ -15,6 +16,7 @@ export function findChrome() {
         return env;
     return CANDIDATES.find((p) => existsSync(p)) ?? null;
 }
+/** The Chrome flags every run gets: autoplay without a gesture, muted audio, file access from files. */
 export const DEFAULT_ARGS = ["--autoplay-policy=no-user-gesture-required", "--mute-audio", "--allow-file-access-from-files"];
 /**
  * Software GL, the same on every machine; for lockstep runs. Under these
@@ -22,6 +24,7 @@ export const DEFAULT_ARGS = ["--autoplay-policy=no-user-gesture-required", "--mu
  * second (measured 2026-11-22), so real frame rate runs use `gpu: "default"`.
  */
 export const SWIFTSHADER_ARGS = ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-unsafe-webgpu"];
+/** Launches the system Chrome with routing and opens a page; throws when no Chrome is found. */
 export async function open(o) {
     const chrome = o.chrome ?? findChrome();
     if (!chrome)

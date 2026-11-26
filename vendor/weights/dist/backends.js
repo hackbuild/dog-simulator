@@ -4,6 +4,7 @@
  * never has to sit in one buffer. Parts are Blobs, which lets the browser
  * keep them on disk.
  */
+/** A backend that keeps parts in memory for this tab only. */
 export function memoryBackend() {
     const metas = new Map();
     const parts = new Map();
@@ -40,7 +41,7 @@ function req(r) {
     });
 }
 /**
- * IndexedDB parts, the layout earlier builds used: one `kv` store with
+ * IndexedDB parts: one `kv` store with
  * `<key>:meta` and `<key>:<n>` records. Works on file://.
  */
 export function idbBackend(opts = {}) {

@@ -236,8 +236,11 @@ export class PerceptMemory {
         this.inner.free();
     }
 }
+/** Grid cell never observed. */
 export const UNKNOWN = 0;
+/** Grid cell seen free. */
 export const FREE = 1;
+/** Grid cell marked occupied. */
 export const OCCUPIED = 2;
 /** Occupancy grid from eye depth renders, with A* paths and frontiers. */
 export class OccupancyGrid {

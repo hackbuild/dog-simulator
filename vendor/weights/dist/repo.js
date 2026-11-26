@@ -57,18 +57,26 @@ export async function ortExternalData(files, graphPath) {
     }
     return out;
 }
+const REMOTE = /^https?:\/\//;
 /**
  * A cache object for transformers.js (`env.useCustomCache = true;
  * env.customCache = transformersCache(store, ...)`). URLs that
  * `licenceFor` names are downloaded through the store on `match`, so they
  * get parts, resume and the licence line; other URLs pass through to
- * transformers.js's own fetch and are stored on `put`.
+ * transformers.js's own fetch and are stored on `put`. Keys that are not
+ * http(s) URLs (the local model path) miss without a fetch.
  */
 export function transformersCache(store, opts) {
-    const urlOf = (r) => (typeof r === "string" ? r : r.url);
+    const urlOf = (r) => {
+        const u = typeof r === "string" ? r : r.url;
+        return REMOTE.test(u) && opts.keyFor ? opts.keyFor(u) : u;
+    };
     return {
         async match(req) {
             const url = urlOf(req);
+            // transformers.js asks for its local path first (/models/<repo>/...): never fetch that from the page origin
+            if (!REMOTE.test(url))
+                return undefined;
             const licence = opts.licenceFor(url);
             if (licence !== null) {
                 const o = opts.onProgress ? { onProgress: opts.onProgress } : {};
@@ -89,6 +97,8 @@ export function transformersCache(store, opts) {
         },
         async put(req, res) {
             const url = urlOf(req);
+            if (!REMOTE.test(url))
+                return;
             if (await store.has(url))
                 return;
             await store.put({ key: url, url, licence: opts.licenceFor(url) ?? "unknown, not stated by the caller" }, await res.blob());

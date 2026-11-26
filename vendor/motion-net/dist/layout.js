@@ -1,6 +1,7 @@
 // Data facts of the published quadruped network: bone order, input and
 // output layout, style labels. Fixed by training; the host reads them from
 // here and checks the manifest against them.
+/** The 27 bones of the network's dog skeleton, in the order of its input and output. */
 export const BONES = [
     "Hips",
     "Spine",
@@ -30,6 +31,7 @@ export const BONES = [
     "Tail1",
     "Tail1Site",
 ];
+/** The number of bones in `BONES`. */
 export const BONE_COUNT = 27;
 /** Parent index per bone, -1 for the root. */
 export const PARENTS = BONES.map((name, i) => {
@@ -41,6 +43,7 @@ export const PARENTS = BONES.map((name, i) => {
         return 2;
     return i - 1;
 });
+/** The style labels the network was trained on. */
 export const STYLES = ["Canter", "Idle", "Jump", "Lie", "Pace", "Sit", "Stand", "Trot", "Walk"];
 /** Paws in contact order: front left, front right, hind left, hind right. */
 export const PAWS = ["front left", "front right", "hind left", "hind right"];
@@ -74,7 +77,9 @@ export const OUT = {
     style: 331,
     length: 412,
 };
+/** Frames in one prediction. */
 export const FRAMES = 16;
 /** Seconds between predicted frames and between trajectory samples. */
 export const FRAME_DT = 1 / 30;
+/** Trajectory samples in one network input. */
 export const TRAJ_SAMPLES = 16;

@@ -63,6 +63,7 @@ export function countIds(px, w, h, n) {
     }
     return { count, sx, sy };
 }
+/** An eye on an agent's head that renders an object ID buffer and a depth buffer and reads them back. */
 export class Eye {
     renderer;
     scene;

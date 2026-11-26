@@ -1,8 +1,8 @@
 /**
  * One weight store over OPFS, Cache Storage, IndexedDB parts and memory.
  *
- * A download is written as parts of `partBytes` (default 128 MB, the size
- * earlier builds use) with a meta record updated after each part. An
+ * A download is written as parts of `partBytes` (default 128 MB) with a
+ * meta record updated after each part. An
  * interrupted download keeps what it has; the next `get` asks the server
  * for the rest with a Range request guarded by If-Range, and starts over
  * when the server answers 200 instead of 206 or when the 206 carries a
@@ -10,6 +10,7 @@
  * the bytes stream in, and checked when the reference carries one.
  */
 import { type Backend, type BackendName, type Meta } from "./backends.js";
+/** A weight file to fetch: URL, cache key, SHA-256 when known, and the weight licence. */
 export interface WeightRef {
     url: string;
     /** Cache key. Default: the URL. Use `gguf:<repo>/<file>` style keys to match older caches. */
@@ -19,6 +20,7 @@ export interface WeightRef {
     /** Weight licence, stated on first load. Required: every model reference names one. */
     licence: string;
 }
+/** Download progress of one file; `total` and `fraction` are null when the server sent no length. */
 export interface Progress {
     key: string;
     loaded: number;
@@ -28,22 +30,32 @@ export interface Progress {
     /** true while existing parts are read back for a resume. */
     resuming: boolean;
 }
+/** Options for one `get`: a progress callback, an abort signal, and whether to resume. */
 export interface GetOptions {
     onProgress?: (p: Progress) => void;
     signal?: AbortSignal;
     /** Continue an interrupted download. Default true. */
     resume?: boolean;
 }
+/** The error the store throws, with a `code` of "http", "sha256", "quota", "abort" or "range". */
 export declare class WeightError extends Error {
     readonly code: "http" | "sha256" | "quota" | "abort" | "range";
     constructor(code: WeightError["code"], message: string);
 }
+/**
+ * Options for `openWeightStore`: backend order, part size, fetch, the licence notice, storage
+ * estimate, persistence and Web Locks.
+ */
 export interface StoreOptions {
     /** Backend order to try, or backend objects. Default "auto": opfs, idb, cache, memory, skipping what is missing. */
     backends?: "auto" | readonly (BackendName | Backend)[];
     partBytes?: number;
     fetch?: typeof fetch;
-    /** Called once per key per store with the licence line. Default console.info. */
+    /**
+     * Called once per model per store with the licence line (a Hugging Face
+     * repo, or the URL's folder, is one model). Default: one console.info
+     * line per model per page session; pass `() => {}` to silence it.
+     */
     onNotice?: (line: string) => void;
     /** navigator.storage.estimate, injectable. */
     estimate?: () => Promise<{
@@ -79,12 +91,17 @@ export interface DownloadRow {
     /** Callers waiting on this download. */
     waiters: number;
 }
+/** Used and quota bytes of this origin's storage, and whether a file of a given size fits. */
 export interface Estimate {
     used: number | null;
     quota: number | null;
-    /** True when quota is unknown or free space is at least 1.2 times `bytes` (as earlier builds did). */
+    /** True when quota is unknown or free space is at least 1.2 times `bytes`. */
     fits(bytes: number): boolean;
 }
+/**
+ * A weight store: get with resume, put files the user supplied, list, evict, cancel, track
+ * downloads and estimate space.
+ */
 export interface WeightStore {
     readonly backend: Backend;
     get(ref: WeightRef, opts?: GetOptions): Promise<Blob>;
@@ -117,3 +134,7 @@ export interface WeightStore {
  * that throws on open (OPFS on file://, a blocked IndexedDB) is skipped.
  */
 export declare function openWeightStore(opts?: StoreOptions): Promise<WeightStore>;
+/** The model a weight key belongs to: its Hugging Face repo, the folder of any other URL, or a non URL key as is. */
+export declare function modelOf(key: string): string;
+/** True the first time a model is named in this page session; shared by every hackbuild package through a global symbol. */
+export declare function firstInSession(model: string): boolean;

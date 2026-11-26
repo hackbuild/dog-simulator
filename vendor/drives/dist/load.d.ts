@@ -1,3 +1,4 @@
+/** Where the wasm comes from: a URL or Response to fetch, bytes, or a compiled module. */
 export type WasmSource = URL | string | Response | ArrayBuffer | ArrayBufferView | WebAssembly.Module;
 export declare function wasmReady(): boolean;
 /** Instantiates the wasm. Later calls return the first load. */

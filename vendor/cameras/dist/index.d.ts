@@ -1,9 +1,12 @@
+/** Uniform numbers in [0, 1), injected so a seed replays the same shake. */
 export type Rng = () => number;
+/** A point or offset in metres, y up. */
 export interface V3 {
     x: number;
     y: number;
     z: number;
 }
+/** The camera surface the rigs write: a three PerspectiveCamera fits, nothing is imported. */
 export interface CameraLike {
     position: {
         set(x: number, y: number, z: number): unknown;
@@ -43,6 +46,7 @@ export declare class Shake {
 }
 /** Places a camera on an orbit around a target: yaw 0 behind +Z, pitch up from the ground. */
 export declare function orbitPosition(target: V3, yaw: number, pitch: number, dist: number): V3;
+/** Options of {@link Follow}; every field has a default. */
 export interface FollowOptions {
     distance?: number;
     minDistance?: number;
@@ -72,6 +76,7 @@ export declare class Follow {
     /** `heading` is the target's yaw (0 faces +Z). */
     update(p: V3, heading: number, dt: number, snap?: boolean): void;
 }
+/** Options of {@link Group}; every field has a default. */
 export interface GroupOptions {
     center?: V3;
     pitch?: number;
@@ -124,6 +129,7 @@ export declare class Orbit {
     pan(right: number, forward: number): void;
     apply(): void;
 }
+/** An object with a scale, such as a three Object3D head bone. */
 export interface Scalable {
     scale: {
         x: number;
@@ -134,7 +140,7 @@ export interface Scalable {
 }
 /**
  * A first person eye on an agent's head. `render` hides the head (scaled
- * to 0.001, learned in earlier builds: visible false would hide the whole subtree)
+ * to 0.001, since visible false would hide the whole subtree)
  * for this render only, then restores it.
  */
 export declare class FirstPerson {

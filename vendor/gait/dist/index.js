@@ -4,13 +4,17 @@
 import { assertReady, loadWasm, loadWasmSync } from "./load.js";
 import * as wasm from "./wasm/gait.js";
 const PKG = "@hackbuild/gait";
+/** Loads the wasm. With no argument the inlined copy is used, which works from file://. */
 export async function load(source) {
     await loadWasm(source);
 }
+/** Loads the wasm synchronously from bytes or a compiled module. */
 export function loadSync(source) {
     loadWasmSync(source);
 }
+/** The gait names in the order the footfall tables use. */
 export const GAIT_NAMES = ["walk", "pace", "trot", "canter", "gallop"];
+/** The footfall tables of the five quadruped gaits, read from the wasm core. */
 export function quadrupedTables() {
     assertReady(PKG);
     const f = wasm.quadrupedTables();
@@ -137,6 +141,7 @@ export class BodyDynamics {
         this.core.free();
     }
 }
+/** The eight tail wag modes, in the order `WagInput.modeWeights` uses. */
 export const WAG_MODES = ["still", "slow wide", "fast small", "loose broad", "helicopter", "high stiff", "tucked", "tip flick"];
 /** Tail wag through a spring chain, with eight wag modes. */
 export class TailWag {
@@ -168,6 +173,7 @@ export class Ears {
         this.core.free();
     }
 }
+/** Default steering settings, tuned on a 0.78 m dog. */
 export const DEFAULT_STEER = { speed: 1.6, stopDistance: 0.3, clearance: 0.3, influence: 1.6, turnSlow: 3.2, turnFast: 1.6, fence: 0 };
 /** Potential field steering toward a goal; a pure function. */
 export function steer(pose, goal, obstacles = [], params = {}) {
@@ -205,6 +211,7 @@ export function solveLeg(a, b, c, target, pole) {
     const o = wasm.solveLeg(Float64Array.from([...a, ...b, ...c]), Float64Array.from(target), Float64Array.from(pole));
     return { upper: [o[6], o[7], o[8], o[9]], lower: [o[10], o[11], o[12], o[13]], reached: o[14] === 1 };
 }
+/** The golden scenario run in wasm, for the native and wasm agreement test. */
 export function goldenTrace(seed) {
     assertReady(PKG);
     return wasm.goldenTrace(seed);

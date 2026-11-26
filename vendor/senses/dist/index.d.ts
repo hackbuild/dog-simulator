@@ -9,6 +9,7 @@ export declare function load(source?: WasmSource): Promise<void>;
 export declare function loadSync(source: ArrayBuffer | ArrayBufferView | WebAssembly.Module): void;
 /** The golden scenario run in wasm, for the native and wasm agreement test. */
 export declare function goldenTrace(seed: number): Float64Array;
+/** A point or velocity in metres, y up. */
 export type Vec3 = {
     x: number;
     y: number;
@@ -22,6 +23,7 @@ export type Vec3 = {
 export type CameraArray = Float64Array;
 /** A camera at a point looking along yaw (0 is +Z) and pitch (up positive). */
 export declare function cameraLook(pos: Vec3, yaw: number, pitch: number, fov: number, aspect: number, near?: number, far?: number): CameraArray;
+/** Options of {@link Saliency}; only `rng` is required. */
 export interface SaliencyOptions {
     rng: Rng;
     /** feature grid the frame is sampled to (default 80 by 40) */
@@ -45,6 +47,7 @@ export interface SaliencyOptions {
         motion?: number;
     };
 }
+/** Where the eye goes next: the winning map cell, its world point and the object it snapped to. */
 export interface Fixation {
     /** cell in the saliency map */
     x: number;
@@ -76,6 +79,7 @@ export declare class Saliency {
     shift(now: number, camera: CameraArray, objects: Vec3[], arousal: number): Fixation | null;
     free(): void;
 }
+/** Options of {@link Looming}; every field has a default. */
 export interface LoomOptions {
     /** startle under this tau in seconds (default 0.6) */
     tau?: number;
@@ -92,6 +96,7 @@ export declare class Looming {
     /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
     free(): void;
 }
+/** Options of {@link OdourField}; only `rng` is required. */
 export interface OdourOptions {
     rng: Rng;
     /** side of the square world in metres, centred on the origin (default 34) */
@@ -107,6 +112,7 @@ export interface OdourOptions {
     meander?: number;
     windHeading?: number;
 }
+/** One odour source for a step of {@link OdourField}. */
 export interface OdourSource {
     /** a small integer per source */
     id: number;
@@ -173,7 +179,9 @@ export declare class Sniffer {
     /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
     free(): void;
 }
+/** The mode of a {@link Tracker}: decide over a trail, follow it, surge upwind or cast crosswind. */
 export type TrackMode = "decide" | "trail" | "surge" | "cast";
+/** One tracker step: the mode, the waypoint to walk to, its speed and stop distance. */
 export interface TrackStep {
     mode: TrackMode;
     waypoint: {
@@ -200,6 +208,7 @@ export declare class Tracker {
     /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
     free(): void;
 }
+/** Options of {@link PerceptMemory}; only `rng` is required. */
 export interface VisionOptions {
     rng: Rng;
     /** half the horizontal field of view in rad (default 2.09, a 240 degree field) */
@@ -211,6 +220,7 @@ export interface VisionOptions {
     forgetAfter?: number;
     drift?: number;
 }
+/** What the caller knows of one object this frame; occlusion is answered by the caller. */
 export interface Sighting {
     pos: Vec3;
     vel?: Vec3;
@@ -219,6 +229,7 @@ export interface Sighting {
     hidden?: boolean;
     fixed?: boolean;
 }
+/** What {@link PerceptMemory.sense} returns for one object. */
 export interface Percept {
     visible: boolean;
     seen: number | null;
@@ -241,9 +252,13 @@ export declare class PerceptMemory {
     /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
     free(): void;
 }
+/** Grid cell never observed. */
 export declare const UNKNOWN = 0;
+/** Grid cell seen free. */
 export declare const FREE = 1;
+/** Grid cell marked occupied. */
 export declare const OCCUPIED = 2;
+/** Options of {@link OccupancyGrid}; every field has a default. */
 export interface GridOptions {
     /** cells per side (default 220) */
     cells?: number;
@@ -261,6 +276,7 @@ export interface GridOptions {
         z: number;
     };
 }
+/** A frontier between free and unknown cells: its centre, distance and size in cells. */
 export interface Frontier {
     x: number;
     z: number;

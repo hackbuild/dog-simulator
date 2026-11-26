@@ -1,8 +1,8 @@
 /**
  * One weight store over OPFS, Cache Storage, IndexedDB parts and memory.
  *
- * A download is written as parts of `partBytes` (default 128 MB, the size
- * earlier builds use) with a meta record updated after each part. An
+ * A download is written as parts of `partBytes` (default 128 MB) with a
+ * meta record updated after each part. An
  * interrupted download keeps what it has; the next `get` asks the server
  * for the rest with a Range request guarded by If-Range, and starts over
  * when the server answers 200 instead of 206 or when the 206 carries a
@@ -11,6 +11,7 @@
  */
 import { cacheBackend, idbBackend, memoryBackend, opfsBackend } from "./backends.js";
 import { Sha256 } from "./sha256.js";
+/** The error the store throws, with a `code` of "http", "sha256", "quota", "abort" or "range". */
 export class WeightError extends Error {
     code;
     constructor(code, message) {
@@ -72,7 +73,7 @@ async function assemble(b, meta) {
 export async function openWeightStore(opts = {}) {
     const partBytes = opts.partBytes ?? 128 * 1024 * 1024;
     const doFetch = opts.fetch ?? globalThis.fetch.bind(globalThis);
-    const notice = opts.onNotice ?? ((l) => console.info(l));
+    const notice = opts.onNotice;
     const now = opts.now ?? (() => Date.now());
     let backend = null;
     for (const b of pickBackends(opts)) {
@@ -113,10 +114,16 @@ export async function openWeightStore(opts = {}) {
     };
     const onceMap = new Map();
     const tellLicence = (key, licence) => {
-        if (noticed.has(key))
+        const model = modelOf(key);
+        if (noticed.has(model))
             return;
-        noticed.add(key);
-        notice(`weights ${key}: licence ${licence}. the weights are not part of this library.`);
+        noticed.add(model);
+        const first = firstInSession(model);
+        const line = `weights ${model}: licence ${licence}. the weights are not part of this library.`;
+        if (notice)
+            notice(line);
+        else if (first)
+            console.info(line);
     };
     const estimate = async () => {
         const fn = opts.estimate ??
@@ -453,4 +460,25 @@ export async function openWeightStore(opts = {}) {
         },
     };
     return store;
+}
+const HF_REPO = /^https:\/\/huggingface\.co\/([^/]+\/[^/]+)\/resolve\//;
+/** The model a weight key belongs to: its Hugging Face repo, the folder of any other URL, or a non URL key as is. */
+export function modelOf(key) {
+    const m = HF_REPO.exec(key);
+    if (m)
+        return m[1];
+    if (!/^https?:\/\//.test(key))
+        return key;
+    const cut = key.split("?")[0].lastIndexOf("/");
+    return cut > 0 ? key.slice(0, cut) : key;
+}
+const SEEN = Symbol.for("hackbuild.licence.seen");
+/** True the first time a model is named in this page session; shared by every hackbuild package through a global symbol. */
+export function firstInSession(model) {
+    const g = globalThis;
+    const seen = (g[SEEN] ??= new Set());
+    if (seen.has(model))
+        return false;
+    seen.add(model);
+    return true;
 }

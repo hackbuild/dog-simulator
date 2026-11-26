@@ -10,6 +10,7 @@
 // boundary, and bone axes are mirrored the same way.
 import { BONE_COUNT, FRAME_DT, FRAMES, IN, OUT, PAW_CHAINS } from "./layout.js";
 // Each value is chosen for a reason given beside it.
+/** The default host tuning; each value has its reason beside it in the source. */
 export const DEFAULT_TUNING = {
     // 0.1 s: ten replans a second answer a command within one step, and each
     // prediction covers 0.5 s, so a late one still has frames to play. At

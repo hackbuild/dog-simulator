@@ -11,90 +11,27 @@
 import { mkdirSync, readFileSync, existsSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { open, waitFor } from "./chrome.js";
-const bound = (handle, body) => `(() => { const h = ${handle}; ${body} })()`;
-/** Runs one scenario on an open page whose test API is ready. */
-export async function runLockstep(page, sc, o = {}) {
-    const sps = o.stepsPerSecond ?? 60;
+import { diffTraces, drive } from "./core.js";
+const bound = (handle, c, expr) => typeof c === "string" ? `(() => { const h = ${handle}; ${expr ? `return (${c});` : c} })()` : `(${c.toString()})(${handle})`;
+/** A driver over a puppeteer page whose test API is ready. */
+export function pageDriver(page, o = {}) {
     const api = o.api ?? "window.__sim";
     const handle = o.handle ?? api;
-    const whenEvery = o.whenEvery ?? 15;
-    const t0 = Date.now();
-    const total = Math.round(sc.seconds * sps);
-    const whens = (sc.actions ?? []).filter((a) => a.when);
-    const events = [
-        ...(sc.actions ?? []).filter((a) => !a.when).map((a) => ({ step: Math.round((a.at ?? 0) * sps), kind: "action", js: a.js })),
-        ...(sc.shots ?? []).map((s) => ({ step: Math.round(s.at * sps), kind: "shot", ...(s.js ? { js: s.js } : {}), path: s.path })),
-    ].sort((a, b) => a.step - b.step);
-    const probes = (sc.probes ?? []).map((p) => ({ ...p, n: Math.max(1, Math.round(p.every * sps)) }));
-    const out = { rows: [], probes: [], fired: [], wallSeconds: 0 };
-    let done = 0;
-    let lastLog = Date.now();
-    const due = async () => {
-        while (events.length && events[0].step <= done) {
-            const e = events.shift();
-            if (e.js)
-                await page.evaluate(bound(handle, e.js));
-            if (e.kind === "shot" && e.path) {
-                await page.evaluate(`(() => { const a = ${api}; if (a.render) a.render(); })()`);
-                mkdirSync(dirname(e.path), { recursive: true });
-                await page.screenshot({ path: e.path });
-            }
-        }
+    return {
+        act: (c) => page.evaluate(bound(handle, c, false)),
+        read: (c) => page.evaluate(bound(handle, c, true)),
+        step: (n) => page.evaluate(`${api}.step(${n})`),
+        trace: () => page.evaluate(`${api}.trace()`),
+        async shot(path) {
+            await page.evaluate(`(() => { const a = ${api}; if (a.render) a.render(); })()`);
+            mkdirSync(dirname(path), { recursive: true });
+            await page.screenshot({ path: path });
+        },
     };
-    while (done < total) {
-        await due();
-        let n = Math.min(o.chunk ?? 30, total - done);
-        if (events.length)
-            n = Math.min(n, Math.max(1, events[0].step - done));
-        for (const p of probes)
-            n = Math.min(n, p.n - (done % p.n));
-        if (whens.length)
-            n = Math.min(n, whenEvery - (done % whenEvery));
-        await page.evaluate(`${api}.step(${n})`);
-        done += n;
-        if (whens.length && done % whenEvery === 0) {
-            for (let i = 0; i < whens.length; i++) {
-                const w = whens[i];
-                if (await page.evaluate(bound(handle, `return !!(${w.when});`))) {
-                    await page.evaluate(bound(handle, w.js));
-                    out.fired.push([done, w.when]);
-                    whens.splice(i--, 1);
-                }
-            }
-        }
-        for (const p of probes)
-            if (done % p.n === 0)
-                out.probes.push([done, await page.evaluate(bound(handle, `return (${p.js});`))]);
-        if (o.onProgress && Date.now() - lastLog > 15000) {
-            lastLog = Date.now();
-            o.onProgress(done / sps, (Date.now() - t0) / 1000);
-        }
-    }
-    // events at exactly `seconds` (a closing screenshot) fire after the last step
-    await due();
-    const tr = (await page.evaluate(`${api}.trace()`));
-    out.rows = tr.rows;
-    if (tr.cols)
-        out.cols = tr.cols;
-    if (tr.hash !== undefined)
-        out.hash = tr.hash;
-    out.wallSeconds = (Date.now() - t0) / 1000;
-    return out;
 }
-/** JSON with NaN and the infinities kept apart from null. */
-const exact = (v) => JSON.stringify(v, (_k, x) => (typeof x === "number" && !Number.isFinite(x) ? `${x}` : x));
-/** First differing row between two traces, or null when identical. NaN, Infinity and null all differ. */
-export function diffTraces(a, b) {
-    const n = Math.max(a.rows.length, b.rows.length);
-    for (let i = 0; i < n; i++) {
-        const x = exact(a.rows[i]);
-        const y = exact(b.rows[i]);
-        if (x !== y)
-            return { row: i, a: a.rows[i] ?? null, b: b.rows[i] ?? null };
-    }
-    if (a.hash !== b.hash)
-        return { row: n, a: a.hash ?? null, b: b.hash ?? null };
-    return null;
+/** Runs one scenario on an open page whose test API is ready. */
+export function runLockstep(page, sc, o = {}) {
+    return drive(pageDriver(page, o), sc, o);
 }
 /** Runs a scenario list, records or compares goldens, returns a report. */
 export async function runSuite(o) {

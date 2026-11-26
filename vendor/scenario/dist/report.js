@@ -1,6 +1,7 @@
 // Reports in the check message form of the house rules: what failed,
 // measured, legal, constraint, then a fix. "stall 4.75 s, legal 0 to 1,
 // set by the passing rule. fix: check the side waypoint".
+/** Pass, fail or not run for one check. */
 export function verdict(c) {
     if (c.measured === null || !Number.isFinite(c.measured))
         return "not run";

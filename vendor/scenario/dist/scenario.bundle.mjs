@@ -19,8 +19,10 @@ const TYPES = {
 	onnx: "application/octet-stream",
 	bin: "application/octet-stream"
 };
+/** The content type for a file path by its extension. */
 const contentTypeOf = (path) => TYPES[path.split(".").pop()?.toLowerCase() ?? ""] ?? "application/octet-stream";
 const verified = /* @__PURE__ */ new Map();
+/** The SHA-256 of a file in hex, cached per path. */
 function sha256File(path) {
 	let h = verified.get(path);
 	if (!h) {
@@ -92,6 +94,7 @@ function fixedBody(match, body, contentType) {
 	} : null;
 }
 // src/chrome.ts
+/** Where Chrome lives on macOS. */
 const CHROME_MAC = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const CANDIDATES = [
 	CHROME_MAC,
@@ -106,6 +109,7 @@ function findChrome() {
 	if (env && existsSync(env)) return env;
 	return CANDIDATES.find((p) => existsSync(p)) ?? null;
 }
+/** The Chrome flags every run gets: autoplay without a gesture, muted audio, file access from files. */
 const DEFAULT_ARGS = [
 	"--autoplay-policy=no-user-gesture-required",
 	"--mute-audio",
@@ -122,6 +126,7 @@ const SWIFTSHADER_ARGS = [
 	"--ignore-gpu-blocklist",
 	"--enable-unsafe-webgpu"
 ];
+/** Launches the system Chrome with routing and opens a page; throws when no Chrome is found. */
 async function open(o) {
 	const chrome = o.chrome ?? findChrome();
 	if (!chrome) throw new Error("no chrome found. set HB_CHROME to the browser binary.");
@@ -217,18 +222,18 @@ async function waitFor(page, expr, timeoutMs, everyMs = 250) {
 		await new Promise((r) => setTimeout(r, everyMs));
 	}
 }
-// src/lockstep.ts
-const bound = (handle, body) => `(() => { const h = ${handle}; ${body} })()`;
-/** Runs one scenario on an open page whose test API is ready. */
-async function runLockstep(page, sc, o = {}) {
+// src/core.ts
+/** The source text of page code, a string as it is or a function by its source. */
+const codeText = (c) => typeof c === "string" ? c : c.toString();
+/** Steps a scenario through a driver; the scheduler both entries share. */
+async function drive(d, sc, o = {}) {
 	const sps = o.stepsPerSecond ?? 60;
-	const api = o.api ?? "window.__sim";
-	const handle = o.handle ?? api;
 	const whenEvery = o.whenEvery ?? 15;
+	const emit = o.onEvent ?? (() => void 0);
 	const t0 = Date.now();
 	const total = Math.round(sc.seconds * sps);
-	const whens = (sc.actions ?? []).filter((a) => a.when);
-	const events = [...(sc.actions ?? []).filter((a) => !a.when).map((a) => ({
+	const whens = (sc.actions ?? []).filter((a) => a.when !== void 0);
+	const events = [...(sc.actions ?? []).filter((a) => a.when === void 0).map((a) => ({
 		step: Math.round((a.at ?? 0) * sps),
 		kind: "action",
 		js: a.js
@@ -253,11 +258,18 @@ async function runLockstep(page, sc, o = {}) {
 	const due = async () => {
 		while (events.length && events[0].step <= done) {
 			const e = events.shift();
-			if (e.js) await page.evaluate(bound(handle, e.js));
+			if (e.js) await d.act(e.js);
+			if (e.kind === "action") emit({
+				type: "action",
+				step: done
+			});
 			if (e.kind === "shot" && e.path) {
-				await page.evaluate(`(() => { const a = ${api}; if (a.render) a.render(); })()`);
-				mkdirSync(dirname(e.path), { recursive: true });
-				await page.screenshot({ path: e.path });
+				if (d.shot) await d.shot(e.path);
+				emit({
+					type: "shot",
+					step: done,
+					path: e.path
+				});
 			}
 		}
 	};
@@ -267,24 +279,45 @@ async function runLockstep(page, sc, o = {}) {
 		if (events.length) n = Math.min(n, Math.max(1, events[0].step - done));
 		for (const p of probes) n = Math.min(n, p.n - done % p.n);
 		if (whens.length) n = Math.min(n, whenEvery - done % whenEvery);
-		await page.evaluate(`${api}.step(${n})`);
+		await d.step(n);
 		done += n;
+		emit({
+			type: "step",
+			step: done,
+			total,
+			simSeconds: done / sps
+		});
 		if (whens.length && done % whenEvery === 0) for (let i = 0; i < whens.length; i++) {
 			const w = whens[i];
-			if (await page.evaluate(bound(handle, `return !!(${w.when});`))) {
-				await page.evaluate(bound(handle, w.js));
-				out.fired.push([done, w.when]);
+			if (await d.read(w.when)) {
+				await d.act(w.js);
+				const when = codeText(w.when);
+				out.fired.push([done, when]);
+				emit({
+					type: "fired",
+					step: done,
+					when
+				});
 				whens.splice(i--, 1);
 			}
 		}
-		for (const p of probes) if (done % p.n === 0) out.probes.push([done, await page.evaluate(bound(handle, `return (${p.js});`))]);
+		for (const p of probes) {
+			if (done % p.n !== 0) continue;
+			const value = await d.read(p.js);
+			out.probes.push([done, value]);
+			emit({
+				type: "probe",
+				step: done,
+				value
+			});
+		}
 		if (o.onProgress && Date.now() - lastLog > 15e3) {
 			lastLog = Date.now();
 			o.onProgress(done / sps, (Date.now() - t0) / 1e3);
 		}
 	}
 	await due();
-	const tr = await page.evaluate(`${api}.trace()`);
+	const tr = await d.trace();
 	out.rows = tr.rows;
 	if (tr.cols) out.cols = tr.cols;
 	if (tr.hash !== void 0) out.hash = tr.hash;
@@ -292,7 +325,7 @@ async function runLockstep(page, sc, o = {}) {
 	return out;
 }
 /** JSON with NaN and the infinities kept apart from null. */
-const exact = (v) => JSON.stringify(v, (_k, x) => typeof x === "number" && !Number.isFinite(x) ? `${x}` : x);
+const exact = (v) => JSON.stringify(v, (_k, x) => typeof x === "number" && !Number.isFinite(x) ? `${x}` : x) ?? "undefined";
 /** First differing row between two traces, or null when identical. NaN, Infinity and null all differ. */
 function diffTraces(a, b) {
 	const n = Math.max(a.rows.length, b.rows.length);
@@ -301,12 +334,90 @@ function diffTraces(a, b) {
 		a: a.rows[i] ?? null,
 		b: b.rows[i] ?? null
 	};
-	if (a.hash !== b.hash) return {
+	if ((a.hash ?? null) !== (b.hash ?? null)) return {
 		row: n,
 		a: a.hash ?? null,
 		b: b.hash ?? null
 	};
 	return null;
+}
+/** Every differing row up to `limit`, with the first differing column, for a diff view. */
+function diffRows(a, b, limit = 200) {
+	const n = Math.max(a.rows.length, b.rows.length);
+	const rows = [];
+	let differing = 0;
+	for (let i = 0; i < n; i++) {
+		const ra = a.rows[i];
+		const rb = b.rows[i];
+		if (exact(ra) === exact(rb)) continue;
+		differing++;
+		if (rows.length >= limit) continue;
+		let col = -1;
+		if (ra && rb) {
+			const m = Math.max(ra.length, rb.length);
+			for (let k = 0; k < m; k++) if (exact(ra[k]) !== exact(rb[k])) {
+				col = k;
+				break;
+			}
+		}
+		rows.push({
+			row: i,
+			col,
+			a: col >= 0 ? ra[col] : ra ?? null,
+			b: col >= 0 ? rb[col] : rb ?? null
+		});
+	}
+	return {
+		compared: n,
+		differing,
+		rows
+	};
+}
+const short = (v) => typeof v === "number" ? String(Number(v.toPrecision(4))) : exact(v);
+/** "trace differs at row 88: heading 0.41, expected 0.39", or "traces match". `b` is the expected trace. */
+function diffMessage(a, b) {
+	const d = diffRows(a, b, 1);
+	const first = d.rows[0];
+	if (!first) return (a.hash ?? null) === (b.hash ?? null) ? "traces match" : `trace hash differs: ${a.hash ?? "none"}, expected ${b.hash ?? "none"}`;
+	if (first.col < 0) return `trace differs at row ${first.row}: ${first.a === null ? "row missing" : "extra row"}, ${d.differing} rows differ`;
+	const name = a.cols?.[first.col] ?? `column ${first.col}`;
+	return `trace differs at row ${first.row}: ${name} ${short(first.a)}, expected ${short(first.b)}`;
+}
+/** FNV-1a 32 bit over the exact JSON of rows, probes and fired: the same in Node and every browser. */
+function traceHash(t) {
+	const s = exact([
+		t.rows,
+		t.probes ?? [],
+		t.fired ?? []
+	]);
+	let h = 2166136261;
+	for (let i = 0; i < s.length; i++) {
+		h ^= s.charCodeAt(i);
+		h = Math.imul(h, 16777619) >>> 0;
+	}
+	return h.toString(16).padStart(8, "0");
+}
+// src/lockstep.ts
+const bound = (handle, c, expr) => typeof c === "string" ? `(() => { const h = ${handle}; ${expr ? `return (${c});` : c} })()` : `(${c.toString()})(${handle})`;
+/** A driver over a puppeteer page whose test API is ready. */
+function pageDriver(page, o = {}) {
+	const api = o.api ?? "window.__sim";
+	const handle = o.handle ?? api;
+	return {
+		act: (c) => page.evaluate(bound(handle, c, false)),
+		read: (c) => page.evaluate(bound(handle, c, true)),
+		step: (n) => page.evaluate(`${api}.step(${n})`),
+		trace: () => page.evaluate(`${api}.trace()`),
+		async shot(path) {
+			await page.evaluate(`(() => { const a = ${api}; if (a.render) a.render(); })()`);
+			mkdirSync(dirname(path), { recursive: true });
+			await page.screenshot({ path });
+		}
+	};
+}
+/** Runs one scenario on an open page whose test API is ready. */
+function runLockstep(page, sc, o = {}) {
+	return drive(pageDriver(page, o), sc, o);
 }
 /** Runs a scenario list, records or compares goldens, returns a report. */
 async function runSuite(o) {
@@ -393,6 +504,7 @@ function percentile(xs, p) {
 	const s = [...xs].sort((a, b) => a - b);
 	return s[Math.min(s.length - 1, Math.max(0, Math.ceil(p / 100 * s.length) - 1))];
 }
+/** Count, mean, p50, p95 and max of a list; NaN for an empty list. */
 function stats(xs) {
 	if (!xs.length) return {
 		n: 0,
@@ -485,6 +597,7 @@ function stallSeconds(points, hasGoal, dt, window = 2, dist = .2) {
 	return s;
 }
 // src/profiler.ts
+/** A profiler over a clock in ms, such as `performance.now`. */
 function createProfiler(clock) {
 	const entries = {};
 	let t = clock();
@@ -550,6 +663,7 @@ async function readRaf(page) {
 	return out;
 }
 // src/report.ts
+/** Pass, fail or not run for one check. */
 function verdict(c) {
 	if (c.measured === null || !Number.isFinite(c.measured)) return "not run";
 	if (c.legal.min !== void 0 && c.measured < c.legal.min) return "fail";
@@ -607,4 +721,4 @@ function reportPasses(r) {
 		return v === "pass" || v === "not run" && c.optional === true;
 	}));
 }
-export { CHROME_MAC, DEFAULT_ARGS, SWIFTSHADER_ARGS, checkMessage, contentTypeOf, createProfiler, diffTraces, findChrome, fixedBody, formatReport, frameStats, installRafSampler, jerk, npmCdn, open, percentile, pinned, readRaf, reportPasses, runLockstep, runSuite, serve, sha256File, sliding, stallSeconds, stats, togglesPerSecond, verdict, waitFor };
+export { CHROME_MAC, DEFAULT_ARGS, SWIFTSHADER_ARGS, checkMessage, codeText, contentTypeOf, createProfiler, diffMessage, diffRows, diffTraces, drive, exact, findChrome, fixedBody, formatReport, frameStats, installRafSampler, jerk, npmCdn, open, pageDriver, percentile, pinned, readRaf, reportPasses, runLockstep, runSuite, serve, sha256File, sliding, stallSeconds, stats, togglesPerSecond, traceHash, verdict, waitFor };

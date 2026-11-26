@@ -9,6 +9,7 @@ const num = (v) => {
 };
 /** Shortest decimal text that reads back to the same number. */
 const fmt = (v) => String(v);
+/** Makes an empty registry; define parameters and layers on it, then `restore` and `fromUrlHash`. */
 export function createRegistry(opts = {}) {
     const defs = new Map();
     const values = new Map();
@@ -235,6 +236,7 @@ export function decimalsFor(step) {
         return 0;
     return Math.min(6, Math.max(2, Math.ceil(-Math.log10(step) - 1e-9)));
 }
+/** A value as text with the decimal places its step calls for. */
 export function formatValue(def, v) {
     return v.toFixed(decimalsFor(def.step));
 }

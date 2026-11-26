@@ -2,6 +2,7 @@
 // part can come from a URL, an ArrayBuffer (or view), or a File or Blob.
 // Every tensor is checked against the dimensions before anything runs.
 import { BONES, BONE_COUNT, STYLES } from "./layout.js";
+/** The licence line of the network weights, stated on the first load in a page. */
 export const WEIGHT_LICENCE = "motion-net weights: cc by-nc 4.0, paul starke and sebastian starke, meta, ai4animationpy. fetched at run time, never bundled, not for commercial use.";
 /** One public copy of the weights, pinned to a commit. Configuration only. */
 export const UPSTREAM = {
@@ -146,6 +147,7 @@ async function bytesOf(src, opts) {
     }
     return out.buffer;
 }
+/** The SHA-256 of a buffer as lowercase hex. */
 export async function sha256Hex(buf) {
     const d = await crypto.subtle.digest("SHA-256", buf);
     return Array.from(new Uint8Array(d), (b) => b.toString(16).padStart(2, "0")).join("");

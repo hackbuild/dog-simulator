@@ -16,6 +16,7 @@ export declare class Completion<G = string> {
     get current(): G | null;
     elapsed(now: number): number;
 }
+/** The input of `settled`: the remaining error, the current rate and the elapsed time of a step. */
 export interface SettleCheck {
     /** remaining error, for a turn the heading error in rad */
     error: number;
@@ -25,8 +26,9 @@ export interface SettleCheck {
     elapsed: number;
     /** give up after this many seconds (default 3) */
     timeout?: number;
-    /** defaults from earlier builds: 0.12 rad and 0.4 rad/s */
+    /** largest error that counts as settled (default 0.12 rad) */
     maxError?: number;
+    /** largest rate that counts as settled (default 0.4 rad/s) */
     maxRate?: number;
 }
 /** Checks the real condition with a timeout, in place of a flag. */

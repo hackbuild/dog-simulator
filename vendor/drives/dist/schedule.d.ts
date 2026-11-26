@@ -1,5 +1,6 @@
+/** Options of an `InferenceScheduler`. */
 export interface ScheduleOptions {
-    /** seconds between the starts of two calls (legacy cortex: 25) */
+    /** seconds between the starts of two calls (the dog simulator uses 25) */
     minInterval: number;
     /** only start while the caller says the agent is idle */
     idleOnly?: boolean;
@@ -8,7 +9,9 @@ export interface ScheduleOptions {
     /** smoothing of the frame time, 0 to 1 per frame (default 0.1) */
     smoothing?: number;
 }
+/** Why a call may not start now, or ready. */
 export type ScheduleState = "busy" | "cooling down" | "waiting for idle" | "over frame budget" | "ready";
+/** Starts a heavy model call only after a minimum interval, optionally only while idle and inside a frame budget, one at a time. */
 export declare class InferenceScheduler {
     readonly opts: ScheduleOptions;
     private lastStart;

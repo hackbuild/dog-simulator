@@ -3,6 +3,7 @@
 // in step with the registry in both directions, and tags every number with
 // its source.
 import { formatValue } from "./index.js";
+/** Builds a tune panel for a registry inside `host` with DOM calls only and keeps both in step. */
 export function bindPanel(host, reg, opts = {}) {
     const doc = opts.document ?? host.ownerDocument;
     const px = opts.prefix ?? "tn";

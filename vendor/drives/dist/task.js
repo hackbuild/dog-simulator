@@ -1,4 +1,4 @@
-// Task gating, from lessons of earlier builds: completion flags go stale when a
+// Task gating: completion flags go stale when a
 // step reads a flag left over from the previous goal (the human sat
 // backwards because the turn step read motor.done from the walk), and a
 // task started while a blocking layer was held froze the body (seated,

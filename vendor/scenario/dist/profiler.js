@@ -1,6 +1,7 @@
 // A per system frame profiler, from lessons of earlier builds: mark after each
 // system in the frame and read the average and worst ms per label. Runs
 // in a page or in Node; the clock is injected (performance.now).
+/** A profiler over a clock in ms, such as `performance.now`. */
 export function createProfiler(clock) {
     const entries = {};
     let t = clock();

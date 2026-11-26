@@ -1,3 +1,4 @@
+/** Count, mean, p50, p95 and max of a list of numbers. */
 export interface Stats {
     n: number;
     mean: number;
@@ -7,15 +8,18 @@ export interface Stats {
 }
 /** Percentile by nearest rank on a sorted copy. */
 export declare function percentile(xs: readonly number[], p: number): number;
+/** Count, mean, p50, p95 and max of a list; NaN for an empty list. */
 export declare function stats(xs: readonly number[]): Stats;
 /** Frame time p50, p95 and max in ms from frame durations. */
 export declare function frameStats(ms: readonly number[]): Stats;
+/** A 2D or 3D position as numbers. */
 export type Point = readonly number[];
 /**
  * Jerk magnitudes (m/s^3) from positions sampled every `dt` seconds: the
  * third difference of position over dt^3. Points may be 2D or 3D.
  */
 export declare function jerk(points: readonly Point[], dt: number): number[];
+/** What `sliding` returns: seconds and share of moving samples that slide. */
 export interface SlideResult {
     /** seconds where the body heading and the direction of motion differ by more than the threshold */
     seconds: number;

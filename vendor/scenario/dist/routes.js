@@ -19,8 +19,10 @@ const TYPES = {
     onnx: "application/octet-stream",
     bin: "application/octet-stream",
 };
+/** The content type for a file path by its extension. */
 export const contentTypeOf = (path) => TYPES[path.split(".").pop()?.toLowerCase() ?? ""] ?? "application/octet-stream";
 const verified = new Map();
+/** The SHA-256 of a file in hex, cached per path. */
 export function sha256File(path) {
     let h = verified.get(path);
     if (!h) {

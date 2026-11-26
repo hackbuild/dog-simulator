@@ -8,9 +8,13 @@ export type { WasmSource } from "./load.js";
 export type Rng = () => number;
 /** Mulberry32, the same stream as the Rust `Mulberry32`. */
 export declare function seededRng(seed: number): Rng;
+/** A 32 bit seed for a wasm stream, drawn from an injected `Rng`. */
 export declare const seedFrom: (rng: Rng) => number;
+/** Loads the wasm core once; call and await it before any class. Pass a URL, a Response, bytes or a compiled module, or nothing to decode the inlined copy. */
 export declare function load(source?: WasmSource): Promise<void>;
+/** Loads the wasm core synchronously from bytes or a compiled module. */
 export declare function loadSync(source: ArrayBuffer | ArrayBufferView | WebAssembly.Module): void;
+/** A fixed trace of 175 core values for one seed, used to check that two builds of the core agree bit for bit. */
 export declare function goldenTrace(seed: number): Float64Array;
 /** Sleepiness from the body clock at an hour 0 to 24 (peaks of activity near 7 and 19). */
 export declare function bodyClock(hour: number): number;
@@ -35,13 +39,16 @@ export declare class Drives<K extends string> {
     /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
     free(): void;
 }
+/** Why a decision went the way it did: held the current act, took the top score, sampled, switched reactively, forced, argmax, or a pending switch fired. */
 export type Reason = "hold" | "top" | "sampled" | "reactive" | "forced" | "argmax" | "fired";
+/** One option with its utility, for callers that keep options as a list. */
 export interface Option<B extends string = string> {
     id: B;
     utility: number;
     /** cannot wait for the dwell: switches after a short latency */
     reactive?: boolean;
 }
+/** The result of one `Chooser.update`: the current act, any pending switch, the reason and a why sentence. */
 export interface Decision<B extends string = string> {
     current: B;
     switched: boolean;
@@ -62,6 +69,7 @@ export interface Decision<B extends string = string> {
     /** every option's utility at this update, for logging */
     utilities: Record<B, number>;
 }
+/** Options of a `Chooser`: the injected rng, the option names, and the softmax, commitment and latency settings. */
 export interface ChooserOptions<B extends string> {
     rng: Rng;
     options: readonly B[];
@@ -102,6 +110,7 @@ export declare class Chooser<B extends string> {
     /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
     free(): void;
 }
+/** What a `CueLearner` did on a cue: ignored it, did nothing it knows, or did an act (offered or cued) after a latency. */
 export type CueResponse<A extends string> = {
     kind: "ignored";
     latency: number;
@@ -114,6 +123,7 @@ export type CueResponse<A extends string> = {
     offered: boolean;
     latency: number;
 };
+/** Options of a `CueLearner`: the injected rng, the action names, learning rates and the non compliance settings. */
 export interface LearnerOptions<A extends string> {
     rng: Rng;
     actions: readonly A[];
@@ -129,6 +139,7 @@ export interface LearnerOptions<A extends string> {
     cueTau?: number;
     noise?: boolean;
 }
+/** The versioned learner state that `CueLearner.toJSON` writes and `CueLearner.load` reads. */
 export interface LearnerState<A extends string> {
     ver: 1;
     cues: Record<string, {
@@ -169,6 +180,7 @@ export declare class CueLearner<A extends string> {
     /** Frees the wasm memory now, before the garbage collector would; the object is unusable after. */
     free(): void;
 }
+/** The stage of the sleep machine. */
 export type SleepStage = "awake" | "onset" | "nrem" | "rem" | "wake";
 /** Sleep pressure, body clock and the stage machine of one sleep. */
 export declare class Sleep {

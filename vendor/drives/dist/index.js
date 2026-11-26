@@ -18,15 +18,19 @@ export function seededRng(seed) {
         return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
     };
 }
+/** A 32 bit seed for a wasm stream, drawn from an injected `Rng`. */
 export const seedFrom = (rng) => Math.floor(rng() * 4294967296) >>> 0;
 const PKG = "@hackbuild/drives";
 const opt = (v) => (v === undefined ? Number.NaN : typeof v === "boolean" ? (v ? 1 : 0) : v);
+/** Loads the wasm core once; call and await it before any class. Pass a URL, a Response, bytes or a compiled module, or nothing to decode the inlined copy. */
 export async function load(source) {
     await loadWasm(source);
 }
+/** Loads the wasm core synchronously from bytes or a compiled module. */
 export function loadSync(source) {
     loadWasmSync(source);
 }
+/** A fixed trace of 175 core values for one seed, used to check that two builds of the core agree bit for bit. */
 export function goldenTrace(seed) {
     assertReady(PKG);
     return w.goldenTrace(seed);

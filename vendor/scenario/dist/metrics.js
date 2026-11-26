@@ -8,6 +8,7 @@ export function percentile(xs, p) {
     const i = Math.min(s.length - 1, Math.max(0, Math.ceil((p / 100) * s.length) - 1));
     return s[i];
 }
+/** Count, mean, p50, p95 and max of a list; NaN for an empty list. */
 export function stats(xs) {
     if (!xs.length)
         return { n: 0, mean: Number.NaN, p50: Number.NaN, p95: Number.NaN, max: Number.NaN };

@@ -1,4 +1,5 @@
 import { type StyleLabel } from "./layout.js";
+/** The licence line of the network weights, stated on the first load in a page. */
 export declare const WEIGHT_LICENCE = "motion-net weights: cc by-nc 4.0, paul starke and sebastian starke, meta, ai4animationpy. fetched at run time, never bundled, not for commercial use.";
 /** One public copy of the weights, pinned to a commit. Configuration only. */
 export declare const UPSTREAM: {
@@ -9,14 +10,18 @@ export declare const UPSTREAM: {
     /** Bytes of that binary (vendor). */
     readonly binBytes: 17704644;
 };
+/** Where a weight part comes from: a URL to fetch, bytes, or a File or Blob. */
 export type Source = URL | string | ArrayBuffer | ArrayBufferView | Blob;
+/** The storage type of one tensor in the binary. */
 export type Dtype = "f16" | "f32";
+/** Where one tensor sits in the binary: byte offset, value count, shape and dtype. */
 export interface TensorEntry {
     offset: number;
     count: number;
     shape: number[];
     dtype: Dtype;
 }
+/** The JSON manifest that describes the network and every tensor in the binary. */
 export interface Manifest {
     model: {
         input_dim: number;
@@ -37,6 +42,7 @@ export interface Manifest {
     bin: Record<string, TensorEntry>;
     [k: string]: unknown;
 }
+/** The network dimensions read from the manifest. */
 export interface Dims {
     dIn: number;
     dOut: number;
@@ -45,6 +51,7 @@ export interface Dims {
     frames: number;
     passes: number;
 }
+/** Checked weights, ready for `Predictor.create`. */
 export interface Weights {
     manifest: Manifest;
     bin: ArrayBuffer;
@@ -63,6 +70,7 @@ export interface Weights {
     sha256: string | null;
     licence: string;
 }
+/** Options of `loadWeights`: the two parts, an optional SHA-256 and progress and licence callbacks. */
 export interface LoadOptions {
     manifest: Source | Manifest;
     bin: Source;
@@ -84,6 +92,7 @@ export declare function requiredTensors(d: Dims): {
 export declare function dimsOf(m: Manifest): Dims;
 /** Checks a manifest against a binary of `binBytes` bytes. Returns the problems, empty when fine. */
 export declare function validate(m: Manifest, binBytes: number): string[];
+/** The SHA-256 of a buffer as lowercase hex. */
 export declare function sha256Hex(buf: ArrayBuffer): Promise<string>;
 /** Fetches or reads both parts, checks them, and states the licence once per page. */
 export declare function loadWeights(opts: LoadOptions): Promise<Weights>;

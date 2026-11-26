@@ -12,6 +12,7 @@ const PKG = "@hackbuild/motion-net";
 export async function load(source) {
     await loadWasm(source);
 }
+/** Loads the page side wasm synchronously from bytes or a compiled module. */
 export function loadSync(source) {
     loadWasmSync(source);
 }

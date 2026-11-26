@@ -1,8 +1,9 @@
-// Scheduling heavy inference, from lessons of earlier builds: GPU contention is
+// Scheduling heavy inference: GPU contention is
 // invisible to JS profiling, so a model call runs only after a minimum
 // interval, optionally only while the agent is idle, and only while recent
 // frames are inside a budget; one call at a time, with a busy state the UI
 // can show.
+/** Starts a heavy model call only after a minimum interval, optionally only while idle and inside a frame budget, one at a time. */
 export class InferenceScheduler {
     opts;
     lastStart = Number.NEGATIVE_INFINITY;

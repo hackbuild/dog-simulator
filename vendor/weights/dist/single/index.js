@@ -1,4 +1,5 @@
 // packages/weights/src/backends.ts
+/** A backend that keeps parts in memory for this tab only. */
 function memoryBackend() {
 	const metas = /* @__PURE__ */ new Map();
 	const parts = /* @__PURE__ */ new Map();
@@ -33,7 +34,7 @@ function req(r) {
 	});
 }
 /**
-* IndexedDB parts, the layout earlier builds used: one `kv` store with
+* IndexedDB parts: one `kv` store with
 * `<key>:meta` and `<key>:<n>` records. Works on file://.
 */
 function idbBackend(opts = {}) {
@@ -230,6 +231,10 @@ const K = new Uint32Array([
 	3204031479,
 	3329325298
 ]);
+/**
+* Incremental SHA-256: call `update` with each chunk as it arrives, then `digestHex` once, so a
+* file of several GB is never held in one buffer.
+*/
 var Sha256 = class {
 	h = new Uint32Array([
 		1779033703,
@@ -327,6 +332,7 @@ var Sha256 = class {
 		h[7] = h[7] + hh | 0;
 	}
 };
+/** Lowercase hex SHA-256 of a byte array. */
 function sha256Hex(data) {
 	return new Sha256().update(data).digestHex();
 }
@@ -334,14 +340,15 @@ function sha256Hex(data) {
 /**
 * One weight store over OPFS, Cache Storage, IndexedDB parts and memory.
 *
-* A download is written as parts of `partBytes` (default 128 MB, the size
-* earlier builds use) with a meta record updated after each part. An
+* A download is written as parts of `partBytes` (default 128 MB) with a
+* meta record updated after each part. An
 * interrupted download keeps what it has; the next `get` asks the server
 * for the rest with a Range request guarded by If-Range, and starts over
 * when the server answers 200 instead of 206 or when the 206 carries a
 * different ETag or Last-Modified than the stored parts. The SHA-256 is computed as
 * the bytes stream in, and checked when the reference carries one.
 */
+/** The error the store throws, with a `code` of "http", "sha256", "quota", "abort" or "range". */
 var WeightError = class extends Error {
 	code;
 	constructor(code, message) {
@@ -399,7 +406,7 @@ async function assemble(b, meta) {
 async function openWeightStore(opts = {}) {
 	const partBytes = opts.partBytes ?? 134217728;
 	const doFetch = opts.fetch ?? globalThis.fetch.bind(globalThis);
-	const notice = opts.onNotice ?? ((l) => console.info(l));
+	const notice = opts.onNotice;
 	const now = opts.now ?? (() => Date.now());
 	let backend = null;
 	for (const b of pickBackends(opts)) try {
@@ -433,9 +440,13 @@ async function openWeightStore(opts = {}) {
 	};
 	const onceMap = /* @__PURE__ */ new Map();
 	const tellLicence = (key, licence) => {
-		if (noticed.has(key)) return;
-		noticed.add(key);
-		notice(`weights ${key}: licence ${licence}. the weights are not part of this library.`);
+		const model = modelOf(key);
+		if (noticed.has(model)) return;
+		noticed.add(model);
+		const first = firstInSession(model);
+		const line = `weights ${model}: licence ${licence}. the weights are not part of this library.`;
+		if (notice) notice(line);
+		else if (first) console.info(line);
 	};
 	const estimate = async () => {
 		const fn = opts.estimate ?? (() => globalThis.navigator?.storage?.estimate?.() ?? Promise.resolve({}));
@@ -768,6 +779,24 @@ async function openWeightStore(opts = {}) {
 	};
 	return store;
 }
+const HF_REPO = /^https:\/\/huggingface\.co\/([^/]+\/[^/]+)\/resolve\//;
+/** The model a weight key belongs to: its Hugging Face repo, the folder of any other URL, or a non URL key as is. */
+function modelOf(key) {
+	const m = HF_REPO.exec(key);
+	if (m) return m[1];
+	if (!/^https?:\/\//.test(key)) return key;
+	const cut = key.split("?")[0].lastIndexOf("/");
+	return cut > 0 ? key.slice(0, cut) : key;
+}
+const SEEN = Symbol.for("hackbuild.licence.seen");
+/** True the first time a model is named in this page session; shared by every hackbuild package through a global symbol. */
+function firstInSession(model) {
+	const g = globalThis;
+	const seen = g[SEEN] ??= /* @__PURE__ */ new Set();
+	if (seen.has(model)) return false;
+	seen.add(model);
+	return true;
+}
 // packages/weights/src/repo.ts
 /** Hugging Face resolve URL base for a repo and revision. Pin a commit hash for reproducible loads. */
 function hfResolve(repo, revision = "main", host = "https://huggingface.co") {
@@ -832,18 +861,24 @@ async function ortExternalData(files, graphPath) {
 	}
 	return out;
 }
+const REMOTE = /^https?:\/\//;
 /**
 * A cache object for transformers.js (`env.useCustomCache = true;
 * env.customCache = transformersCache(store, ...)`). URLs that
 * `licenceFor` names are downloaded through the store on `match`, so they
 * get parts, resume and the licence line; other URLs pass through to
-* transformers.js's own fetch and are stored on `put`.
+* transformers.js's own fetch and are stored on `put`. Keys that are not
+* http(s) URLs (the local model path) miss without a fetch.
 */
 function transformersCache(store, opts) {
-	const urlOf = (r) => typeof r === "string" ? r : r.url;
+	const urlOf = (r) => {
+		const u = typeof r === "string" ? r : r.url;
+		return REMOTE.test(u) && opts.keyFor ? opts.keyFor(u) : u;
+	};
 	return {
 		async match(req) {
 			const url = urlOf(req);
+			if (!REMOTE.test(url)) return void 0;
 			const licence = opts.licenceFor(url);
 			if (licence !== null) {
 				const o = opts.onProgress ? { onProgress: opts.onProgress } : {};
@@ -868,6 +903,7 @@ function transformersCache(store, opts) {
 		},
 		async put(req, res) {
 			const url = urlOf(req);
+			if (!REMOTE.test(url)) return;
 			if (await store.has(url)) return;
 			await store.put({
 				key: url,

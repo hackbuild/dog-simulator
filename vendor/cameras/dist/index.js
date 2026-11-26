@@ -234,7 +234,7 @@ export class Orbit {
 }
 /**
  * A first person eye on an agent's head. `render` hides the head (scaled
- * to 0.001, learned in earlier builds: visible false would hide the whole subtree)
+ * to 0.001, since visible false would hide the whole subtree)
  * for this render only, then restores it.
  */
 export class FirstPerson {

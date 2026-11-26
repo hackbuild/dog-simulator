@@ -1,5 +1,6 @@
 import { type Object3D, Quaternion, Vector3 } from "three";
 import { type BodyGeometry, type BodyPose, type GaitState, type LegSpec } from "./index.js";
+/** Bone names of one leg: upper, middle and end joints, then the toe bones. */
 export interface LegNames {
     up: string;
     mid: string;
@@ -7,6 +8,7 @@ export interface LegNames {
     /** Bones from the end joint down to the toe tip. */
     toes: string[];
 }
+/** Bone names of a quadruped: the four legs, the hips, and optional spine, tail and ear bones. */
 export interface QuadrupedNames {
     legs: {
         LF: LegNames;
@@ -29,6 +31,7 @@ interface MeasuredLeg {
     pole: Vector3;
     endRest: Quaternion;
 }
+/** A quadruped rig measured from its rest pose by `measureQuadruped`, ready for `driveQuadruped`. */
 export interface QuadrupedRig {
     root: Object3D;
     hips: Object3D;
@@ -51,6 +54,7 @@ export interface QuadrupedRig {
  * when this runs. Names can come from `@hackbuild/rig` `limbChains`.
  */
 export declare function measureQuadruped(root: Object3D, names: QuadrupedNames): QuadrupedRig;
+/** Optional tail, ear and IK settings for `driveQuadruped`. */
 export interface DriveExtras {
     /** Tail link yaw angles and the root link lift, from `TailWag`. */
     tail?: {
